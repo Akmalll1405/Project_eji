@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  password     String
+  role         Role          @default(PROJECT_MANAGER)
+  createdAt    DateTime      @default(now())
+  projects     Project[]
+  transactions Transaction[]
+}
+
+model Project {
+  id              String        @id @default(cuid())
+  nama            String
+  jenis           String
+  nilai           Float
+  penanggungjawab String
+  perusahaan      String
+  sektor          String
+  tanggalMulai    DateTime
+  tanggalSelesai  DateTime
+  status          StatusProyek  @default(PERENCANAAN)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  userId          String
+  documents       Document[]
+  donors          Donor[]
+  user            User          @relation(fields: [userId], references: [id])
+  transactions    Transaction[]
+}
+
+model Donor {
+  id              String   @id @default(cuid())
+  nama            String
+  jenis           String
+  nilai           Float
+  penanggungjawab String
+  perusahaan      String
+  createdAt       DateTime @default(now())
+  projectId       String
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id            String       @id @default(cuid())
+  jenisDokumen  JenisDokumen
+  fileUrl       String
+  fileName      String
+  tanggalUpload DateTime     @default(now())
+  projectId     String
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id                String          @id @default(cuid())
+  jenisPembayaran   JenisPembayaran
+  keterangan        String
+  nomorRekening     String?
+  bankTujuan        String?
+  jumlah            Float
+  tanggalPembayaran DateTime
+  buktiBayarUrl     String?
+  createdAt         DateTime        @default(now())
+  projectId         String
+  userId            String
+  project           Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user              User            @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  PROJECT_MANAGER
+}
+
+enum StatusProyek {
+  PERENCANAAN
+  BERJALAN
+  SELESAI
+}
+
+enum JenisDokumen {
+  PROPOSAL
+  KONTRAK_KERJA
+  SURAT_IZIN
+  DOKUMENTASI_KEGIATAN
+  LAPORAN_PEKERJAAN
+}
+
+enum JenisPembayaran {
+  TUNAI
+  NONTUNAI
+}
