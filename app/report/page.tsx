@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 interface Project {
   id: string
@@ -119,19 +120,25 @@ export default function ReportPage() {
   )
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen-[100dvh] bg-white overflow-x-hidden">
       {/* Header */}
-      <header className="bg-blue-500 px-6 py-3 flex items-center justify-between">
-        <div className="w-12 h-12 bg-white rounded flex items-center justify-center text-blue-500 font-bold text-xs">
-          LOGO
+      <header className="bg-blue-500 px-6 py-3 flex items-center justify-between gap-2">
+        <div className="flex-shrink-0">
+                  <Image
+                    src="/logopupuk.png"
+                    alt="Logo"
+                    width= {40}
+                    height={40}
+                    className="object-contain"
+        />
         </div>
-        <div className="flex items-center gap-6">
-          <div className="bg-white rounded-full px-4 py-1 text-sm text-gray-600">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
+          <div className="bg-white rounded-full px-2 sm:px-3 py-1 text-[10px] sm:text-xs text-gray-600 max-w-[120px] sm:max-w-xs truncate break-all">
             {session?.user?.email}
           </div>
-          <button onClick={() => router.push('/dashboard')} className="text-white font-bold underline">Home</button>
-          <button onClick={() => router.push('/report')} className="text-white font-bold underline">Report</button>
-          <button onClick={() => signOut({ callbackUrl: '/login' })} className="text-white text-sm border border-white px-3 py-1 rounded hover:bg-blue-600">Logout</button>
+          <button onClick={() => router.push('/dashboard')} className="text-white text-xs sm:text-sm font-bold underline">Home</button>
+          <button onClick={() => router.push('/report')} className="text-white text-xs sm:text-sm font-bold underline">Report</button>
+          <button onClick={() => signOut({ callbackUrl: '/login' })} className="text-white text-xs border border-white px-2 py-1 rounded">Logout</button>
         </div>
       </header>
 
@@ -143,7 +150,7 @@ export default function ReportPage() {
         {/* ===== FILTER INFORMASI PEKERJAAN ===== */}
         <div className="border border-gray-200 rounded-lg p-4 mb-6">
           <div className="font-bold text-gray-700 text-sm mb-3">INFORMASI PEKERJAAN</div>
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Jenis Pekerjaan <span className="text-red-500">*</span></label>
               <select value={filterJenis} onChange={(e) => setFilterJenis(e.target.value)}
@@ -179,7 +186,7 @@ export default function ReportPage() {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="font-bold text-gray-800 text-sm">{p.nama}</div>
-                      <div className="grid grid-cols-3 gap-2 mt-2 text-xs text-gray-600">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-2 text-xs text-gray-600">
                         <div>Jenis: <span className="font-bold text-gray-700">{p.jenis}</span></div>
                         <div>Perusahaan: <span className="font-bold text-gray-700">{p.perusahaan}</span></div>
                         <div>Sektor: <span className="font-bold text-gray-700">{p.sektor}</span></div>
@@ -201,7 +208,7 @@ export default function ReportPage() {
                     </div>
                     <button
                       onClick={() => router.push(`/proyek/${p.id}`)}
-                      className="text-blue-500 text-xs underline ml-4 whitespace-nowrap"
+                      className="text-blue-500 text-xs underline ml-2 whitespace-nowrap shrink-0"
                     >
                       Lihat Detail
                     </button>
@@ -230,7 +237,7 @@ export default function ReportPage() {
         {/* ===== FILTER FILE DOKUMEN ===== */}
         <div className="border border-gray-200 rounded-lg p-4 mb-6">
           <div className="font-bold text-gray-700 text-sm mb-3">FILE DOKUMEN</div>
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Nama Dokumen <span className="text-red-500">*</span></label>
               <select value={filterDokumen} onChange={(e) => setFilterDokumen(e.target.value)}
@@ -270,7 +277,7 @@ export default function ReportPage() {
         </div>
 
         {/* ===== RINGKASAN ===== */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
             <div className="text-xs text-gray-500">Total Proyek Terfilter</div>
             <div className="text-2xl font-bold text-gray-800 mt-1">{filteredProjects.length}</div>

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -11,7 +12,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     setError('')
@@ -35,12 +36,15 @@ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
       <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center text-gray-800 dark:text-white mb-2">
-          Sistem Manajemen Proyek
-        </h1>
-        <p className="text-center text-gray-500 dark:text-gray-400 mb-6">
-          Silakan login untuk melanjutkan
-        </p>
+        <div className="flex justify-center mb-4">
+          <Image
+            src="/logotulisanpupuk.png"
+            alt="Logo"
+            width={200}
+            height={200}
+            className="object-contain"
+          />
+        </div>
 
         {error && (
           <div className="bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 p-3 rounded mb-4 text-sm">

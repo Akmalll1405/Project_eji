@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 interface Project {
   id: string
@@ -121,15 +122,21 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-[100dvh] bg-gray-50">
 
       {/* Header */}
-      <header className="bg-blue-500 px-4 py-3 flex items-center justify-between">
-        <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-blue-500 font-bold text-xs flex-shrink-0">
-          LOGO
+      <header className="bg-blue-500 px-4 py-3 flex items-center justify-between flex-wrap">
+        <div className="flex-shrink-2">
+          <Image
+            src="/logopupuk.png"
+            alt="Logo"
+            width= {40}
+            height={40}
+            className="object-contain"
+          />
         </div>
         <div className="flex items-center gap-2 sm:gap-4 ml-2">
-          <div className="hidden sm:block bg-white rounded-full px-3 py-1 text-xs text-gray-600 max-w-xs truncate">
+          <div className="bg-white rounded-full px-2 py-1 text-[10px] sm:text-xs text-gray-600 max-w-[120px] sm:max-w-xs truncate break-all">
             {session?.user?.email}
           </div>
           <button onClick={() => router.push('/dashboard')} className="text-white text-xs sm:text-sm font-bold underline">
@@ -149,7 +156,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="px-4 sm:px-6 py-4 sm:py-6">
+      <main className="px-4 sm:px-6 py-4 sm:py-6 overflow-x-hidden">
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 sm:mb-6">
@@ -349,7 +356,7 @@ export default function DashboardPage() {
 
       {/* Modal Form Tambah Pekerjaan */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4 overflow-y-auto">
           <div className="bg-gray-900 border border-gray-700 p-5 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white mb-4">Tambah Pekerjaan</h3>
             <div className="space-y-3">

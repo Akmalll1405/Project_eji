@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import Image from 'next/image'
 
 interface Project {
   id: string
@@ -358,7 +359,14 @@ export default function DetailProyekPage() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="bg-blue-500 px-6 py-3 flex items-center justify-between">
-        <div className="w-12 h-12 bg-white rounded flex items-center justify-center text-blue-500 font-bold text-xs">LOGO</div>
+        <div className="flex-shrink-2">
+                  <Image
+                    src="/logopupuk.png"
+                    alt="Logo"
+                    width= {40}
+                    height={40}
+                    className="object-contain"
+                  /></div>
         <div className="flex items-center gap-6">
           <div className="bg-white rounded-full px-4 py-1 text-sm text-gray-600">{session?.user?.email}</div>
           <button onClick={() => router.push('/dashboard')} className="text-white font-bold underline">Home</button>
