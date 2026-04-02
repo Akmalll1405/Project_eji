@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import Image from 'next/image'
+import Header from '@/components/header'
+import Loading from '@/components/Loading'
 
 interface Project {
   id: string
@@ -12,7 +13,7 @@ interface Project {
   jenis: string
   nilai: number
   penanggungjawab: string
-  perusahaan: string
+  wilayah: string
   sektor: string
   tanggalMulai: string
   tanggalSelesai: string
@@ -101,12 +102,15 @@ export default function DetailProyekPage() {
   })
   const [editProyekForm, setEditProyekForm] = useState({
     nama: '', jenis: '', nilai: '', penanggungjawab: '',
-    perusahaan: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: ''
+    wilayah: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: ''
   })
 
   useEffect(() => {
-    if (status === 'unauthenticated') router.push('/login')
-    if (status === 'authenticated') fetchAll()
+    if (status === 'unauthenticated') {
+      router.push('/login')
+    } else if (status === 'authenticated') {
+      fetchAll()
+    }
   }, [status])
 
   const fetchAll = async () => {
@@ -118,7 +122,7 @@ export default function DetailProyekPage() {
       nama: p.nama || '', jenis: p.jenis || '',
       nilai: p.nilai?.toString() || '',
       penanggungjawab: p.penanggungjawab || '',
-      perusahaan: p.perusahaan || '', sektor: p.sektor || '',
+      wilayah: p.wilayah || '', sektor: p.sektor || '',
       tanggalMulai: p.tanggalMulai?.split('T')[0] || '',
       tanggalSelesai: p.tanggalSelesai?.split('T')[0] || '',
       status: p.status || 'PERENCANAAN'
@@ -161,11 +165,8 @@ export default function DetailProyekPage() {
       alert('Tanggal Mulai wajib diisi!')
       return
     }
-    if (!editProyekForm.tanggalSelesai) {
-      alert('Tanggal Selesai wajib diisi!')
-      return
-    }
-    if (new Date(editProyekForm.tanggalSelesai) < new Date(editProyekForm.tanggalMulai)) {
+    if (editProyekForm.tanggalSelesai &&
+      new Date(editProyekForm.tanggalSelesai) < new Date(editProyekForm.tanggalMulai)) {
       alert('Tanggal Selesai tidak boleh sebelum Tanggal Mulai!')
       return
     }
@@ -349,31 +350,12 @@ export default function DetailProyekPage() {
     PERENCANAAN: 'Draft', BERJALAN: 'Sedang Diproses', SELESAI: 'Selesai'
   }
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500">Loading...</p>
-    </div>
-  )
+  if (loading) return <Loading />
 
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-blue-500 px-6 py-3 flex items-center justify-between">
-        <div className="flex-shrink-2">
-                  <Image
-                    src="/logopupuk.png"
-                    alt="Logo"
-                    width= {40}
-                    height={40}
-                    className="object-contain"
-                  /></div>
-        <div className="flex items-center gap-6">
-          <div className="bg-white rounded-full px-4 py-1 text-sm text-gray-600">{session?.user?.email}</div>
-          <button onClick={() => router.push('/dashboard')} className="text-white font-bold underline">Home</button>
-          <button onClick={() => router.push('/report')} className="text-white font-bold underline">Report</button>
-          <button onClick={() => signOut({ callbackUrl: '/login' })} className="text-white text-sm border border-white px-3 py-1 rounded hover:bg-blue-600">Logout</button>
-        </div>
-      </header>
+      <Header />
 
       <main className="px-6 py-6 max-w-5xl mx-auto">
         <button onClick={() => router.push('/dashboard')} className="text-blue-500 text-sm mb-4 hover:underline">
@@ -384,10 +366,10 @@ export default function DetailProyekPage() {
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
           <div className="font-bold text-gray-800 text-lg">{proyek?.nama}</div>
           <div className="text-sm text-gray-500 mt-1">
-            {proyek?.jenis} • {proyek?.perusahaan} •
+            {proyek?.jenis} • {proyek?.wilayah} •
             <span className={`ml-2 px-2 py-0.5 rounded text-xs font-bold ${proyek?.status === 'BERJALAN' ? 'bg-blue-100 text-blue-700' :
-                proyek?.status === 'SELESAI' ? 'bg-green-100 text-green-700' :
-                  'bg-gray-100 text-gray-700'
+              proyek?.status === 'SELESAI' ? 'bg-green-100 text-green-700' :
+                'bg-gray-100 text-gray-700'
               }`}>
               {statusLabel[proyek?.status || '']}
             </span>
@@ -421,7 +403,7 @@ export default function DetailProyekPage() {
                 { label: 'Nama Pekerjaan', key: 'nama' },
                 { label: 'Nilai Pekerjaan (Rp)', key: 'nilai' },
                 { label: 'Penanggung Jawab', key: 'penanggungjawab' },
-                { label: 'Perusahaan/Lembaga', key: 'perusahaan' },
+                { label: 'Wilayah Pengerjaan', key: 'wilayah' },
                 { label: 'Sektor', key: 'sektor' },
               ].map(({ label, key }) => (
                 <div key={key}>
@@ -439,7 +421,7 @@ export default function DetailProyekPage() {
                   className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700" />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Tanggal Selesai <span className="text-red-500">*</span></label>
+                <label className="block text-xs text-gray-500 mb-1">Tanggal Selesai</label>
                 <input type="date" value={editProyekForm.tanggalSelesai}
                   onChange={(e) => setEditProyekForm({ ...editProyekForm, tanggalSelesai: e.target.value })}
                   className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700" />

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import Header from '@/components/header'
+import Loading from '@/components/Loading'
 
 interface Project {
   id: string
@@ -11,7 +12,7 @@ interface Project {
   jenis: string
   nilai: number
   penanggungjawab: string
-  perusahaan: string
+  wilayah: string
   sektor: string
   tanggalMulai: string
   tanggalSelesai: string
@@ -27,35 +28,47 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState('SEMUA')
   const [searchNama, setSearchNama] = useState('')
-  const [searchPerusahaan, setSearchPerusahaan] = useState('')
+  const [searchWilayah, setSearchWilayah] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
     nama: '', jenis: '', nilai: '', penanggungjawab: '',
-    perusahaan: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: 'PERENCANAAN'
+    wilayah: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: 'PERENCANAAN'
   })
 
   useEffect(() => {
-    if (status === 'unauthenticated') router.push('/login')
-    if (status === 'authenticated') fetchProjects()
+    if (status === 'unauthenticated') {
+      router.push('/login')
+    } else if (status === 'authenticated') {
+      fetchProjects()
+    }
   }, [status])
 
   const fetchProjects = async () => {
-    const res = await fetch('/api/proyek')
-    const data = await res.json()
-    setProjects(Array.isArray(data) ? data : [])
-    setLoading(false)
+    try {
+      setLoading(true)
+      const res = await fetch('/api/proyek')
+      const data = await res.json()
+      setProjects(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
+  if (status === 'loading' || loading) return <Loading />
+  if (status === 'unauthenticated') return null
+  
   const handleSubmit = async () => {
     if (!form.nama.trim()) { alert('Nama Pekerjaan wajib diisi!'); return }
     if (!form.jenis.trim()) { alert('Jenis Pekerjaan wajib diisi!'); return }
     if (!form.sektor.trim()) { alert('Sektor wajib diisi!'); return }
     if (!form.tanggalMulai) { alert('Tanggal Mulai wajib diisi!'); return }
-    if (!form.tanggalSelesai) { alert('Tanggal Selesai wajib diisi!'); return }
-    if (new Date(form.tanggalSelesai) < new Date(form.tanggalMulai)) {
+    if (form.tanggalSelesai && new Date(form.tanggalSelesai) < new Date(form.tanggalMulai)) {
       alert('Tanggal Selesai tidak boleh sebelum Tanggal Mulai!')
       return
     }
+
     await fetch('/api/proyek', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -75,7 +88,7 @@ export default function DashboardPage() {
   const resetForm = () => {
     setForm({
       nama: '', jenis: '', nilai: '', penanggungjawab: '',
-      perusahaan: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: 'PERENCANAAN'
+      wilayah: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: 'PERENCANAAN'
     })
   }
 
@@ -96,14 +109,13 @@ export default function DashboardPage() {
   }
 
   const filtered = projects.filter(p => {
-    if (p.status === 'SELESAI') return false
     const matchStatus = filterStatus === 'SEMUA' || p.status === filterStatus
     const matchNama = (p.nama || '').toLowerCase().includes(searchNama.toLowerCase())
-    const matchPerusahaan = (p.perusahaan || '').toLowerCase().includes(searchPerusahaan.toLowerCase())
-    return matchStatus && matchNama && matchPerusahaan
+    const matchWilayah = (p.wilayah || '').toLowerCase().includes(searchWilayah.toLowerCase())
+    return matchStatus && matchNama && matchWilayah
   })
 
-  const totalProyek = projects.filter(p => p.status !== 'SELESAI').length
+  const totalProyek = projects.length
   const sedangBerjalan = projects.filter(p => p.status === 'BERJALAN').length
   const selesai = projects.filter(p => p.status === 'SELESAI').length
 
@@ -113,48 +125,12 @@ export default function DashboardPage() {
     return Math.ceil((selesaiDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
   }
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-[100dvh] bg-gray-50">
 
       {/* Header */}
-      <header className="bg-blue-500 px-4 py-3 flex items-center justify-between flex-wrap">
-        <div className="flex-shrink-2">
-          <Image
-            src="/logopupuk.png"
-            alt="Logo"
-            width= {40}
-            height={40}
-            className="object-contain"
-          />
-        </div>
-        <div className="flex items-center gap-2 sm:gap-4 ml-2">
-          <div className="bg-white rounded-full px-2 py-1 text-[10px] sm:text-xs text-gray-600 max-w-[120px] sm:max-w-xs truncate break-all">
-            {session?.user?.email}
-          </div>
-          <button onClick={() => router.push('/dashboard')} className="text-white text-xs sm:text-sm font-bold underline">
-            Home
-          </button>
-          <button onClick={() => router.push('/report')} className="text-white text-xs sm:text-sm font-bold underline">
-            Report
-          </button>
-          {(session?.user as any)?.role === 'ADMIN' && (
-            <button onClick={() => router.push('/users')} className="text-white text-xs sm:text-sm font-bold underline">
-              Users
-            </button>
-          )}
-          <button onClick={() => signOut({ callbackUrl: '/login' })} className="text-white text-xs border border-white px-2 py-1 rounded hover:bg-blue-600">
-            Logout
-          </button>
-        </div>
-      </header>
+      <Header />
 
       <main className="px-4 sm:px-6 py-4 sm:py-6 overflow-x-hidden">
 
@@ -198,16 +174,16 @@ export default function DashboardPage() {
           <div className="flex items-center border border-gray-300 rounded px-3 py-2 gap-2 bg-white flex-1">
             <input
               type="text"
-              placeholder="Cari nama lembaga..."
-              value={searchPerusahaan}
-              onChange={(e) => setSearchPerusahaan(e.target.value)}
+              placeholder="Cari wilayah pengerjaan..."
+              value={searchWilayah}
+              onChange={(e) => setSearchWilayah(e.target.value)}
               className="outline-none text-sm text-gray-700 w-full"
             />
             <span className="text-gray-400">🔍</span>
           </div>
-          {(searchNama || searchPerusahaan) && (
+          {(searchNama || searchWilayah) && (
             <button
-              onClick={() => { setSearchNama(''); setSearchPerusahaan('') }}
+              onClick={() => { setSearchNama(''); setSearchWilayah('') }}
               className="text-xs text-gray-500 hover:text-red-500 underline px-2"
             >
               Reset
@@ -217,13 +193,12 @@ export default function DashboardPage() {
 
         {/* Filter Buttons */}
         <div className="flex gap-2 mb-4 sm:mb-6 flex-wrap">
-          {['SEMUA', 'PERENCANAAN', 'BERJALAN'].map((s) => (
+          {['SEMUA', 'PERENCANAAN', 'BERJALAN', "SELESAI"].map((s) => (
             <button
               key={s}
               onClick={() => setFilterStatus(s)}
-              className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium ${
-                filterStatus === s ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-              }`}
+              className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium ${filterStatus === s ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                }`}
             >
               {s === 'SEMUA' ? 'Semua' : statusLabel[s]}
             </button>
@@ -265,8 +240,8 @@ export default function DashboardPage() {
                     </button>
                     <div className="mt-2 text-xs text-gray-500">Penanggung Jawab</div>
                     <div className="text-xs font-bold text-gray-700">{p.penanggungjawab || '-'}</div>
-                    <div className="mt-1 text-xs text-gray-500">Perusahaan</div>
-                    <div className="text-xs font-bold text-gray-700">{p.perusahaan || '-'}</div>
+                    <div className="mt-1 text-xs text-gray-500">Wilayah</div>
+                    <div className="text-xs font-bold text-gray-700">{p.wilayah || '-'}</div>
                   </td>
                   <td className="py-3 px-3 align-top">
                     <div className="text-xs text-gray-500">Nilai projek</div>
@@ -278,11 +253,10 @@ export default function DashboardPage() {
                     <div className="text-xs text-gray-500">Diinput oleh</div>
                     <div className="text-sm font-bold text-gray-700">{p.userName || '-'}</div>
                     <div className="mt-2 text-xs text-gray-500">Status</div>
-                    <div className={`text-xs font-bold px-2 py-1 rounded inline-block mt-1 ${
-                      p.status === 'BERJALAN' ? 'bg-blue-100 text-blue-700' :
+                    <div className={`text-xs font-bold px-2 py-1 rounded inline-block mt-1 ${p.status === 'BERJALAN' ? 'bg-blue-100 text-blue-700' :
                       p.status === 'SELESAI' ? 'bg-green-100 text-green-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
+                        'bg-gray-100 text-gray-700'
+                      }`}>
                       {statusLabel[p.status] || p.status}
                     </div>
                     {(() => {
@@ -317,11 +291,10 @@ export default function DashboardPage() {
                   className="text-blue-500 underline text-sm font-bold hover:text-blue-700 text-left flex-1 mr-2">
                   {p.nama || '-'}
                 </button>
-                <span className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap flex-shrink-0 ${
-                  p.status === 'BERJALAN' ? 'bg-blue-100 text-blue-700' :
+                <span className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap flex-shrink-0 ${p.status === 'BERJALAN' ? 'bg-blue-100 text-blue-700' :
                   p.status === 'SELESAI' ? 'bg-green-100 text-green-700' :
-                  'bg-gray-100 text-gray-700'
-                }`}>
+                    'bg-gray-100 text-gray-700'
+                  }`}>
                   {statusLabel[p.status] || p.status}
                 </span>
               </div>
@@ -330,7 +303,7 @@ export default function DashboardPage() {
                 <div><span className="text-gray-500">Jenis: </span><span className="font-bold text-gray-700">{p.jenis || '-'}</span></div>
                 <div><span className="text-gray-500">Nilai: </span><span className="font-bold text-gray-700">{formatRupiah(p.nilai || 0)}</span></div>
                 <div><span className="text-gray-500">PJ: </span><span className="font-bold text-gray-700">{p.penanggungjawab || '-'}</span></div>
-                <div><span className="text-gray-500">Lembaga: </span><span className="font-bold text-gray-700">{p.perusahaan || '-'}</span></div>
+                <div><span className="text-gray-500">Wilayah: </span><span className="font-bold text-gray-700">{p.wilayah || '-'}</span></div>
                 <div><span className="text-gray-500">Diinput: </span><span className="font-bold text-gray-700">{p.userName || '-'}</span></div>
                 <div><span className="text-gray-500">Update: </span><span className="font-bold text-gray-700">{new Date(p.updatedAt).toLocaleDateString('id-ID')}</span></div>
               </div>
@@ -365,10 +338,10 @@ export default function DashboardPage() {
                 { label: 'Jenis Pekerjaan', key: 'jenis', type: 'text', required: true },
                 { label: 'Nilai Pekerjaan (Rp)', key: 'nilai', type: 'number', required: false },
                 { label: 'Penanggung Jawab', key: 'penanggungjawab', type: 'text', required: false },
-                { label: 'Perusahaan/Lembaga', key: 'perusahaan', type: 'text', required: false },
+                { label: 'Wilayah Pengerjaan', key: 'wilayah', type: 'text', required: false },
                 { label: 'Sektor', key: 'sektor', type: 'text', required: true },
                 { label: 'Tanggal Mulai', key: 'tanggalMulai', type: 'date', required: true },
-                { label: 'Tanggal Selesai', key: 'tanggalSelesai', type: 'date', required: true },
+                { label: 'Tanggal Selesai', key: 'tanggalSelesai', type: 'date', required: false },
               ].map(({ label, key, type, required }) => (
                 <div key={key}>
                   <label className="block text-xs text-gray-300 mb-1">
@@ -378,9 +351,8 @@ export default function DashboardPage() {
                     type={type}
                     value={form[key as keyof typeof form]}
                     onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                    className={`w-full bg-gray-800 border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 ${
-                      required && !form[key as keyof typeof form] ? 'border-red-500' : 'border-gray-600'
-                    }`}
+                    className={`w-full bg-gray-800 border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 ${required && !form[key as keyof typeof form] ? 'border-red-500' : 'border-gray-600'
+                      }`}
                   />
                   {required && !form[key as keyof typeof form] && (
                     <p className="text-red-400 text-xs mt-1">Field ini wajib diisi</p>

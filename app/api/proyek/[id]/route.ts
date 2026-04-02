@@ -35,21 +35,25 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id } = await params
     const body = await req.json()
 
-    const proyek = await prisma.$queryRaw`
+    const nilai = body.nilai ? parseFloat(body.nilai) : 0
+    const tanggalMulai = body.tanggalMulai ? new Date(body.tanggalMulai).toISOString() : new Date().toISOString()
+    const tanggalSelesai = body.tanggalSelesai ? new Date(body.tanggalSelesai).toISOString() : null
+
+    const proyek = await prisma.$queryRawUnsafe(`
       UPDATE "Project" SET
-        "nama" = ${body.nama},
-        "jenis" = ${body.jenis},
-        "nilai" = ${parseFloat(body.nilai)}::float,
-        "penanggungjawab" = ${body.penanggungjawab},
-        "perusahaan" = ${body.perusahaan},
-        "sektor" = ${body.sektor},
-        "tanggalMulai" = ${new Date(body.tanggalMulai)},
-        "tanggalSelesai" = ${new Date(body.tanggalSelesai)},
-        "status" = ${body.status}::"StatusProyek",
+        "nama" = '${body.nama}',
+        "jenis" = '${body.jenis}',
+        "nilai" = ${nilai},
+        "penanggungjawab" = '${body.penanggungjawab || ''}',
+        "perusahaan" = '${body.perusahaan || ''}',
+        "sektor" = '${body.sektor || ''}',
+        "tanggalMulai" = '${tanggalMulai}',
+        "tanggalSelesai" = ${tanggalSelesai ? `'${tanggalSelesai}'` : 'NULL'},
+        "status" = '${body.status}'::"StatusProyek",
         "updatedAt" = NOW()
-      WHERE id = ${id}
+      WHERE id = '${id}'
       RETURNING *
-    `
+    `)
 
     return NextResponse.json(proyek)
   } catch (error) {

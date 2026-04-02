@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import Header from '@/components/header'
+import Loading from '@/components/Loading'
 
 interface Project {
   id: string
@@ -11,7 +12,7 @@ interface Project {
   jenis: string
   nilai: number
   penanggungjawab: string
-  perusahaan: string
+  wilayah: string
   sektor: string
   tanggalMulai: string
   tanggalSelesai: string
@@ -53,35 +54,55 @@ export default function ReportPage() {
   const [filterDokumen, setFilterDokumen] = useState('Semua')
 
   useEffect(() => {
-    if (status === 'unauthenticated') router.push('/login')
-    if (status === 'authenticated') fetchData()
+    if (status === 'unauthenticated') {
+      router.push('/login')
+    } else if (status === 'authenticated') {
+      fetchData()
+    }
   }, [status])
 
   const fetchData = async () => {
-    const res = await fetch('/api/proyek')
-    const data = await res.json()
-    const proyekList: Project[] = Array.isArray(data) ? data : []
-    setProjects(proyekList)
+    try {
+      setLoading(true)
 
-    const dokumenList: Dokumen[] = []
-    const transaksiList: Transaksi[] = []
+      const res = await fetch('/api/proyek')
+      const data = await res.json()
+      const proyekList: Project[] = Array.isArray(data) ? data : []
+      setProjects(proyekList)
 
-    await Promise.all(proyekList.map(async (p) => {
-      const [dRes, tRes] = await Promise.all([
-        fetch(`/api/dokumen?projectId=${p.id}`),
-        fetch(`/api/transaksi?projectId=${p.id}`)
-      ])
-      const dData = await dRes.json()
-      const tData = await tRes.json()
-      if (Array.isArray(dData)) dokumenList.push(...dData.map((d: Dokumen) => ({ ...d, projectId: p.id })))
-      if (Array.isArray(tData)) transaksiList.push(...tData.map((t: Transaksi) => ({ ...t, projectId: p.id })))
-    }))
+      const dokumenList: Dokumen[] = []
+      const transaksiList: Transaksi[] = []
 
-    setAllDokumen(dokumenList)
-    setAllTransaksi(transaksiList)
-    setLoading(false)
+      await Promise.all(proyekList.map(async (p) => {
+        const [dRes, tRes] = await Promise.all([
+          fetch(`/api/dokumen?projectId=${p.id}`),
+          fetch(`/api/transaksi?projectId=${p.id}`)
+        ])
+        const dData = await dRes.json()
+        const tData = await tRes.json()
+
+        if (Array.isArray(dData)) {
+          dokumenList.push(...dData.map((d: Dokumen) => ({ ...d, projectId: p.id })))
+        }
+
+        if (Array.isArray(tData)) {
+          transaksiList.push(...tData.map((t: Transaksi) => ({ ...t, projectId: p.id })))
+        }
+      }))
+
+      setAllDokumen(dokumenList)
+      setAllTransaksi(transaksiList)
+
+    } catch (error) {
+      console.error('Error fetch data:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
+  if (status === 'loading' || loading) return <Loading />
+  if (status === 'unauthenticated') return null
+  
   const formatRupiah = (num: number) =>
     new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(num)
 
@@ -96,13 +117,13 @@ export default function ReportPage() {
   }
 
   const uniqueJenis = ['Semua', ...Array.from(new Set(projects.map(p => p.jenis).filter(Boolean)))]
-  const uniqueWilayah = ['Semua', ...Array.from(new Set(projects.map(p => p.perusahaan).filter(Boolean)))]
+  const uniqueWilayah = ['Semua', ...Array.from(new Set(projects.map(p => p.wilayah).filter(Boolean)))]
   const uniqueStatus = ['Semua', 'PERENCANAAN', 'BERJALAN', 'SELESAI']
   const uniqueDokumen = ['Semua', 'KONTRAK_KERJA', 'PROPOSAL', 'SURAT_IZIN', 'DOKUMENTASI_KEGIATAN', 'LAPORAN_PEKERJAAN']
 
   const filteredProjects = projects.filter(p => {
     const matchJenis = filterJenis === 'Semua' || p.jenis === filterJenis
-    const matchWilayah = filterWilayah === 'Semua' || p.perusahaan === filterWilayah
+    const matchWilayah = filterWilayah === 'Semua' || p.wilayah === filterWilayah
     const matchStatus = filterStatus === 'Semua' || p.status === filterStatus
     return matchJenis && matchWilayah && matchStatus
   })
@@ -113,34 +134,11 @@ export default function ReportPage() {
     return matchDokumen && projectMatch
   })
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500">Loading...</p>
-    </div>
-  )
-
+  if (loading) return <Loading />
   return (
     <div className="min-h-screen-[100dvh] bg-white overflow-x-hidden">
       {/* Header */}
-      <header className="bg-blue-500 px-6 py-3 flex items-center justify-between gap-2">
-        <div className="flex-shrink-0">
-                  <Image
-                    src="/logopupuk.png"
-                    alt="Logo"
-                    width= {40}
-                    height={40}
-                    className="object-contain"
-        />
-        </div>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
-          <div className="bg-white rounded-full px-2 sm:px-3 py-1 text-[10px] sm:text-xs text-gray-600 max-w-[120px] sm:max-w-xs truncate break-all">
-            {session?.user?.email}
-          </div>
-          <button onClick={() => router.push('/dashboard')} className="text-white text-xs sm:text-sm font-bold underline">Home</button>
-          <button onClick={() => router.push('/report')} className="text-white text-xs sm:text-sm font-bold underline">Report</button>
-          <button onClick={() => signOut({ callbackUrl: '/login' })} className="text-white text-xs border border-white px-2 py-1 rounded">Logout</button>
-        </div>
-      </header>
+      <Header />
 
       <main className="px-6 py-6 max-w-5xl mx-auto">
 
@@ -188,17 +186,16 @@ export default function ReportPage() {
                       <div className="font-bold text-gray-800 text-sm">{p.nama}</div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-2 text-xs text-gray-600">
                         <div>Jenis: <span className="font-bold text-gray-700">{p.jenis}</span></div>
-                        <div>Perusahaan: <span className="font-bold text-gray-700">{p.perusahaan}</span></div>
+                        <div>Wilayah: <span className="font-bold text-gray-700">{p.wilayah}</span></div>
                         <div>Sektor: <span className="font-bold text-gray-700">{p.sektor}</span></div>
                         <div>Nilai: <span className="font-bold text-gray-700">{formatRupiah(p.nilai)}</span></div>
                         <div>PJ: <span className="font-bold text-gray-700">{p.penanggungjawab}</span></div>
                         <div>
                           Status:
-                          <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-bold ${
-                            p.status === 'BERJALAN' ? 'bg-blue-100 text-blue-700' :
+                          <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-bold ${p.status === 'BERJALAN' ? 'bg-blue-100 text-blue-700' :
                             p.status === 'SELESAI' ? 'bg-green-100 text-green-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
+                              'bg-gray-100 text-gray-700'
+                            }`}>
                             {statusLabel[p.status]}
                           </span>
                         </div>

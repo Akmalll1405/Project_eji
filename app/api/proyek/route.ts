@@ -39,31 +39,32 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const userId = (session.user as any).id
 
-    console.log('userId:', userId)
-    console.log('body:', body)
+    const nilai = body.nilai ? parseFloat(body.nilai) : 0
+    const tanggalMulai = body.tanggalMulai ? new Date(body.tanggalMulai).toISOString() : new Date().toISOString()
+    const tanggalSelesai = body.tanggalSelesai ? new Date(body.tanggalSelesai).toISOString() : null
 
-    const proyek = await prisma.$queryRaw`
+    const proyek = await prisma.$queryRawUnsafe(`
       INSERT INTO "Project" (
-        "id", "nama", "jenis", "nilai", "penanggungjawab", 
-        "perusahaan", "sektor", "tanggalMulai", "tanggalSelesai", 
+        "id", "nama", "jenis", "nilai", "penanggungjawab",
+        "perusahaan", "sektor", "tanggalMulai", "tanggalSelesai",
         "status", "userId", "createdAt", "updatedAt"
       ) VALUES (
         gen_random_uuid()::text,
-        ${body.nama},
-        ${body.jenis},
-        ${parseFloat(body.nilai)}::float,
-        ${body.penanggungjawab},
-        ${body.perusahaan},
-        ${body.sektor},
-        ${new Date(body.tanggalMulai)},
-        ${new Date(body.tanggalSelesai)},
-        ${body.status || 'PERENCANAAN'}::"StatusProyek",
-        ${userId},
+        '${body.nama}',
+        '${body.jenis}',
+        ${nilai},
+        '${body.penanggungjawab || ''}',
+        '${body.perusahaan || ''}',
+        '${body.sektor}',
+        '${tanggalMulai}',
+        ${tanggalSelesai ? `'${tanggalSelesai}'` : 'NULL'},
+        '${body.status || 'PERENCANAAN'}'::"StatusProyek",
+        '${userId}',
         NOW(),
         NOW()
       )
       RETURNING *
-    `
+    `)
 
     return NextResponse.json(proyek)
   } catch (error) {

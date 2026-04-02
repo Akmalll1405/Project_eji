@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import Header from '@/components/header'
+import Loading from '@/components/Loading'
 
 interface User {
   id: string
@@ -41,6 +42,9 @@ export default function UsersPage() {
     setUsers(Array.isArray(data) ? data : [])
     setLoading(false)
   }
+  
+  if (status === 'loading' || loading) return <Loading />
+  if (status === 'unauthenticated') return null
 
   const handleSubmit = async () => {
     if (!form.name.trim()) { alert('Nama wajib diisi!'); return }
@@ -84,43 +88,28 @@ export default function UsersPage() {
   )
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-blue-500 px-6 py-3 flex items-center justify-between flex-wrap gap-2">
-        <div className="flex-shrink-2">
-          <Image
-            src="/logopupuk.png"
-            alt="Logo"
-            width={40}
-            height={40}
-            className="object-contain"
-          /></div>
-        <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-end flex-1">
-          <div className="bg-white rounded-full px-2 sm:px-4 py-1 
-                    text-[10px] sm:text-sm text-gray-600 
-                    max-w-[120px] sm:max-w-xs 
-                    truncate">{session?.user?.email}</div>
-          <button onClick={() => router.push('/dashboard')} className="text-white text-xs sm:text-sm font-bold underline whitespace-nowrap">Home</button>
-          <button onClick={() => router.push('/report')} className="text-white text-xs sm:text-sm font-bold underline whitespace-nowrap">Report</button>
-          <button onClick={() => signOut({ callbackUrl: '/login' })} className="text-white text-xs sm:text-sm border border-white px-2 py-1 rounded whitespace-nowrap">Logout</button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
 
-      <main className="px-6 py-6 max-w-4xl mx-auto">
+      <main className="px-4 sm:px-6 py-4 sm:py-6 max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-xl font-bold text-gray-800">Manajemen User</h1>
-            <p className="text-sm text-gray-500 mt-1">Kelola akun Admin dan Project Manager</p>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-800">Manajemen User</h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">Kelola akun Admin dan Project Manager</p>
           </div>
           <button
-            onClick={() => { setShowForm(true); setEditUser(null); setForm({ name: '', email: '', password: '', role: 'PROJECT_MANAGER' }) }}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium"
+            onClick={() => {
+              setShowForm(true)
+              setEditUser(null)
+              setForm({ name: '', email: '', password: '', role: 'PROJECT_MANAGER' })
+            }}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded text-xs sm:text-sm font-medium"
           >
             + Tambah User
           </button>
         </div>
 
-        {/* DEKSTOP */}
+        {/* Tabel Desktop */}
         <div className="hidden md:block bg-white border border-gray-200 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -134,9 +123,7 @@ export default function UsersPage() {
             </thead>
             <tbody>
               {users.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-400">Belum ada user</td>
-                </tr>
+                <tr><td colSpan={5} className="text-center py-8 text-gray-400">Belum ada user</td></tr>
               ) : users.map((u) => (
                 <tr key={u.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-4 py-3">
@@ -145,7 +132,7 @@ export default function UsersPage() {
                       <span className="text-xs text-blue-500">(Anda)</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{u.email}</td>
+                  <td className="px-4 py-3 text-gray-600 text-sm">{u.email}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 rounded text-xs font-bold ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
                       }`}>
@@ -157,23 +144,13 @@ export default function UsersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-3">
-                      <button
-                        onClick={() => {
-                          setEditUser(u)
-                          setForm({ name: u.name, email: u.email, password: '', role: u.role })
-                          setShowForm(true)
-                        }}
-                        className="text-blue-500 text-xs underline"
-                      >
-                        Edit
-                      </button>
+                      <button onClick={() => {
+                        setEditUser(u)
+                        setForm({ name: u.name, email: u.email, password: '', role: u.role })
+                        setShowForm(true)
+                      }} className="text-blue-500 text-xs underline">Edit</button>
                       {u.id !== (session?.user as any)?.id && (
-                        <button
-                          onClick={() => handleDelete(u.id)}
-                          className="text-red-500 text-xs underline"
-                        >
-                          Hapus
-                        </button>
+                        <button onClick={() => handleDelete(u.id)} className="text-red-500 text-xs underline">Hapus</button>
                       )}
                     </div>
                   </td>
@@ -182,12 +159,13 @@ export default function UsersPage() {
             </tbody>
           </table>
         </div>
-      </main>
-        {/* MOBILE */}
-        <div className="md:hidden space-y-3">
-          {users.map((u) => (
-            <div key={u.id} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
 
+        {/* Card Mobile */}
+        <div className="md:hidden space-y-3">
+          {users.length === 0 ? (
+            <p className="text-center py-8 text-gray-400">Belum ada user</p>
+          ) : users.map((u) => (
+            <div key={u.id} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
               <div className="flex justify-between items-start">
                 <div>
                   <div className="font-bold text-gray-800 text-sm">{u.name}</div>
@@ -195,49 +173,34 @@ export default function UsersPage() {
                     <span className="text-xs text-blue-500">(Anda)</span>
                   )}
                 </div>
-
-                <span className={`text-xs px-2 py-1 rounded font-bold ${u.role === 'ADMIN'
-                    ? 'bg-purple-100 text-purple-700'
-                    : 'bg-blue-100 text-blue-700'
+                <span className={`text-xs px-2 py-1 rounded font-bold ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
                   }`}>
                   {u.role === 'ADMIN' ? 'Admin' : 'Project Manager'}
                 </span>
               </div>
-
-              <div className="mt-2 text-xs text-gray-600">
+              <div className="mt-2 text-xs text-gray-600 space-y-1">
                 <div>Email: <span className="font-bold break-all">{u.email}</span></div>
                 <div>Dibuat: <span className="font-bold">{new Date(u.createdAt).toLocaleDateString('id-ID')}</span></div>
               </div>
-
-              <div className="flex gap-3 mt-3 border-t pt-2 text-xs">
-                <button
-                  onClick={() => {
-                    setEditUser(u)
-                    setForm({ name: u.name, email: u.email, password: '', role: u.role })
-                    setShowForm(true)
-                  }}
-                  className="text-blue-500 underline"
-                >
-                  Edit
-                </button>
-
+              <div className="flex gap-3 mt-3 pt-2 border-t border-gray-100 text-xs">
+                <button onClick={() => {
+                  setEditUser(u)
+                  setForm({ name: u.name, email: u.email, password: '', role: u.role })
+                  setShowForm(true)
+                }} className="text-blue-500 underline">Edit</button>
                 {u.id !== (session?.user as any)?.id && (
-                  <button
-                    onClick={() => handleDelete(u.id)}
-                    className="text-red-500 underline"
-                  >
-                    Hapus
-                  </button>
+                  <button onClick={() => handleDelete(u.id)} className="text-red-500 underline">Hapus</button>
                 )}
               </div>
-
             </div>
           ))}
         </div>
-      {/* Modal Form User */}
+      </main>
+
+      {/* Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-gray-900 border border-gray-700 p-6 rounded-xl w-full max-w-md">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+          <div className="bg-gray-900 border border-gray-700 p-5 rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white mb-4">
               {editUser ? 'Edit User' : 'Tambah User Baru'}
             </h3>
@@ -259,7 +222,7 @@ export default function UsersPage() {
               <div>
                 <label className="block text-xs text-gray-300 mb-1">
                   Password {!editUser && <span className="text-red-400">*</span>}
-                  {editUser && <span className="text-gray-500">(kosongkan jika tidak diganti)</span>}
+                  {editUser && <span className="text-gray-500 ml-1">(kosongkan jika tidak diganti)</span>}
                 </label>
                 <input type="password" value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -275,9 +238,8 @@ export default function UsersPage() {
                   <option value="ADMIN">Admin</option>
                 </select>
               </div>
-
-              {/* Info akses role */}
-              <div className={`rounded-lg p-3 text-xs ${form.role === 'ADMIN' ? 'bg-purple-900 text-purple-200' : 'bg-blue-900 text-blue-200'}`}>
+              <div className={`rounded-lg p-3 text-xs ${form.role === 'ADMIN' ? 'bg-purple-900 text-purple-200' : 'bg-blue-900 text-blue-200'
+                }`}>
                 {form.role === 'ADMIN' ? (
                   <div>
                     <div className="font-bold mb-1">Akses Admin:</div>
@@ -296,7 +258,6 @@ export default function UsersPage() {
                 )}
               </div>
             </div>
-
             <div className="flex gap-3 mt-6">
               <button onClick={handleSubmit}
                 className="flex-1 bg-blue-500 hover:bg-blue-400 text-white py-2 rounded-lg font-medium">
