@@ -136,7 +136,7 @@ export default function ReportPage() {
 
   if (loading) return <Loading />
   return (
-    <div className="min-h-screen-[100svh] bg-gray-50 overflow-x-hidden">
+    <div className="min-h-[100svh] bg-gray-50 overflow-x-hidden">
       {/* Header */}
       <Header />
 
@@ -180,9 +180,9 @@ export default function ReportPage() {
           ) : (
             <div className="space-y-3">
               {filteredProjects.map(p => (
-                <div key={p.id} className="border border-gray-100 rounded-lg p-3 bg-gray-50 flex items-center justify-between">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
+                <div key={p.id} className="border border-gray-100 rounded-lg p-3 bg-gray-50">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                    <div className="flex-1 min-w-0">
                       <div className="font-bold text-gray-800 text-sm">{p.nama}</div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-2 text-xs text-gray-600">
                         <div>Jenis: <span className="font-bold text-gray-700">{p.jenis}</span></div>
