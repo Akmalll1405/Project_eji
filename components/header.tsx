@@ -18,8 +18,11 @@ export default function Header() {
             src="/logopupuk.png"
             alt="Logo"
             fill
-            className="object-contain"
-            style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))' }}
+            sizes='48px'
+            loading='eager'
+            priority
+            className="object-contain rounded lg"
+            style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))' }}
           />
         </div>
       </div>

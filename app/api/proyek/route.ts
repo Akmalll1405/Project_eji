@@ -10,11 +10,11 @@ export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // Auto update status proyek yang sudah melewati tanggal selesai
     await prisma.$queryRawUnsafe(`
       UPDATE "Project" 
       SET "status" = 'SELESAI', "updatedAt" = NOW()
       WHERE "tanggalSelesai" < NOW() 
+      AND "tanggalSelesai" IS NOT NULL
       AND "status" != 'SELESAI'
     `)
 
@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(proyek)
   } catch (error) {
+    console.error('GET Error:', error)
     return NextResponse.json({ error: String(error) }, { status: 500 })
   }
 }
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
     const proyek = await prisma.$queryRawUnsafe(`
       INSERT INTO "Project" (
         "id", "nama", "jenis", "nilai", "penanggungjawab",
-        "perusahaan", "sektor", "tanggalMulai", "tanggalSelesai",
+        "wilayah", "sektor", "tanggalMulai", "tanggalSelesai",
         "status", "userId", "createdAt", "updatedAt"
       ) VALUES (
         gen_random_uuid()::text,
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
         '${body.jenis}',
         ${nilai},
         '${body.penanggungjawab || ''}',
-        '${body.perusahaan || ''}',
+        '${body.wilayah || ''}',
         '${body.sektor}',
         '${tanggalMulai}',
         ${tanggalSelesai ? `'${tanggalSelesai}'` : 'NULL'},
