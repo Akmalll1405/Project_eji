@@ -58,7 +58,7 @@ export default function DashboardPage() {
 
   if (status === 'loading' || loading) return <Loading />
   if (status === 'unauthenticated') return null
-  
+
   const handleSubmit = async () => {
     if (!form.nama.trim()) { alert('Nama Pekerjaan wajib diisi!'); return }
     if (!form.jenis.trim()) { alert('Jenis Pekerjaan wajib diisi!'); return }
@@ -127,7 +127,7 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="min-h-[100dvh] bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
 
       {/* Header */}
       <Header />

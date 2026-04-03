@@ -353,11 +353,11 @@ export default function DetailProyekPage() {
   if (loading) return <Loading />
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-[100svh] bg-gray-50 overflow-x-hidden">
       {/* Header */}
       <Header />
 
-      <main className="px-6 py-6 max-w-5xl mx-auto">
+      <main className="px-4 sm:px-6 py-6 max-w-5xl mx-auto w-full">
         <button onClick={() => router.push('/dashboard')} className="text-blue-500 text-sm mb-4 hover:underline">
           ← Kembali ke Dashboard
         </button>
@@ -377,7 +377,7 @@ export default function DetailProyekPage() {
         </div>
 
         {/* Nav Tab */}
-        <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
+        <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto w-full">
           {[
             { key: 'proyek', label: 'Data Proyek' },
             { key: 'donor', label: 'Data Pendonor' },
@@ -397,7 +397,7 @@ export default function DetailProyekPage() {
         {activeSection === 'proyek' && (
           <div>
             <div className="bg-blue-500 text-white px-4 py-2 font-bold text-sm mb-4">DATA PROJEK</div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 { label: 'Jenis Proyek', key: 'jenis' },
                 { label: 'Nama Pekerjaan', key: 'nama' },
@@ -629,7 +629,7 @@ export default function DetailProyekPage() {
 
       {/* Modal Donor */}
       {showDonorForm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-gray-900 border border-gray-700 p-6 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white mb-4">{editDonor ? 'Edit Donor' : 'Tambah Donor'}</h3>
             <div className="space-y-3">

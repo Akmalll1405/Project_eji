@@ -102,7 +102,7 @@ export default function ReportPage() {
 
   if (status === 'loading' || loading) return <Loading />
   if (status === 'unauthenticated') return null
-  
+
   const formatRupiah = (num: number) =>
     new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(num)
 
@@ -136,11 +136,11 @@ export default function ReportPage() {
 
   if (loading) return <Loading />
   return (
-    <div className="min-h-screen-[100dvh] bg-white overflow-x-hidden">
+    <div className="min-h-screen-[100svh] bg-gray-50 overflow-x-hidden">
       {/* Header */}
       <Header />
 
-      <main className="px-6 py-6 max-w-5xl mx-auto">
+      <main className="px-4 sm:px-6 py-6 max-w-5xl mx-auto w-full">
 
         {/* ===== SECTION REPORT ===== */}
         <div className="bg-blue-500 text-white px-4 py-2 font-bold text-sm mb-6">REPORT</div>
@@ -180,7 +180,7 @@ export default function ReportPage() {
           ) : (
             <div className="space-y-3">
               {filteredProjects.map(p => (
-                <div key={p.id} className="border border-gray-100 rounded-lg p-3 bg-gray-50">
+                <div key={p.id} className="border border-gray-100 rounded-lg p-3 bg-gray-50 flex items-center justify-between">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="font-bold text-gray-800 text-sm">{p.nama}</div>
