@@ -5,7 +5,6 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../auth/[...nextauth]/route'
 
-
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
@@ -13,12 +12,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const { id } = await params
 
-    const proyek = await prisma.$queryRaw`
+    const proyek = await prisma.$queryRawUnsafe(`
       SELECT p.*, u.name as "userName"
       FROM "Project" p
       LEFT JOIN "User" u ON p."userId" = u.id
-      WHERE p.id = ${id}
-    `
+      WHERE p.id = '${id}'
+    `)
 
     return NextResponse.json(proyek)
   } catch (error) {
@@ -45,7 +44,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         "jenis" = '${body.jenis}',
         "nilai" = ${nilai},
         "penanggungjawab" = '${body.penanggungjawab || ''}',
-        "perusahaan" = '${body.perusahaan || ''}',
+        "wilayah" = '${body.wilayah || ''}',
         "sektor" = '${body.sektor || ''}',
         "tanggalMulai" = '${tanggalMulai}',
         "tanggalSelesai" = ${tanggalSelesai ? `'${tanggalSelesai}'` : 'NULL'},
@@ -69,9 +68,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     const { id } = await params
 
-    await prisma.$queryRaw`
-      DELETE FROM "Project" WHERE id = ${id}
-    `
+    await prisma.$queryRawUnsafe(`DELETE FROM "Project" WHERE id = '${id}'`)
 
     return NextResponse.json({ message: 'Proyek berhasil dihapus' })
   } catch (error) {

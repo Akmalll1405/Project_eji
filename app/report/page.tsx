@@ -200,7 +200,9 @@ export default function ReportPage() {
                           </span>
                         </div>
                         <div>Mulai: <span className="font-bold text-gray-700">{new Date(p.tanggalMulai).toLocaleDateString('id-ID')}</span></div>
-                        <div>Selesai: <span className="font-bold text-gray-700">{new Date(p.tanggalSelesai).toLocaleDateString('id-ID')}</span></div>
+                        <div>Selesai: <span className="font-bold text-gray-700">   {p.tanggalSelesai
+                          ? new Date(p.tanggalSelesai).toLocaleDateString('id-ID')
+                          : '-'}</span></div>
                       </div>
                     </div>
                     <button

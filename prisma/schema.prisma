@@ -44,9 +44,8 @@ model Donor {
   id              String   @id @default(cuid())
   nama            String
   jenis           String
-  nilai           Float
   penanggungjawab String
-  perusahaan      String
+  wilayah         String
   createdAt       DateTime @default(now())
   projectId       String
   project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)

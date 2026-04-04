@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     const donor = await prisma.$queryRaw`
       INSERT INTO "Donor" (
-        "id", "nama", "jenis", "nilai", "penanggungjawab", 
+        "id", "nama", "jenis","penanggungjawab", 
         "wilayah", "alamat", "tahunPendirian", "lamaUsaha",
         "projectId", "createdAt"
       )
@@ -40,7 +40,6 @@ export async function POST(req: NextRequest) {
         gen_random_uuid()::text,
         ${body.nama},
         ${body.jenis},
-        ${parseFloat(body.nilai || '0')}::float,
         ${body.penanggungjawab},
         ${body.wilayah || ''},
         ${body.alamat || ''},
@@ -55,6 +54,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(donor)
   } catch (error) {
     console.error('POST Donor Error:', error)
+    console.log("INSERT DONOR TANPA NILAI")
     return NextResponse.json({ error: String(error) }, { status: 500 })
   }
 }

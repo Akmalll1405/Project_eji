@@ -17,7 +17,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       UPDATE "Donor" SET
         "nama" = ${body.nama},
         "jenis" = ${body.jenis},
-        "nilai" = ${parseFloat(body.nilai || '0')}::float,
         "penanggungjawab" = ${body.penanggungjawab},
         "wilayah" = ${body.wilayah || ''},
         "alamat" = ${body.alamat || ''},

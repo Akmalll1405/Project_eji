@@ -25,7 +25,6 @@ interface Donor {
   id: string
   nama: string
   jenis: string
-  nilai: number
   penanggungjawab: string
   wilayah: string
   alamat: string
@@ -89,7 +88,7 @@ export default function DetailProyekPage() {
   const [selectedJenisDokumen, setSelectedJenisDokumen] = useState('KONTRAK_KERJA')
 
   const [donorForm, setDonorForm] = useState({
-    nama: '', jenis: '', nilai: '', penanggungjawab: '',
+    nama: '', jenis: '', penanggungjawab: '',
     wilayah: '', alamat: '', tahunPendirian: '', lamaUsaha: ''
   })
   const [transaksiForm, setTransaksiForm] = useState({
@@ -195,7 +194,7 @@ export default function DetailProyekPage() {
     }
     setShowDonorForm(false)
     setEditDonor(null)
-    setDonorForm({ nama: '', jenis: '', nilai: '', penanggungjawab: '', wilayah: '', alamat: '', tahunPendirian: '', lamaUsaha: '' })
+    setDonorForm({ nama: '', jenis: '', penanggungjawab: '', wilayah: '', alamat: '', tahunPendirian: '', lamaUsaha: '' })
     fetchAll2()
   }
 
@@ -377,7 +376,7 @@ export default function DetailProyekPage() {
         </div>
 
         {/* Nav Tab */}
-        <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto w-full">
+        <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto w-full no-scrollbar">
           {[
             { key: 'proyek', label: 'Data Proyek' },
             { key: 'donor', label: 'Data Pendonor' },
@@ -411,26 +410,26 @@ export default function DetailProyekPage() {
                   <input type={key === 'nilai' ? 'number' : 'text'}
                     value={editProyekForm[key as keyof typeof editProyekForm]}
                     onChange={(e) => setEditProyekForm({ ...editProyekForm, [key]: e.target.value })}
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700" />
+                    className="w-full min-w-0 border border-gray-300 rounded px-3 py-2 text-sm text-gray-700" />
                 </div>
               ))}
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Tanggal Mulai <span className="text-red-500">*</span></label>
                 <input type="date" value={editProyekForm.tanggalMulai}
                   onChange={(e) => setEditProyekForm({ ...editProyekForm, tanggalMulai: e.target.value })}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700" />
+                  className="w-full min-w-0 border border-gray-300 rounded px-3 py-2 text-sm text-gray-700" />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Tanggal Selesai</label>
                 <input type="date" value={editProyekForm.tanggalSelesai}
                   onChange={(e) => setEditProyekForm({ ...editProyekForm, tanggalSelesai: e.target.value })}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700" />
+                  className="w-full min-w-0 border border-gray-300 rounded px-3 py-2 text-sm text-gray-700" />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Status <span className="text-red-500">*</span></label>
                 <select value={editProyekForm.status}
                   onChange={(e) => setEditProyekForm({ ...editProyekForm, status: e.target.value })}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700">
+                  className="w-full min-w-0 border border-gray-300 rounded px-3 py-2 text-sm text-gray-700">
                   <option value="PERENCANAAN">Draft</option>
                   <option value="BERJALAN">Sedang Diproses</option>
                   <option value="SELESAI">Selesai</option>
@@ -449,7 +448,7 @@ export default function DetailProyekPage() {
           <div>
             <div className="bg-blue-500 text-white px-4 py-2 font-bold text-sm mb-4 flex justify-between items-center">
               <span>DATA PENDONOR</span>
-              <button onClick={() => { setShowDonorForm(true); setEditDonor(null); setDonorForm({ nama: '', jenis: '', nilai: '', penanggungjawab: '', wilayah: '', alamat: '', tahunPendirian: '', lamaUsaha: '' }) }}
+              <button onClick={() => { setShowDonorForm(true); setEditDonor(null); setDonorForm({ nama: '', jenis: '', penanggungjawab: '', wilayah: '', alamat: '', tahunPendirian: '', lamaUsaha: '' }) }}
                 className="bg-white text-blue-500 px-3 py-1 rounded text-xs font-bold">+ Tambah Donor</button>
             </div>
             {donors.length === 0 ? (
@@ -471,7 +470,7 @@ export default function DetailProyekPage() {
                   <div className="flex gap-3 mt-3">
                     <button onClick={() => {
                       setEditDonor(d)
-                      setDonorForm({ nama: d.nama, jenis: d.jenis, nilai: d.nilai.toString(), penanggungjawab: d.penanggungjawab, wilayah: d.wilayah, alamat: d.alamat, tahunPendirian: d.tahunPendirian?.toString(), lamaUsaha: d.lamaUsaha?.toString() })
+                      setDonorForm({ nama: d.nama, jenis: d.jenis,  penanggungjawab: d.penanggungjawab, wilayah: d.wilayah, alamat: d.alamat, tahunPendirian: d.tahunPendirian?.toString(), lamaUsaha: d.lamaUsaha?.toString() })
                       setShowDonorForm(true)
                     }} className="text-blue-500 text-xs underline">Edit</button>
                     <button onClick={() => handleDeleteDonor(d.id)} className="text-red-500 text-xs underline">Hapus</button>
@@ -491,7 +490,7 @@ export default function DetailProyekPage() {
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Jenis Dokumen</label>
                   <select value={selectedJenisDokumen} onChange={(e) => setSelectedJenisDokumen(e.target.value)}
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700">
+                    className="w-full min-w-0 border border-gray-300 rounded px-3 py-2 text-sm text-gray-700">
                     <option value="KONTRAK_KERJA">Kontrak Kerja</option>
                     <option value="PROPOSAL">Proposal</option>
                     <option value="SURAT_IZIN">Surat Izin</option>
@@ -639,11 +638,10 @@ export default function DetailProyekPage() {
                 { label: 'Tahun Pendirian', key: 'tahunPendirian' },
                 { label: 'Lama Usaha (tahun)', key: 'lamaUsaha' },
                 { label: 'Penanggung Jawab', key: 'penanggungjawab' },
-                { label: 'Nilai Donasi (Rp)', key: 'nilai' },
               ].map(({ label, key }) => (
                 <div key={key}>
                   <label className="block text-xs text-gray-300 mb-1">{label}</label>
-                  <input type={['nilai', 'tahunPendirian', 'lamaUsaha'].includes(key) ? 'number' : 'text'}
+                  <input type={['tahunPendirian', 'lamaUsaha'].includes(key) ? 'number' : 'text'}
                     value={donorForm[key as keyof typeof donorForm]}
                     onChange={(e) => setDonorForm({ ...donorForm, [key]: e.target.value })}
                     className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" />
