@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         gen_random_uuid()::text,
         '${body.nama}',
         '${body.jenis}',
-        ${nilai},
+        '${nilai}',
         '${body.penanggungjawab || ''}',
         '${body.wilayah || ''}',
         '${body.sektor}',
