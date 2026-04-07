@@ -676,11 +676,10 @@ export default function DetailProyekPage() {
               { label: 'Tahun Pendirian', key: 'tahunPendirian' },
               { label: 'Lama Usaha (tahun)', key: 'lamaUsaha' },
               { label: 'Penanggung Jawab', key: 'penanggungjawab' },
-              { label: 'Nilai Donasi (Rp)', key: 'nilai' },
             ].map(({ label, key }) => (
               <div key={key}>
                 <label className="block text-xs text-gray-500 mb-1.5">{label}</label>
-                <input type={['nilai', 'tahunPendirian', 'lamaUsaha'].includes(key) ? 'number' : 'text'}
+                <input type={['tahunPendirian', 'lamaUsaha'].includes(key) ? 'number' : 'text'}
                   value={donorForm[key as keyof typeof donorForm]}
                   onChange={(e) => setDonorForm({ ...donorForm, [key]: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
