@@ -136,137 +136,121 @@ export default function ReportPage() {
 
   if (loading) return <Loading />
   return (
-    <div className="min-h-[100svh] bg-gray-50 overflow-x-hidden">
-      {/* Header */}
+    <div style={{ minHeight: '100dvh', background: '#030712' }}>
       <Header />
 
-      <main className="px-4 sm:px-6 py-6 max-w-5xl mx-auto w-full">
+      <main className="px-4 sm:px-6 py-4 sm:py-6 max-w-5xl mx-auto">
 
-        {/* ===== SECTION REPORT ===== */}
-        <div className="bg-blue-500 text-white px-4 py-2 font-bold text-sm mb-6">REPORT</div>
+        <div className="px-4 py-2.5 rounded-xl font-bold text-sm mb-6 text-white"
+          style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>
+          REPORT
+        </div>
 
-        {/* ===== FILTER INFORMASI PEKERJAAN ===== */}
-        <div className="border border-gray-200 rounded-lg p-4 mb-6">
-          <div className="font-bold text-gray-700 text-sm mb-3">INFORMASI PEKERJAAN</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Jenis Pekerjaan <span className="text-red-500">*</span></label>
-              <select value={filterJenis} onChange={(e) => setFilterJenis(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700">
-                {uniqueJenis.map(j => <option key={j} value={j}>{j}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Wilayah Pekerjaan <span className="text-red-500">*</span></label>
-              <select value={filterWilayah} onChange={(e) => setFilterWilayah(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700">
-                {uniqueWilayah.map(w => <option key={w} value={w}>{w}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Status</label>
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700">
-                {uniqueStatus.map(s => (
-                  <option key={s} value={s}>{s === 'Semua' ? 'Semua' : statusLabel[s]}</option>
-                ))}
-              </select>
-            </div>
+        {/* Filter Pekerjaan */}
+        <div className="rounded-xl p-5 mb-6"
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="font-semibold text-gray-400 text-xs uppercase tracking-widest mb-4">Informasi Pekerjaan</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            {[
+              { label: 'Jenis Pekerjaan', value: filterJenis, onChange: setFilterJenis, options: uniqueJenis },
+              { label: 'Wilayah', value: filterWilayah, onChange: setFilterWilayah, options: uniqueWilayah },
+              { label: 'Status', value: filterStatus, onChange: setFilterStatus, options: uniqueStatus, labelMap: (s: string) => s === 'Semua' ? 'Semua' : statusLabel[s] },
+            ].map(({ label, value, onChange, options, labelMap }) => (
+              <div key={label}>
+                <label className="block text-xs text-gray-600 mb-1.5">{label}</label>
+                <select value={value} onChange={(e) => onChange(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg text-sm text-gray-300 outline-none"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  {options.map((o: string) => (
+                    <option key={o} value={o} className="bg-gray-900">
+                      {labelMap ? labelMap(o) : o}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
           </div>
 
-          {/* Hasil filter proyek */}
           {filteredProjects.length === 0 ? (
-            <p className="text-gray-400 text-sm text-center py-4">Tidak ada proyek yang sesuai filter</p>
+            <p className="text-gray-600 text-sm text-center py-4">Tidak ada proyek yang sesuai filter</p>
           ) : (
             <div className="space-y-3">
               {filteredProjects.map(p => (
-                <div key={p.id} className="border border-gray-100 rounded-lg p-3 bg-gray-50">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-gray-800 text-sm">{p.nama}</div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-2 text-xs text-gray-600">
-                        <div>Jenis: <span className="font-bold text-gray-700">{p.jenis}</span></div>
-                        <div>Wilayah: <span className="font-bold text-gray-700">{p.wilayah}</span></div>
-                        <div>Sektor: <span className="font-bold text-gray-700">{p.sektor}</span></div>
-                        <div>Nilai: <span className="font-bold text-gray-700">{formatRupiah(p.nilai)}</span></div>
-                        <div>PJ: <span className="font-bold text-gray-700">{p.penanggungjawab}</span></div>
+                <div key={p.id} className="rounded-xl p-4"
+                  style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-200 text-sm mb-2">{p.nama}</div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1 text-xs">
+                        <div><span className="text-gray-600">Jenis: </span><span className="text-gray-400">{p.jenis}</span></div>
+                        <div><span className="text-gray-600">Wilayah: </span><span className="text-gray-400">{p.wilayah}</span></div>
+                        <div><span className="text-gray-600">Sektor: </span><span className="text-gray-400">{p.sektor}</span></div>
+                        <div><span className="text-gray-600">Nilai: </span><span className="text-gray-400">{formatRupiah(p.nilai)}</span></div>
+                        <div><span className="text-gray-600">PJ: </span><span className="text-gray-400">{p.penanggungjawab}</span></div>
                         <div>
-                          Status:
-                          <span className={`ml-1 px-1.5 py-0.5 rounded text-xs font-bold ${p.status === 'BERJALAN' ? 'bg-blue-100 text-blue-700' :
-                            p.status === 'SELESAI' ? 'bg-green-100 text-green-700' :
-                              'bg-gray-100 text-gray-700'
-                            }`}>
-                            {statusLabel[p.status]}
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${p.status === 'BERJALAN' ? 'bg-blue-500/10 text-blue-400' :
+                              p.status === 'SELESAI' ? 'bg-emerald-500/10 text-emerald-400' :
+                                'bg-gray-500/10 text-gray-500'
+                            }`}>{statusLabel[p.status]}</span>
+                        </div>
+                        <div><span className="text-gray-600">Mulai: </span><span className="text-gray-400">{p.tanggalMulai ? new Date(p.tanggalMulai).toLocaleDateString('id-ID') : '-'}</span></div>
+                        <div><span className="text-gray-600">Selesai: </span><span className="text-gray-400">{p.tanggalSelesai ? new Date(p.tanggalSelesai).toLocaleDateString('id-ID') : '-'}</span></div>
+                      </div>
+                      {allTransaksi.filter(t => t.projectId === p.id).length > 0 && (
+                        <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                          <span className="text-xs text-gray-600">Total keuangan: </span>
+                          <span className="text-xs text-emerald-400 font-medium">
+                            {formatRupiah(allTransaksi.filter(t => t.projectId === p.id).reduce((acc, t) => acc + t.jumlah, 0))}
+                          </span>
+                          <span className="text-xs text-gray-700 ml-2">
+                            ({allTransaksi.filter(t => t.projectId === p.id).length} transaksi)
                           </span>
                         </div>
-                        <div>Mulai: <span className="font-bold text-gray-700">{new Date(p.tanggalMulai).toLocaleDateString('id-ID')}</span></div>
-                        <div>Selesai: <span className="font-bold text-gray-700">   {p.tanggalSelesai
-                          ? new Date(p.tanggalSelesai).toLocaleDateString('id-ID')
-                          : '-'}</span></div>
-                      </div>
+                      )}
                     </div>
-                    <button
-                      onClick={() => router.push(`/proyek/${p.id}`)}
-                      className="text-blue-500 text-xs underline ml-2 whitespace-nowrap shrink-0"
-                    >
-                      Lihat Detail
+                    <button onClick={() => router.push(`/proyek/${p.id}`)}
+                      className="text-blue-400 text-xs hover:text-blue-300 transition ml-4 whitespace-nowrap">
+                      Detail →
                     </button>
                   </div>
-
-                  {/* Transaksi proyek ini */}
-                  {allTransaksi.filter(t => t.projectId === p.id).length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <div className="text-xs font-bold text-gray-500 mb-2">KEUANGAN</div>
-                      <div className="text-xs text-gray-600">
-                        Total: <span className="font-bold text-green-600">
-                          {formatRupiah(allTransaksi.filter(t => t.projectId === p.id).reduce((acc, t) => acc + t.jumlah, 0))}
-                        </span>
-                        <span className="ml-3 text-gray-400">
-                          ({allTransaksi.filter(t => t.projectId === p.id).length} transaksi)
-                        </span>
-                      </div>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* ===== FILTER FILE DOKUMEN ===== */}
-        <div className="border border-gray-200 rounded-lg p-4 mb-6">
-          <div className="font-bold text-gray-700 text-sm mb-3">FILE DOKUMEN</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Nama Dokumen <span className="text-red-500">*</span></label>
-              <select value={filterDokumen} onChange={(e) => setFilterDokumen(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-700">
-                {uniqueDokumen.map(d => (
-                  <option key={d} value={d}>{d === 'Semua' ? 'Semua' : jenisDokumenLabel[d]}</option>
-                ))}
-              </select>
-            </div>
+        {/* Filter Dokumen */}
+        <div className="rounded-xl p-5 mb-6"
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="font-semibold text-gray-400 text-xs uppercase tracking-widest mb-4">File Dokumen</div>
+          <div className="mb-4">
+            <label className="block text-xs text-gray-600 mb-1.5">Jenis Dokumen</label>
+            <select value={filterDokumen} onChange={(e) => setFilterDokumen(e.target.value)}
+              className="w-full sm:w-64 px-3 py-2 rounded-lg text-sm text-gray-300 outline-none"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              {uniqueDokumen.map(d => (
+                <option key={d} value={d} className="bg-gray-900">{d === 'Semua' ? 'Semua' : jenisDokumenLabel[d]}</option>
+              ))}
+            </select>
           </div>
-
           {filteredDokumen.length === 0 ? (
-            <p className="text-gray-400 text-sm text-center py-4">Tidak ada dokumen yang sesuai filter</p>
+            <p className="text-gray-600 text-sm text-center py-4">Tidak ada dokumen</p>
           ) : (
             <div className="space-y-2">
               {filteredDokumen.map(d => {
                 const proyek = projects.find(p => p.id === d.projectId)
                 return (
-                  <div key={d.id} className="border border-gray-100 rounded-lg p-3 bg-gray-50 flex items-center justify-between">
+                  <div key={d.id} className="flex items-center justify-between rounded-lg px-4 py-3"
+                    style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
                     <div>
-                      <div className="font-medium text-gray-800 text-sm">{d.fileName}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">
-                        {jenisDokumenLabel[d.jenisDokumen]} •
-                        {proyek ? ` ${proyek.nama} • ` : ' '}
-                        {new Date(d.tanggalUpload).toLocaleDateString('id-ID')}
+                      <div className="text-sm text-gray-300">{d.fileName}</div>
+                      <div className="text-xs text-gray-600 mt-0.5">
+                        {jenisDokumenLabel[d.jenisDokumen]} • {proyek?.nama} • {new Date(d.tanggalUpload).toLocaleDateString('id-ID')}
                       </div>
                     </div>
                     <a href={d.fileUrl} target="_blank" rel="noopener noreferrer"
-                      className="text-blue-500 text-xs underline font-medium whitespace-nowrap ml-4">
-                      Download File
+                      className="text-blue-400 text-xs hover:text-blue-300 transition ml-4 whitespace-nowrap">
+                      Download
                     </a>
                   </div>
                 )
@@ -275,24 +259,20 @@ export default function ReportPage() {
           )}
         </div>
 
-        {/* ===== RINGKASAN ===== */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-            <div className="text-xs text-gray-500">Total Proyek Terfilter</div>
-            <div className="text-2xl font-bold text-gray-800 mt-1">{filteredProjects.length}</div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-            <div className="text-xs text-gray-500">Total Dokumen</div>
-            <div className="text-2xl font-bold text-blue-600 mt-1">{filteredDokumen.length}</div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-            <div className="text-xs text-gray-500">Total Nilai Proyek</div>
-            <div className="text-lg font-bold text-green-600 mt-1">
-              {formatRupiah(filteredProjects.reduce((acc, p) => acc + p.nilai, 0))}
+        {/* Ringkasan */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            { label: 'Total Proyek', value: filteredProjects.length, color: '#f9fafb' },
+            { label: 'Total Dokumen', value: filteredDokumen.length, color: '#60a5fa' },
+            { label: 'Total Nilai', value: formatRupiah(filteredProjects.reduce((acc, p) => acc + p.nilai, 0)), color: '#34d399', small: true },
+          ].map(({ label, value, color, small }) => (
+            <div key={label} className="rounded-xl p-4"
+              style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="text-xs text-gray-600">{label}</div>
+              <div className={`font-bold mt-1 ${small ? 'text-lg' : 'text-2xl'}`} style={{ color }}>{value}</div>
             </div>
-          </div>
+          ))}
         </div>
-
       </main>
     </div>
   )

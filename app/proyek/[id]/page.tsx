@@ -352,422 +352,485 @@ export default function DetailProyekPage() {
   if (loading) return <Loading />
 
   return (
-    <div className="min-h-[100svh] bg-gray-50 overflow-x-hidden">
-      {/* Header */}
-      <Header />
+  <div style={{ minHeight: '100dvh', background: '#030712' }}>
+    <Header />
 
-      <main className="px-4 sm:px-6 py-6 max-w-5xl mx-auto w-full">
-        <button onClick={() => router.push('/dashboard')} className="text-blue-500 text-sm mb-4 hover:underline">
-          ← Kembali ke Dashboard
-        </button>
+    <main className="px-4 sm:px-6 py-4 sm:py-6 max-w-5xl mx-auto">
+      <button onClick={() => router.push('/dashboard')}
+        className="text-blue-400 text-sm mb-4 hover:text-blue-300 transition flex items-center gap-1">
+        ← Dashboard
+      </button>
 
-        {/* Info singkat proyek */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-          <div className="font-bold text-gray-800 text-lg">{proyek?.nama}</div>
-          <div className="text-sm text-gray-500 mt-1">
-            {proyek?.jenis} • {proyek?.wilayah} •
-            <span className={`ml-2 px-2 py-0.5 rounded text-xs font-bold ${proyek?.status === 'BERJALAN' ? 'bg-blue-100 text-blue-700' :
-              proyek?.status === 'SELESAI' ? 'bg-green-100 text-green-700' :
-                'bg-gray-100 text-gray-700'
-              }`}>
-              {statusLabel[proyek?.status || '']}
-            </span>
-          </div>
+      {/* Info proyek */}
+      <div className="rounded-xl p-4 mb-6"
+        style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="font-semibold text-white text-base">{proyek?.nama}</div>
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <span className="text-gray-500 text-xs">{proyek?.jenis}</span>
+          {proyek?.wilayah && <><span className="text-gray-700">•</span><span className="text-gray-500 text-xs">{proyek.wilayah}</span></>}
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+            proyek?.status === 'BERJALAN' ? 'bg-blue-500/10 text-blue-400' :
+            proyek?.status === 'SELESAI' ? 'bg-emerald-500/10 text-emerald-400' :
+            'bg-gray-500/10 text-gray-400'
+          }`}>{statusLabel[proyek?.status || '']}</span>
         </div>
+      </div>
 
-        {/* Nav Tab */}
-        <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto w-full no-scrollbar">
-          {[
-            { key: 'proyek', label: 'Data Proyek' },
-            { key: 'donor', label: 'Data Pendonor' },
-            { key: 'dokumen', label: 'Upload Dokumen' },
-            { key: 'keuangan', label: 'Keuangan' },
-            { key: 'lainlain', label: 'Lain-Lain' },
-          ].map((s) => (
-            <button key={s.key} onClick={() => setActiveSection(s.key)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap ${activeSection === s.key ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}>
-              {s.label}
+      {/* Nav Tab */}
+      <div className="flex gap-1 mb-6 overflow-x-auto pb-1"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        {[
+          { key: 'proyek', label: 'Data Proyek' },
+          { key: 'donor', label: 'Pendonor' },
+          { key: 'dokumen', label: 'Dokumen' },
+          { key: 'keuangan', label: 'Keuangan' },
+          { key: 'lainlain', label: 'Lain-Lain' },
+        ].map((s) => (
+          <button key={s.key} onClick={() => setActiveSection(s.key)}
+            className="px-4 py-2 text-xs font-medium transition whitespace-nowrap rounded-t-lg"
+            style={{
+              color: activeSection === s.key ? '#60a5fa' : '#6b7280',
+              borderBottom: activeSection === s.key ? '2px solid #2563eb' : '2px solid transparent',
+              background: activeSection === s.key ? 'rgba(37,99,235,0.05)' : 'transparent',
+            }}>
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* DATA PROYEK */}
+      {activeSection === 'proyek' && (
+        <div>
+          <div className="px-4 py-2.5 rounded-xl font-bold text-xs mb-4 text-white uppercase tracking-wider"
+            style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>DATA PROJEK</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              { label: 'Jenis Proyek', key: 'jenis' },
+              { label: 'Nama Pekerjaan', key: 'nama' },
+              { label: 'Nilai Pekerjaan (Rp)', key: 'nilai' },
+              { label: 'Penanggung Jawab', key: 'penanggungjawab' },
+              { label: 'Wilayah Pengerjaan', key: 'wilayah' },
+              { label: 'Sektor', key: 'sektor' },
+            ].map(({ label, key }) => (
+              <div key={key}>
+                <label className="block text-xs text-gray-600 mb-1.5">{label} <span className="text-red-500">*</span></label>
+                <input type={key === 'nilai' ? 'number' : 'text'}
+                  value={editProyekForm[key as keyof typeof editProyekForm]}
+                  onChange={(e) => setEditProyekForm({ ...editProyekForm, [key]: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none transition"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+              </div>
+            ))}
+            <div>
+              <label className="block text-xs text-gray-600 mb-1.5">Tanggal Mulai <span className="text-red-500">*</span></label>
+              <input type="date" value={editProyekForm.tanggalMulai}
+                onChange={(e) => setEditProyekForm({ ...editProyekForm, tanggalMulai: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1.5">Tanggal Selesai</label>
+              <input type="date" value={editProyekForm.tanggalSelesai}
+                onChange={(e) => setEditProyekForm({ ...editProyekForm, tanggalSelesai: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1.5">Status <span className="text-red-500">*</span></label>
+              <select value={editProyekForm.status}
+                onChange={(e) => setEditProyekForm({ ...editProyekForm, status: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }}>
+                <option value="PERENCANAAN" className="bg-gray-900">Draft</option>
+                <option value="BERJALAN" className="bg-gray-900">Sedang Diproses</option>
+                <option value="SELESAI" className="bg-gray-900">Selesai</option>
+              </select>
+            </div>
+          </div>
+          <button onClick={handleUpdateProyek}
+            className="mt-5 px-6 py-2.5 rounded-xl text-white text-sm font-medium transition"
+            style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', boxShadow: '0 4px 12px rgba(37,99,235,0.3)' }}>
+            Simpan Perubahan
+          </button>
+        </div>
+      )}
+
+      {/* DATA PENDONOR */}
+      {activeSection === 'donor' && (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <div className="px-4 py-2.5 rounded-xl font-bold text-xs text-white uppercase tracking-wider flex-1 mr-3"
+              style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>DATA PENDONOR</div>
+            <button onClick={() => { setShowDonorForm(true); setEditDonor(null); setDonorForm({ nama: '', jenis: '', penanggungjawab: '', wilayah: '', alamat: '', tahunPendirian: '', lamaUsaha: '' }) }}
+              className="px-3 py-2 rounded-xl text-white text-xs font-medium whitespace-nowrap"
+              style={{ background: 'rgba(37,99,235,0.2)', border: '1px solid rgba(37,99,235,0.3)' }}>
+              + Tambah
             </button>
+          </div>
+          {donors.length === 0 ? (
+            <p className="text-gray-600 text-sm text-center py-10">Belum ada data pendonor</p>
+          ) : donors.map((d) => (
+            <div key={d.id} className="rounded-xl mb-3 overflow-hidden"
+              style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="px-4 py-2.5 font-semibold text-sm text-white"
+                style={{ background: 'rgba(20,184,166,0.15)', borderBottom: '1px solid rgba(20,184,166,0.2)' }}>
+                {d.nama}
+              </div>
+              <div className="p-4" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                <div className="text-sm text-gray-400 mb-2">{d.alamat}</div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                  <div>Tahun Pendirian: <span className="text-gray-400">{d.tahunPendirian}</span></div>
+                  <div>Lama Usaha: <span className="text-gray-400">{d.lamaUsaha} tahun</span></div>
+                </div>
+                <div className="mt-2 text-xs">
+                  <div className="text-gray-600 mt-2 mb-1 uppercase tracking-wider text-xs">Pengurus</div>
+                  <div className="text-gray-400">PJ: <span className="text-gray-300 font-medium">{d.penanggungjawab}</span></div>
+                </div>
+                <div className="flex gap-3 mt-3">
+                  <button onClick={() => { setEditDonor(d); setDonorForm({ nama: d.nama, jenis: d.jenis, penanggungjawab: d.penanggungjawab, wilayah: d.wilayah, alamat: d.alamat, tahunPendirian: d.tahunPendirian?.toString(), lamaUsaha: d.lamaUsaha?.toString() }); setShowDonorForm(true) }}
+                    className="text-blue-400 text-xs hover:text-blue-300 transition">Edit</button>
+                  <button onClick={() => handleDeleteDonor(d.id)} className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
+      )}
 
-        {/* ===== DATA PROYEK ===== */}
-        {activeSection === 'proyek' && (
-          <div>
-            <div className="bg-blue-500 text-white px-4 py-2 font-bold text-sm mb-4">DATA PROJEK</div>
+      {/* UPLOAD DOKUMEN */}
+      {activeSection === 'dokumen' && (
+        <div>
+          <div className="px-4 py-2.5 rounded-xl font-bold text-xs mb-4 text-white uppercase tracking-wider"
+            style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>UPLOAD DOKUMEN</div>
+          <div className="rounded-xl p-4 mb-5"
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { label: 'Jenis Proyek', key: 'jenis' },
-                { label: 'Nama Pekerjaan', key: 'nama' },
-                { label: 'Nilai Pekerjaan (Rp)', key: 'nilai' },
-                { label: 'Penanggung Jawab', key: 'penanggungjawab' },
-                { label: 'Wilayah Pengerjaan', key: 'wilayah' },
-                { label: 'Sektor', key: 'sektor' },
-              ].map(({ label, key }) => (
-                <div key={key}>
-                  <label className="block text-xs text-gray-500 mb-1">{label} <span className="text-red-500">*</span></label>
-                  <input type={key === 'nilai' ? 'number' : 'text'}
-                    value={editProyekForm[key as keyof typeof editProyekForm]}
-                    onChange={(e) => setEditProyekForm({ ...editProyekForm, [key]: e.target.value })}
-                    className="w-full min-w-0 border border-gray-300 rounded px-3 py-2 text-sm text-gray-700" />
-                </div>
-              ))}
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Tanggal Mulai <span className="text-red-500">*</span></label>
-                <input type="date" value={editProyekForm.tanggalMulai}
-                  onChange={(e) => setEditProyekForm({ ...editProyekForm, tanggalMulai: e.target.value })}
-                  className="w-full min-w-0 border border-gray-300 rounded px-3 py-2 text-sm text-gray-700" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Tanggal Selesai</label>
-                <input type="date" value={editProyekForm.tanggalSelesai}
-                  onChange={(e) => setEditProyekForm({ ...editProyekForm, tanggalSelesai: e.target.value })}
-                  className="w-full min-w-0 border border-gray-300 rounded px-3 py-2 text-sm text-gray-700" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Status <span className="text-red-500">*</span></label>
-                <select value={editProyekForm.status}
-                  onChange={(e) => setEditProyekForm({ ...editProyekForm, status: e.target.value })}
-                  className="w-full min-w-0 border border-gray-300 rounded px-3 py-2 text-sm text-gray-700">
-                  <option value="PERENCANAAN">Draft</option>
-                  <option value="BERJALAN">Sedang Diproses</option>
-                  <option value="SELESAI">Selesai</option>
+                <label className="block text-xs text-gray-600 mb-1.5">Jenis Dokumen</label>
+                <select value={selectedJenisDokumen} onChange={(e) => setSelectedJenisDokumen(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }}>
+                  <option value="KONTRAK_KERJA" className="bg-gray-900">Kontrak Kerja</option>
+                  <option value="PROPOSAL" className="bg-gray-900">Proposal</option>
+                  <option value="SURAT_IZIN" className="bg-gray-900">Surat Izin</option>
+                  <option value="DOKUMENTASI_KEGIATAN" className="bg-gray-900">Dokumentasi Kegiatan</option>
+                  <option value="LAPORAN_PEKERJAAN" className="bg-gray-900">Laporan Pekerjaan</option>
                 </select>
               </div>
+              <div>
+                <label className="block text-xs text-gray-600 mb-1.5">File</label>
+                <div className="rounded-xl p-4 text-center cursor-pointer transition"
+                  style={{ border: '2px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}>
+                  <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={handleUploadDokumen} className="hidden" id="fileUpload" />
+                  <label htmlFor="fileUpload" className="cursor-pointer">
+                    <div className="text-2xl mb-1">📎</div>
+                    <div className="text-xs text-gray-500">{uploading ? 'Mengupload...' : 'Klik untuk upload'}</div>
+                    <div className="text-xs text-gray-700 mt-1">PDF, JPG, PNG (maks 10MB)</div>
+                  </label>
+                </div>
+              </div>
             </div>
-            <button onClick={handleUpdateProyek}
-              className="mt-6 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded text-sm font-medium">
-              Simpan Perubahan
+          </div>
+          {dokumen.length === 0 ? (
+            <p className="text-gray-600 text-sm text-center py-10">Belum ada dokumen</p>
+          ) : (
+            <div className="space-y-2">
+              {dokumen.map((d) => (
+                <div key={d.id} className="flex items-center justify-between rounded-xl px-4 py-3"
+                  style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div>
+                    <div className="text-sm text-gray-300">{d.fileName}</div>
+                    <div className="text-xs text-gray-600 mt-0.5">
+                      {jenisDokumenLabel[d.jenisDokumen]} • {new Date(d.tanggalUpload).toLocaleDateString('id-ID')}
+                    </div>
+                  </div>
+                  <div className="flex gap-3 ml-4">
+                    <a href={d.fileUrl} target="_blank" rel="noopener noreferrer"
+                      className="text-blue-400 text-xs hover:text-blue-300 transition">Download</a>
+                    <button onClick={() => handleDeleteDokumen(d.id, d.fileUrl)}
+                      className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* KEUANGAN */}
+      {activeSection === 'keuangan' && (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <div className="px-4 py-2.5 rounded-xl font-bold text-xs text-white uppercase tracking-wider flex-1 mr-3"
+              style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>KEUANGAN</div>
+            <button onClick={() => { setShowTransaksiForm(true); setEditTransaksi(null); resetTransaksiForm() }}
+              className="px-3 py-2 rounded-xl text-white text-xs font-medium whitespace-nowrap"
+              style={{ background: 'rgba(37,99,235,0.2)', border: '1px solid rgba(37,99,235,0.3)' }}>
+              + Pembayaran
             </button>
           </div>
-        )}
 
-        {/* ===== DATA PENDONOR ===== */}
-        {activeSection === 'donor' && (
-          <div>
-            <div className="bg-blue-500 text-white px-4 py-2 font-bold text-sm mb-4 flex justify-between items-center">
-              <span>DATA PENDONOR</span>
-              <button onClick={() => { setShowDonorForm(true); setEditDonor(null); setDonorForm({ nama: '', jenis: '', penanggungjawab: '', wilayah: '', alamat: '', tahunPendirian: '', lamaUsaha: '' }) }}
-                className="bg-white text-blue-500 px-3 py-1 rounded text-xs font-bold">+ Tambah Donor</button>
+          <div className="rounded-xl p-4 mb-4"
+            style={{ background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.15)' }}>
+            <div className="text-xs text-gray-600">Total Pembayaran</div>
+            <div className="text-xl font-bold text-emerald-400 mt-1">
+              {formatRupiah(transaksi.reduce((acc, t) => acc + t.jumlah, 0))}
             </div>
-            {donors.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-8">Belum ada data pendonor</p>
-            ) : donors.map((d) => (
-              <div key={d.id} className="border border-gray-200 rounded-lg mb-4 overflow-hidden">
-                <div className="bg-teal-500 text-white px-4 py-2 font-bold text-sm">{d.nama}</div>
-                <div className="p-4">
-                  <div className="text-sm font-bold text-gray-700 mb-2">{d.alamat}</div>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                    <div>Tahun Pendirian: <span className="font-bold">{d.tahunPendirian}</span></div>
-                    <div>Lama Usaha: <span className="font-bold">{d.lamaUsaha} tahun</span></div>
-                  </div>
-                  <div className="mt-2 text-xs">
-                    <div className="font-bold text-gray-500 mt-2">PENGURUS</div>
-                    <div className="text-gray-600">Penanggung Jawab:</div>
-                    <div className="font-bold text-gray-800">{d.penanggungjawab}</div>
-                  </div>
-                  <div className="flex gap-3 mt-3">
-                    <button onClick={() => {
-                      setEditDonor(d)
-                      setDonorForm({ nama: d.nama, jenis: d.jenis,  penanggungjawab: d.penanggungjawab, wilayah: d.wilayah, alamat: d.alamat, tahunPendirian: d.tahunPendirian?.toString(), lamaUsaha: d.lamaUsaha?.toString() })
-                      setShowDonorForm(true)
-                    }} className="text-blue-500 text-xs underline">Edit</button>
-                    <button onClick={() => handleDeleteDonor(d.id)} className="text-red-500 text-xs underline">Hapus</button>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
-        )}
 
-        {/* ===== UPLOAD DOKUMEN ===== */}
-        {activeSection === 'dokumen' && (
-          <div>
-            <div className="bg-blue-500 text-white px-4 py-2 font-bold text-sm mb-4">UPLOAD DOKUMEN PEKERJAAN</div>
-            <div className="border border-gray-200 rounded-lg p-4 mb-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Jenis Dokumen</label>
-                  <select value={selectedJenisDokumen} onChange={(e) => setSelectedJenisDokumen(e.target.value)}
-                    className="w-full min-w-0 border border-gray-300 rounded px-3 py-2 text-sm text-gray-700">
-                    <option value="KONTRAK_KERJA">Kontrak Kerja</option>
-                    <option value="PROPOSAL">Proposal</option>
-                    <option value="SURAT_IZIN">Surat Izin</option>
-                    <option value="DOKUMENTASI_KEGIATAN">Dokumentasi Kegiatan</option>
-                    <option value="LAPORAN_PEKERJAAN">Laporan Pekerjaan</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">File Dokumen</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                    <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={handleUploadDokumen} className="hidden" id="fileUpload" />
-                    <label htmlFor="fileUpload" className="cursor-pointer">
-                      <div className="text-gray-400 text-2xl mb-1">📎</div>
-                      <div className="text-xs text-gray-500">{uploading ? 'Mengupload...' : 'Klik untuk upload file'}</div>
-                      <div className="text-xs text-gray-400 mt-1">Format: PDF, JPG, PNG (maks 10MB)</div>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {dokumen.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-8">Belum ada dokumen yang diupload</p>
-            ) : (
-              <div className="space-y-3">
-                {dokumen.map((d) => (
-                  <div key={d.id} className="border border-gray-200 rounded-lg p-4 flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-gray-800 text-sm">{d.fileName}</div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {jenisDokumenLabel[d.jenisDokumen]} • {new Date(d.tanggalUpload).toLocaleDateString('id-ID')}
-                      </div>
+          {transaksi.length === 0 ? (
+            <p className="text-gray-600 text-sm text-center py-10">Belum ada transaksi</p>
+          ) : transaksi.map((t) => (
+            <div key={t.id} className="rounded-xl p-4 mb-3"
+              style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex justify-between items-start">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs flex-1">
+                  <div><span className="text-gray-600">Jenis: </span><span className="text-gray-300">{t.jenisPembayaran}</span></div>
+                  <div><span className="text-gray-600">Keterangan: </span><span className="text-gray-300">{t.keterangan}</span></div>
+                  {t.bankTujuan && <div><span className="text-gray-600">Bank: </span><span className="text-gray-300">{t.bankTujuan}</span></div>}
+                  {t.nomorRekening && <div><span className="text-gray-600">Rekening: </span><span className="text-gray-300">{t.nomorRekening}</span></div>}
+                  <div><span className="text-gray-600">Tanggal: </span><span className="text-gray-300">{new Date(t.tanggalPembayaran).toLocaleDateString('id-ID')}</span></div>
+                  <div><span className="text-gray-600">Jumlah: </span><span className="text-emerald-400 font-medium">{formatRupiah(t.jumlah)}</span></div>
+                  {t.buktiBayarUrl && (
+                    <div className="col-span-2">
+                      <a href={t.buktiBayarUrl} target="_blank" rel="noopener noreferrer"
+                        className="text-blue-400 text-xs hover:text-blue-300 transition">Lihat Bukti →</a>
                     </div>
-                    <div className="flex gap-3">
-                      <a href={d.fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 text-xs underline">Download</a>
-                      <button onClick={() => handleDeleteDokumen(d.id, d.fileUrl)} className="text-red-500 text-xs underline">Hapus</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ===== KEUANGAN ===== */}
-        {activeSection === 'keuangan' && (
-          <div>
-            <div className="bg-blue-500 text-white px-4 py-2 font-bold text-sm mb-4 flex justify-between items-center">
-              <span>TRANSPARANSI KEUANGAN (Pembayaran)</span>
-              <button onClick={() => { setShowTransaksiForm(true); setEditTransaksi(null); resetTransaksiForm() }}
-                className="bg-white text-blue-500 px-3 py-1 rounded text-xs font-bold">+ Pembayaran</button>
-            </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-              <div className="text-xs text-gray-500">Total Pembayaran</div>
-              <div className="text-2xl font-bold text-green-600">
-                {formatRupiah(transaksi.reduce((acc, t) => acc + t.jumlah, 0))}
-              </div>
-            </div>
-            {transaksi.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-8">Belum ada transaksi</p>
-            ) : transaksi.map((t) => (
-              <div key={t.id} className="border border-gray-200 rounded-lg p-4 mb-3">
-                <div className="flex justify-between items-start">
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs flex-1">
-                    <div><div className="text-gray-500">Jenis Pembayaran</div><div className="font-bold text-gray-700">{t.jenisPembayaran}</div></div>
-                    <div><div className="text-gray-500">Keterangan</div><div className="font-bold text-gray-700">{t.keterangan}</div></div>
-                    {t.bankTujuan && <div><div className="text-gray-500">Bank Tujuan</div><div className="font-bold text-gray-700">{t.bankTujuan}</div></div>}
-                    {t.nomorRekening && <div><div className="text-gray-500">No. Rekening</div><div className="font-bold text-gray-700">{t.nomorRekening}</div></div>}
-                    <div><div className="text-gray-500">Tanggal</div><div className="font-bold text-gray-700">{new Date(t.tanggalPembayaran).toLocaleDateString('id-ID')}</div></div>
-                    <div><div className="text-gray-500">Jumlah</div><div className="font-bold text-green-600">{formatRupiah(t.jumlah)}</div></div>
-                    {t.buktiBayarUrl && (
-                      <div className="col-span-2">
-                        <div className="text-gray-500">Bukti Pembayaran</div>
-                        <a href={t.buktiBayarUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 text-xs underline">Lihat Bukti</a>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-2 ml-4">
-                    <button onClick={() => {
-                      setEditTransaksi(t)
-                      setTransaksiForm({ jenisPembayaran: t.jenisPembayaran, keterangan: t.keterangan, nomorRekening: t.nomorRekening || '', bankTujuan: t.bankTujuan || '', jumlah: t.jumlah.toString(), tanggalPembayaran: t.tanggalPembayaran.split('T')[0], buktiBayarUrl: t.buktiBayarUrl || '' })
-                      setShowTransaksiForm(true)
-                    }} className="text-blue-500 text-xs underline">Edit</button>
-                    <button onClick={() => handleDeleteTransaksi(t.id)} className="text-red-500 text-xs underline">Hapus</button>
-                  </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 ml-4">
+                  <button onClick={() => {
+                    setEditTransaksi(t)
+                    setTransaksiForm({ jenisPembayaran: t.jenisPembayaran, keterangan: t.keterangan, nomorRekening: t.nomorRekening || '', bankTujuan: t.bankTujuan || '', jumlah: t.jumlah.toString(), tanggalPembayaran: t.tanggalPembayaran.split('T')[0], buktiBayarUrl: t.buktiBayarUrl || '' })
+                    setShowTransaksiForm(true)
+                  }} className="text-blue-400 text-xs hover:text-blue-300 transition">Edit</button>
+                  <button onClick={() => handleDeleteTransaksi(t.id)} className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* ===== LAIN-LAIN ===== */}
-        {activeSection === 'lainlain' && (
-          <div>
-            <div className="bg-blue-500 text-white px-4 py-2 font-bold text-sm mb-4 flex justify-between items-center">
-              <span>LAIN-LAIN</span>
-              <button onClick={() => { setShowKegiatanForm(true); setEditKegiatan(null); setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }) }}
-                className="bg-white text-blue-500 px-3 py-1 rounded text-xs font-bold">+ Kegiatan</button>
             </div>
-            {kegiatan.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-8">Belum ada kegiatan</p>
-            ) : (
-              <div className="space-y-3">
-                {kegiatan.map((k) => (
-                  <div key={k.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-800 text-sm">{k.namaKegiatan}</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {new Date(k.tanggalKegiatan).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+          ))}
+        </div>
+      )}
+
+      {/* LAIN-LAIN */}
+      {activeSection === 'lainlain' && (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <div className="px-4 py-2.5 rounded-xl font-bold text-xs text-white uppercase tracking-wider flex-1 mr-3"
+              style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>LAIN-LAIN</div>
+            <button onClick={() => { setShowKegiatanForm(true); setEditKegiatan(null); setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }) }}
+              className="px-3 py-2 rounded-xl text-white text-xs font-medium whitespace-nowrap"
+              style={{ background: 'rgba(37,99,235,0.2)', border: '1px solid rgba(37,99,235,0.3)' }}>
+              + Kegiatan
+            </button>
+          </div>
+          {kegiatan.length === 0 ? (
+            <p className="text-gray-600 text-sm text-center py-10">Belum ada kegiatan</p>
+          ) : (
+            <div className="space-y-3">
+              {kegiatan.map((k) => (
+                <div key={k.id} className="rounded-xl p-4"
+                  style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-200 text-sm">{k.namaKegiatan}</div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        {new Date(k.tanggalKegiatan).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      </div>
+                      {k.fotoUrl && (
+                        <div className="mt-3">
+                          <img src={k.fotoUrl} alt={k.namaKegiatan}
+                            className="w-40 h-28 object-cover rounded-lg"
+                            style={{ border: '1px solid rgba(255,255,255,0.08)' }} />
+                          <a href={k.fotoUrl} target="_blank" rel="noopener noreferrer"
+                            className="text-blue-400 text-xs hover:text-blue-300 transition mt-1 block">Lihat lengkap →</a>
                         </div>
-                        {k.fotoUrl && (
-                          <div className="mt-3">
-                            <img src={k.fotoUrl} alt={k.namaKegiatan} className="w-48 h-32 object-cover rounded-lg border border-gray-200" />
-                            <a href={k.fotoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 text-xs underline mt-1 block">Lihat foto lengkap</a>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-2 ml-4">
-                        <button onClick={() => {
-                          setEditKegiatan(k)
-                          setKegiatanForm({ namaKegiatan: k.namaKegiatan, tanggalKegiatan: k.tanggalKegiatan.split('T')[0], fotoUrl: k.fotoUrl || '', fotoName: k.fotoName || '' })
-                          setShowKegiatanForm(true)
-                        }} className="text-blue-500 text-xs underline">Edit</button>
-                        <button onClick={() => handleDeleteKegiatan(k.id)} className="text-red-500 text-xs underline">Hapus</button>
-                      </div>
+                      )}
+                    </div>
+                    <div className="flex gap-3 ml-4">
+                      <button onClick={() => { setEditKegiatan(k); setKegiatanForm({ namaKegiatan: k.namaKegiatan, tanggalKegiatan: k.tanggalKegiatan.split('T')[0], fotoUrl: k.fotoUrl || '', fotoName: k.fotoName || '' }); setShowKegiatanForm(true) }}
+                        className="text-blue-400 text-xs hover:text-blue-300 transition">Edit</button>
+                      <button onClick={() => handleDeleteKegiatan(k.id)} className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </main>
-
-      {/* Modal Donor */}
-      {showDonorForm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-gray-900 border border-gray-700 p-6 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-white mb-4">{editDonor ? 'Edit Donor' : 'Tambah Donor'}</h3>
-            <div className="space-y-3">
-              {[
-                { label: 'Nama Yayasan/Lembaga', key: 'nama' },
-                { label: 'Alamat Lengkap', key: 'alamat' },
-                { label: 'Tahun Pendirian', key: 'tahunPendirian' },
-                { label: 'Lama Usaha (tahun)', key: 'lamaUsaha' },
-                { label: 'Penanggung Jawab', key: 'penanggungjawab' },
-              ].map(({ label, key }) => (
-                <div key={key}>
-                  <label className="block text-xs text-gray-300 mb-1">{label}</label>
-                  <input type={['tahunPendirian', 'lamaUsaha'].includes(key) ? 'number' : 'text'}
-                    value={donorForm[key as keyof typeof donorForm]}
-                    onChange={(e) => setDonorForm({ ...donorForm, [key]: e.target.value })}
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" />
                 </div>
               ))}
             </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={handleSaveDonor} className="flex-1 bg-blue-500 hover:bg-blue-400 text-white py-2 rounded-lg font-medium">Simpan</button>
-              <button onClick={() => { setShowDonorForm(false); setEditDonor(null) }} className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium">Batal</button>
-            </div>
-          </div>
+          )}
         </div>
       )}
+    </main>
 
-      {/* Modal Transaksi */}
-      {showTransaksiForm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-gray-900 border border-gray-700 p-6 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-white mb-4">{editTransaksi ? 'Edit Transaksi' : 'Tambah Transaksi'}</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-gray-300 mb-1">Jenis Pembayaran</label>
-                <select value={transaksiForm.jenisPembayaran}
-                  onChange={(e) => setTransaksiForm({ ...transaksiForm, jenisPembayaran: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                  <option value="TUNAI">Tunai</option>
-                  <option value="NONTUNAI">Non-Tunai</option>
-                </select>
+    {/* Modal Donor */}
+    {showDonorForm && (
+      <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
+        style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
+        <div className="w-full max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto"
+          style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <h3 className="text-base font-semibold text-white mb-5">{editDonor ? 'Edit Donor' : 'Tambah Donor'}</h3>
+          <div className="space-y-3">
+            {[
+              { label: 'Nama Yayasan/Lembaga', key: 'nama' },
+              { label: 'Alamat Lengkap', key: 'alamat' },
+              { label: 'Tahun Pendirian', key: 'tahunPendirian' },
+              { label: 'Lama Usaha (tahun)', key: 'lamaUsaha' },
+              { label: 'Penanggung Jawab', key: 'penanggungjawab' },
+              { label: 'Nilai Donasi (Rp)', key: 'nilai' },
+            ].map(({ label, key }) => (
+              <div key={key}>
+                <label className="block text-xs text-gray-500 mb-1.5">{label}</label>
+                <input type={['nilai', 'tahunPendirian', 'lamaUsaha'].includes(key) ? 'number' : 'text'}
+                  value={donorForm[key as keyof typeof donorForm]}
+                  onChange={(e) => setDonorForm({ ...donorForm, [key]: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
               </div>
-              {[
-                { label: 'Keterangan Pembayaran', key: 'keterangan' },
-                { label: 'Nomor Rekening', key: 'nomorRekening' },
-                { label: 'Bank Tujuan', key: 'bankTujuan' },
-                { label: 'Jumlah (Rp)', key: 'jumlah' },
-              ].map(({ label, key }) => (
-                <div key={key}>
-                  <label className="block text-xs text-gray-300 mb-1">{label}</label>
-                  <input type={key === 'jumlah' ? 'number' : 'text'}
-                    value={transaksiForm[key as keyof typeof transaksiForm]}
-                    onChange={(e) => setTransaksiForm({ ...transaksiForm, [key]: e.target.value })}
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" />
-                </div>
-              ))}
-              <div>
-                <label className="block text-xs text-gray-300 mb-1">Tanggal Pembayaran</label>
-                <input type="date" value={transaksiForm.tanggalPembayaran}
-                  onChange={(e) => setTransaksiForm({ ...transaksiForm, tanggalPembayaran: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-300 mb-1">Bukti Pembayaran</label>
-                <div className="border-2 border-dashed border-gray-600 rounded-lg p-3 text-center">
-                  <input ref={buktiBayarRef} type="file" accept=".jpg,.jpeg,.png,.pdf"
-                    onChange={handleUploadBuktiBayar} className="hidden" id="buktiBayarUpload" />
-                  <label htmlFor="buktiBayarUpload" className="cursor-pointer">
-                    <div className="text-gray-400 text-xl mb-1">📎</div>
-                    <div className="text-xs text-gray-400">{uploadingBukti ? 'Mengupload...' : 'Klik untuk upload bukti bayar'}</div>
-                    <div className="text-xs text-gray-500 mt-1">Format: JPG, PNG, PDF</div>
-                  </label>
-                </div>
-                {transaksiForm.buktiBayarUrl && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-green-400 text-xs">✓ Bukti sudah diupload</span>
-                    <a href={transaksiForm.buktiBayarUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 text-xs underline">Lihat file</a>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={handleSaveTransaksi} className="flex-1 bg-blue-500 hover:bg-blue-400 text-white py-2 rounded-lg font-medium">Simpan</button>
-              <button onClick={() => { setShowTransaksiForm(false); setEditTransaksi(null); resetTransaksiForm() }} className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium">Batal</button>
-            </div>
+            ))}
+          </div>
+          <div className="flex gap-3 mt-6">
+            <button onClick={handleSaveDonor}
+              className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium"
+              style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>Simpan</button>
+            <button onClick={() => { setShowDonorForm(false); setEditDonor(null) }}
+              className="flex-1 py-2.5 rounded-xl text-sm text-gray-400"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>Batal</button>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
-      {/* Modal Kegiatan */}
-      {showKegiatanForm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-gray-900 border border-gray-700 p-6 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-white mb-4">{editKegiatan ? 'Edit Kegiatan' : 'Tambah Kegiatan'}</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-gray-300 mb-1">Nama Kegiatan <span className="text-red-400">*</span></label>
-                <input type="text" value={kegiatanForm.namaKegiatan}
-                  onChange={(e) => setKegiatanForm({ ...kegiatanForm, namaKegiatan: e.target.value })}
-                  placeholder="Masukkan nama kegiatan"
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-300 mb-1">Tanggal Kegiatan <span className="text-red-400">*</span></label>
-                <input type="date" value={kegiatanForm.tanggalKegiatan}
-                  onChange={(e) => setKegiatanForm({ ...kegiatanForm, tanggalKegiatan: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-300 mb-1">Foto Dokumentasi</label>
-                <div className="border-2 border-dashed border-gray-600 rounded-lg p-3 text-center">
-                  <input ref={fotoKegiatanRef} type="file" accept=".jpg,.jpeg,.png"
-                    onChange={handleUploadFotoKegiatan} className="hidden" id="fotoKegiatanUpload" />
-                  <label htmlFor="fotoKegiatanUpload" className="cursor-pointer">
-                    <div className="text-gray-400 text-xl mb-1">📷</div>
-                    <div className="text-xs text-gray-400">{uploadingFoto ? 'Mengupload...' : 'Klik untuk upload foto'}</div>
-                    <div className="text-xs text-gray-500 mt-1">Format: JPG, PNG (maks 10MB)</div>
-                  </label>
-                </div>
-                {kegiatanForm.fotoUrl && (
-                  <div className="mt-2">
-                    <img src={kegiatanForm.fotoUrl} alt="Preview" className="w-full h-32 object-cover rounded-lg" />
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-green-400 text-xs">✓ Foto sudah diupload</span>
-                      <button onClick={() => setKegiatanForm({ ...kegiatanForm, fotoUrl: '', fotoName: '' })}
-                        className="text-red-400 text-xs underline">Hapus foto</button>
-                    </div>
-                  </div>
-                )}
-              </div>
+    {/* Modal Transaksi */}
+    {showTransaksiForm && (
+      <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
+        style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
+        <div className="w-full max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto"
+          style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <h3 className="text-base font-semibold text-white mb-5">{editTransaksi ? 'Edit Transaksi' : 'Tambah Transaksi'}</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">Jenis Pembayaran</label>
+              <select value={transaksiForm.jenisPembayaran}
+                onChange={(e) => setTransaksiForm({ ...transaksiForm, jenisPembayaran: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }}>
+                <option value="TUNAI" className="bg-gray-900">Tunai</option>
+                <option value="NONTUNAI" className="bg-gray-900">Non-Tunai</option>
+              </select>
             </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={handleSaveKegiatan} className="flex-1 bg-blue-500 hover:bg-blue-400 text-white py-2 rounded-lg font-medium">Simpan</button>
-              <button onClick={() => { setShowKegiatanForm(false); setEditKegiatan(null); setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }) }}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium">Batal</button>
+            {[
+              { label: 'Keterangan', key: 'keterangan' },
+              { label: 'Nomor Rekening', key: 'nomorRekening' },
+              { label: 'Bank Tujuan', key: 'bankTujuan' },
+              { label: 'Jumlah (Rp)', key: 'jumlah' },
+            ].map(({ label, key }) => (
+              <div key={key}>
+                <label className="block text-xs text-gray-500 mb-1.5">{label}</label>
+                <input type={key === 'jumlah' ? 'number' : 'text'}
+                  value={transaksiForm[key as keyof typeof transaksiForm]}
+                  onChange={(e) => setTransaksiForm({ ...transaksiForm, [key]: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+              </div>
+            ))}
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">Tanggal Pembayaran</label>
+              <input type="date" value={transaksiForm.tanggalPembayaran}
+                onChange={(e) => setTransaksiForm({ ...transaksiForm, tanggalPembayaran: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">Bukti Pembayaran</label>
+              <div className="rounded-xl p-4 text-center"
+                style={{ border: '2px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}>
+                <input ref={buktiBayarRef} type="file" accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={handleUploadBuktiBayar} className="hidden" id="buktiBayarUpload" />
+                <label htmlFor="buktiBayarUpload" className="cursor-pointer">
+                  <div className="text-xl mb-1">📎</div>
+                  <div className="text-xs text-gray-500">{uploadingBukti ? 'Mengupload...' : 'Klik untuk upload'}</div>
+                </label>
+              </div>
+              {transaksiForm.buktiBayarUrl && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-emerald-400 text-xs">✓ Terupload</span>
+                  <a href={transaksiForm.buktiBayarUrl} target="_blank" rel="noopener noreferrer"
+                    className="text-blue-400 text-xs hover:text-blue-300 transition">Lihat →</a>
+                </div>
+              )}
             </div>
           </div>
+          <div className="flex gap-3 mt-6">
+            <button onClick={handleSaveTransaksi}
+              className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium"
+              style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>Simpan</button>
+            <button onClick={() => { setShowTransaksiForm(false); setEditTransaksi(null); resetTransaksiForm() }}
+              className="flex-1 py-2.5 rounded-xl text-sm text-gray-400"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>Batal</button>
+          </div>
         </div>
-      )}
-    </div>
-  )
+      </div>
+    )}
+
+    {/* Modal Kegiatan */}
+    {showKegiatanForm && (
+      <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
+        style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
+        <div className="w-full max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto"
+          style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <h3 className="text-base font-semibold text-white mb-5">{editKegiatan ? 'Edit Kegiatan' : 'Tambah Kegiatan'}</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">Nama Kegiatan *</label>
+              <input type="text" value={kegiatanForm.namaKegiatan}
+                onChange={(e) => setKegiatanForm({ ...kegiatanForm, namaKegiatan: e.target.value })}
+                placeholder="Masukkan nama kegiatan"
+                className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">Tanggal Kegiatan *</label>
+              <input type="date" value={kegiatanForm.tanggalKegiatan}
+                onChange={(e) => setKegiatanForm({ ...kegiatanForm, tanggalKegiatan: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">Foto Dokumentasi</label>
+              <div className="rounded-xl p-4 text-center"
+                style={{ border: '2px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}>
+                <input ref={fotoKegiatanRef} type="file" accept=".jpg,.jpeg,.png"
+                  onChange={handleUploadFotoKegiatan} className="hidden" id="fotoKegiatanUpload" />
+                <label htmlFor="fotoKegiatanUpload" className="cursor-pointer">
+                  <div className="text-xl mb-1">📷</div>
+                  <div className="text-xs text-gray-500">{uploadingFoto ? 'Mengupload...' : 'Klik untuk upload foto'}</div>
+                </label>
+              </div>
+              {kegiatanForm.fotoUrl && (
+                <div className="mt-2">
+                  <img src={kegiatanForm.fotoUrl} alt="Preview"
+                    className="w-full h-28 object-cover rounded-xl"
+                    style={{ border: '1px solid rgba(255,255,255,0.08)' }} />
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-emerald-400 text-xs">✓ Terupload</span>
+                    <button onClick={() => setKegiatanForm({ ...kegiatanForm, fotoUrl: '', fotoName: '' })}
+                      className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-3 mt-6">
+            <button onClick={handleSaveKegiatan}
+              className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium"
+              style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>Simpan</button>
+            <button onClick={() => { setShowKegiatanForm(false); setEditKegiatan(null); setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }) }}
+              className="flex-1 py-2.5 rounded-xl text-sm text-gray-400"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>Batal</button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+)
 }

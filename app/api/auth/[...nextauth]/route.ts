@@ -1,8 +1,9 @@
-export const dynamic = "force-dynamic";
 import NextAuth, { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { prisma } from '@/lib/prisma'
+import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+
+const prisma = new PrismaClient()
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,34 +17,25 @@ export const authOptions: NextAuthOptions = {
         try {
           console.log('=== LOGIN ATTEMPT ===')
           console.log('Email:', credentials?.email)
-          console.log('Password input:', credentials?.password)
 
-          if (!credentials?.email || !credentials?.password) {
-            console.log('Missing credentials')
-            return null
-          }
+          if (!credentials?.email || !credentials?.password) return null
 
           const user = await prisma.user.findUnique({
             where: { email: credentials.email }
           })
 
-          console.log('User from DB:', user ? 'FOUND' : 'NOT FOUND')
-          if (user) {
-            console.log('DB password hash:', user.password)
+          if (!user) {
+            console.log('User tidak ditemukan')
+            return null
           }
-
-          if (!user) return null
 
           const passwordMatch = await bcrypt.compare(
             credentials.password,
             user.password
           )
 
-          console.log('Password match result:', passwordMatch)
-
           if (!passwordMatch) return null
 
-          console.log('=== LOGIN SUCCESS ===')
           return {
             id: user.id,
             email: user.email,
@@ -81,7 +73,7 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt'
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: true
+  debug: false
 }
 
 const handler = NextAuth(authOptions)

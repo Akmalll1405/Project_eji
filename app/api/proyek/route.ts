@@ -10,14 +10,6 @@ export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    await prisma.$queryRawUnsafe(`
-      UPDATE "Project" 
-      SET "status" = 'SELESAI', "updatedAt" = NOW()
-      WHERE "tanggalSelesai" < NOW() 
-      AND "tanggalSelesai" IS NOT NULL
-      AND "status" != 'SELESAI'
-    `)
-
     const proyek = await prisma.$queryRawUnsafe(`
       SELECT p.*, u.name as "userName", u.id as "userId"
       FROM "Project" p
@@ -53,7 +45,7 @@ export async function POST(req: NextRequest) {
         gen_random_uuid()::text,
         '${body.nama}',
         '${body.jenis}',
-        '${nilai}',
+        ${nilai},
         '${body.penanggungjawab || ''}',
         '${body.wilayah || ''}',
         '${body.sektor}',

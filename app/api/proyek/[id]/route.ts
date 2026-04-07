@@ -30,10 +30,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
+      
     const { id } = await params
     const body = await req.json()
-
+    console.log('STATUS DIKIRIM:', body.status)
     const nilai = body.nilai ? parseFloat(body.nilai) : 0
     const tanggalMulai = body.tanggalMulai ? new Date(body.tanggalMulai).toISOString() : new Date().toISOString()
     const tanggalSelesai = body.tanggalSelesai ? new Date(body.tanggalSelesai).toISOString() : null
@@ -53,7 +53,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       WHERE id = '${id}'
       RETURNING *
     `)
-
+    console.log('HASIL UPDATE:', proyek)
     return NextResponse.json(proyek)
   } catch (error) {
     console.error('PUT Error:', error)

@@ -126,265 +126,231 @@ export default function DashboardPage() {
   }
 
 
-  return (
-    <div className="min-h-screen bg-gray-50">
+return (
+  <div style={{ minHeight: '100dvh', background: '#030712' }}>
+    <Header />
 
-      {/* Header */}
-      <Header />
+    <main className="px-4 sm:px-6 py-4 sm:py-6">
 
-      <main className="px-4 sm:px-6 py-4 sm:py-6 overflow-x-hidden">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        {[
+          { label: 'Total Proyek', value: totalProyek, color: '#f9fafb' },
+          { label: 'Sedang Berjalan', value: sedangBerjalan, color: '#60a5fa' },
+          { label: 'Selesai', value: selesai, color: '#34d399' },
+          { label: 'Hampir Selesai', value: projects.filter(p => { const d = getDiffDays(p.tanggalSelesai); return d <= 7 && d >= 0 && p.status !== 'SELESAI' }).length, color: '#fb923c' },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="rounded-xl p-4"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="text-xs text-gray-500">{label}</p>
+            <p className="text-2xl sm:text-3xl font-bold mt-1" style={{ color }}>{value}</p>
+          </div>
+        ))}
+      </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 sm:mb-6">
-          <div className="bg-white border border-gray-200 p-3 sm:p-4 rounded-lg shadow-sm">
-            <h3 className="text-gray-500 text-xs">Total Proyek</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{totalProyek}</p>
+      {/* Search */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
+        {[
+          { placeholder: 'Cari nama pekerjaan...', value: searchNama, onChange: setSearchNama },
+          { placeholder: 'Cari wilayah pengerjaan...', value: searchWilayah, onChange: setSearchWilayah },
+        ].map(({ placeholder, value, onChange }) => (
+          <div key={placeholder} className="flex items-center flex-1 px-3 py-2 rounded-xl gap-2"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <input type="text" placeholder={placeholder} value={value}
+              onChange={(e) => onChange(e.target.value)}
+              className="bg-transparent outline-none text-sm text-gray-300 w-full placeholder-gray-600" />
+            <span className="text-gray-600 text-xs">🔍</span>
           </div>
-          <div className="bg-white border border-gray-200 p-3 sm:p-4 rounded-lg shadow-sm">
-            <h3 className="text-gray-500 text-xs">Sedang Berjalan</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-1">{sedangBerjalan}</p>
-          </div>
-          <div className="bg-white border border-gray-200 p-3 sm:p-4 rounded-lg shadow-sm">
-            <h3 className="text-gray-500 text-xs">Selesai</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-1">{selesai}</p>
-          </div>
-          <div className="bg-white border border-gray-200 p-3 sm:p-4 rounded-lg shadow-sm">
-            <h3 className="text-gray-500 text-xs">Hampir Selesai</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-orange-500 mt-1">
-              {projects.filter(p => {
-                const d = getDiffDays(p.tanggalSelesai)
-                return d <= 7 && d >= 0 && p.status !== 'SELESAI'
-              }).length}
-            </p>
-          </div>
-        </div>
+        ))}
+        {(searchNama || searchWilayah) && (
+          <button onClick={() => { setSearchNama(''); setSearchWilayah('') }}
+            className="text-xs text-gray-500 hover:text-red-400 transition px-2">Reset</button>
+        )}
+      </div>
 
-        {/* Search */}
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4">
-          <div className="flex items-center border border-gray-300 rounded px-3 py-2 gap-2 bg-white flex-1">
-            <input
-              type="text"
-              placeholder="Cari nama pekerjaan..."
-              value={searchNama}
-              onChange={(e) => setSearchNama(e.target.value)}
-              className="outline-none text-sm text-gray-700 w-full"
-            />
-            <span className="text-gray-400">🔍</span>
-          </div>
-          <div className="flex items-center border border-gray-300 rounded px-3 py-2 gap-2 bg-white flex-1">
-            <input
-              type="text"
-              placeholder="Cari wilayah pengerjaan..."
-              value={searchWilayah}
-              onChange={(e) => setSearchWilayah(e.target.value)}
-              className="outline-none text-sm text-gray-700 w-full"
-            />
-            <span className="text-gray-400">🔍</span>
-          </div>
-          {(searchNama || searchWilayah) && (
-            <button
-              onClick={() => { setSearchNama(''); setSearchWilayah('') }}
-              className="text-xs text-gray-500 hover:text-red-500 underline px-2"
-            >
-              Reset
-            </button>
-          )}
-        </div>
-
-        {/* Filter Buttons */}
-        <div className="flex gap-2 mb-4 sm:mb-6 flex-wrap">
-          {['SEMUA', 'PERENCANAAN', 'BERJALAN', "SELESAI"].map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(s)}
-              className={`px-3 py-1.5 rounded text-xs sm:text-sm font-medium ${filterStatus === s ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                }`}
-            >
-              {s === 'SEMUA' ? 'Semua' : statusLabel[s]}
-            </button>
-          ))}
-          <button
-            onClick={() => setShowForm(true)}
-            className="px-3 py-1.5 rounded text-xs sm:text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 ml-auto"
-          >
-            + Pekerjaan
+      {/* Filter */}
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {['SEMUA', 'PERENCANAAN', 'BERJALAN', 'SELESAI'].map((s) => (
+          <button key={s} onClick={() => setFilterStatus(s)}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium transition"
+            style={{
+              background: filterStatus === s ? '#2563eb' : 'rgba(255,255,255,0.04)',
+              border: filterStatus === s ? '1px solid #2563eb' : '1px solid rgba(255,255,255,0.07)',
+              color: filterStatus === s ? '#fff' : '#9ca3af'
+            }}>
+            {s === 'SEMUA' ? 'Semua' : statusLabel[s]}
           </button>
-        </div>
+        ))}
+        <button onClick={() => setShowForm(true)}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium text-white ml-auto transition"
+          style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', boxShadow: '0 4px 12px rgba(37,99,235,0.3)' }}>
+          + Pekerjaan
+        </button>
+      </div>
 
-        {/* Tabel Desktop */}
-        <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="border-b-2 border-gray-300 bg-gray-50">
-                <th className="text-left py-2 px-3 text-gray-600 font-semibold">Update</th>
-                <th className="text-left py-2 px-3 text-gray-600 font-semibold">Pekerjaan</th>
-                <th className="text-left py-2 px-3 text-gray-600 font-semibold">Nilai</th>
-                <th className="text-left py-2 px-3 text-gray-600 font-semibold">Progres</th>
+      {/* Tabel Desktop */}
+      <div className="hidden md:block rounded-xl overflow-hidden"
+        style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+        <table className="w-full text-sm">
+          <thead>
+            <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              {['Update', 'Pekerjaan', 'Nilai', 'Progres'].map(h => (
+                <th key={h} className="text-left py-3 px-4 text-xs text-gray-500 font-medium">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <tr><td colSpan={4} className="text-center py-10 text-gray-600">Belum ada pekerjaan</td></tr>
+            ) : filtered.map((p) => (
+              <tr key={p.id} className="border-b transition hover:bg-white/[0.02]"
+                style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+                <td className="py-4 px-4 text-gray-600 text-xs whitespace-pre-line align-top">
+                  {formatDate(p.updatedAt)}
+                </td>
+                <td className="py-4 px-4 align-top">
+                  <div className="text-gray-600 text-xs mb-1">Nama pekerjaan</div>
+                  <button onClick={() => router.push(`/proyek/${p.id}`)}
+                    className="text-blue-400 hover:text-blue-300 text-sm font-medium transition text-left">
+                    {p.nama || '-'}
+                  </button>
+                  <div className="mt-2 text-xs text-gray-600">PJ: <span className="text-gray-400">{p.penanggungjawab || '-'}</span></div>
+                  <div className="text-xs text-gray-600">Wilayah: <span className="text-gray-400">{p.wilayah || '-'}</span></div>
+                </td>
+                <td className="py-4 px-4 align-top">
+                  <div className="text-xs text-gray-600 mb-1">Nilai</div>
+                  <div className="text-sm font-medium text-gray-300">{formatRupiah(p.nilai || 0)}</div>
+                  <div className="mt-2 text-xs text-gray-600">Jenis: <span className="text-gray-400">{p.jenis || '-'}</span></div>
+                </td>
+                <td className="py-4 px-4 align-top">
+                  <div className="text-xs text-gray-600 mb-1">Diinput oleh</div>
+                  <div className="text-sm text-gray-300">{p.userName || '-'}</div>
+                  <div className="mt-2">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      p.status === 'BERJALAN' ? 'bg-blue-500/10 text-blue-400' :
+                      p.status === 'SELESAI' ? 'bg-emerald-500/10 text-emerald-400' :
+                      'bg-gray-500/10 text-gray-400'
+                    }`}>{statusLabel[p.status] || p.status}</span>
+                  </div>
+                  {(() => {
+                    const d = getDiffDays(p.tanggalSelesai)
+                    if (d <= 7 && d >= 0 && p.status !== 'SELESAI') return <div className="text-xs text-orange-400 mt-1">⚠ {d} hari lagi</div>
+                    if (d < 0 && p.status !== 'SELESAI') return <div className="text-xs text-red-400 mt-1">⚠ Lewat batas</div>
+                    return null
+                  })()}
+                  <div className="flex gap-3 mt-2">
+                    <button onClick={() => router.push(`/proyek/${p.id}`)} className="text-blue-400 text-xs hover:text-blue-300 transition">Detail</button>
+                    {(session?.user as any)?.role === 'ADMIN' && (
+                      <button onClick={() => handleDelete(p.id)} className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
+                    )}
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={4} className="text-center py-8 text-gray-400">Loading...</td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={4} className="text-center py-8 text-gray-400">Belum ada pekerjaan</td></tr>
-              ) : filtered.map((p) => (
-                <tr key={p.id} className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="py-3 px-3 text-gray-500 text-xs whitespace-pre-line align-top">
-                    {formatDate(p.updatedAt)}
-                  </td>
-                  <td className="py-3 px-3 align-top">
-                    <div className="text-gray-500 text-xs">Nama pekerjaan</div>
-                    <button onClick={() => router.push(`/proyek/${p.id}`)}
-                      className="text-blue-500 underline text-sm font-medium hover:text-blue-700 text-left">
-                      {p.nama || '-'}
-                    </button>
-                    <div className="mt-2 text-xs text-gray-500">Penanggung Jawab</div>
-                    <div className="text-xs font-bold text-gray-700">{p.penanggungjawab || '-'}</div>
-                    <div className="mt-1 text-xs text-gray-500">Wilayah</div>
-                    <div className="text-xs font-bold text-gray-700">{p.wilayah || '-'}</div>
-                  </td>
-                  <td className="py-3 px-3 align-top">
-                    <div className="text-xs text-gray-500">Nilai projek</div>
-                    <div className="text-sm font-bold text-gray-700">{formatRupiah(p.nilai || 0)}</div>
-                    <div className="mt-2 text-xs text-gray-500">Jenis projek</div>
-                    <div className="text-sm font-bold text-gray-700">{p.jenis || '-'}</div>
-                  </td>
-                  <td className="py-3 px-3 align-top">
-                    <div className="text-xs text-gray-500">Diinput oleh</div>
-                    <div className="text-sm font-bold text-gray-700">{p.userName || '-'}</div>
-                    <div className="mt-2 text-xs text-gray-500">Status</div>
-                    <div className={`text-xs font-bold px-2 py-1 rounded inline-block mt-1 ${p.status === 'BERJALAN' ? 'bg-blue-100 text-blue-700' :
-                      p.status === 'SELESAI' ? 'bg-green-100 text-green-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                      {statusLabel[p.status] || p.status}
-                    </div>
-                    {(() => {
-                      const d = getDiffDays(p.tanggalSelesai)
-                      if (d <= 7 && d >= 0 && p.status !== 'SELESAI') return <div className="text-xs text-orange-500 font-bold mt-1">⚠ Selesai dalam {d} hari</div>
-                      if (d < 0 && p.status !== 'SELESAI') return <div className="text-xs text-red-500 font-bold mt-1">⚠ Melewati batas waktu</div>
-                      return null
-                    })()}
-                    <div className="flex gap-2 mt-2">
-                      <button onClick={() => router.push(`/proyek/${p.id}`)} className="text-blue-500 text-xs underline">Detail</button>
-                      {(session?.user as any)?.role === 'ADMIN' && (
-                        <button onClick={() => handleDelete(p.id)} className="text-red-500 text-xs underline">Hapus</button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-        {/* Card View Mobile */}
-        <div className="md:hidden space-y-3">
-          {loading ? (
-            <p className="text-center py-8 text-gray-400">Loading...</p>
-          ) : filtered.length === 0 ? (
-            <p className="text-center py-8 text-gray-400">Belum ada pekerjaan</p>
-          ) : filtered.map((p) => (
-            <div key={p.id} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
-              <div className="flex justify-between items-start mb-2">
-                <button onClick={() => router.push(`/proyek/${p.id}`)}
-                  className="text-blue-500 underline text-sm font-bold hover:text-blue-700 text-left flex-1 mr-2">
-                  {p.nama || '-'}
-                </button>
-                <span className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap flex-shrink-0 ${p.status === 'BERJALAN' ? 'bg-blue-100 text-blue-700' :
-                  p.status === 'SELESAI' ? 'bg-green-100 text-green-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
-                  {statusLabel[p.status] || p.status}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mt-2">
-                <div><span className="text-gray-500">Jenis: </span><span className="font-bold text-gray-700">{p.jenis || '-'}</span></div>
-                <div><span className="text-gray-500">Nilai: </span><span className="font-bold text-gray-700">{formatRupiah(p.nilai || 0)}</span></div>
-                <div><span className="text-gray-500">PJ: </span><span className="font-bold text-gray-700">{p.penanggungjawab || '-'}</span></div>
-                <div><span className="text-gray-500">Wilayah: </span><span className="font-bold text-gray-700">{p.wilayah || '-'}</span></div>
-                <div><span className="text-gray-500">Diinput: </span><span className="font-bold text-gray-700">{p.userName || '-'}</span></div>
-                <div><span className="text-gray-500">Update: </span><span className="font-bold text-gray-700">{new Date(p.updatedAt).toLocaleDateString('id-ID')}</span></div>
-              </div>
-
-              {(() => {
-                const d = getDiffDays(p.tanggalSelesai)
-                if (d <= 7 && d >= 0 && p.status !== 'SELESAI') return <div className="text-xs text-orange-500 font-bold mt-2">⚠ Selesai dalam {d} hari</div>
-                if (d < 0 && p.status !== 'SELESAI') return <div className="text-xs text-red-500 font-bold mt-2">⚠ Melewati batas waktu</div>
-                return null
-              })()}
-
-              <div className="flex gap-3 mt-3 pt-2 border-t border-gray-100">
-                <button onClick={() => router.push(`/proyek/${p.id}`)} className="text-blue-500 text-xs underline">Detail</button>
-                {(session?.user as any)?.role === 'ADMIN' && (
-                  <button onClick={() => handleDelete(p.id)} className="text-red-500 text-xs underline">Hapus</button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-      </main>
-
-      {/* Modal Form Tambah Pekerjaan */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4 overflow-y-auto">
-          <div className="bg-gray-900 border border-gray-700 p-5 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-white mb-4">Tambah Pekerjaan</h3>
-            <div className="space-y-3">
-              {[
-                { label: 'Nama Pekerjaan', key: 'nama', type: 'text', required: true },
-                { label: 'Jenis Pekerjaan', key: 'jenis', type: 'text', required: true },
-                { label: 'Nilai Pekerjaan (Rp)', key: 'nilai', type: 'number', required: false },
-                { label: 'Penanggung Jawab', key: 'penanggungjawab', type: 'text', required: false },
-                { label: 'Wilayah Pengerjaan', key: 'wilayah', type: 'text', required: false },
-                { label: 'Sektor', key: 'sektor', type: 'text', required: true },
-                { label: 'Tanggal Mulai', key: 'tanggalMulai', type: 'date', required: true },
-                { label: 'Tanggal Selesai', key: 'tanggalSelesai', type: 'date', required: false },
-              ].map(({ label, key, type, required }) => (
-                <div key={key}>
-                  <label className="block text-xs text-gray-300 mb-1">
-                    {label} {required && <span className="text-red-400">*</span>}
-                  </label>
-                  <input
-                    type={type}
-                    value={form[key as keyof typeof form]}
-                    onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                    className={`w-full bg-gray-800 border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 ${required && !form[key as keyof typeof form] ? 'border-red-500' : 'border-gray-600'
-                      }`}
-                  />
-                  {required && !form[key as keyof typeof form] && (
-                    <p className="text-red-400 text-xs mt-1">Field ini wajib diisi</p>
-                  )}
-                </div>
-              ))}
-              <div>
-                <label className="block text-xs text-gray-300 mb-1">Status</label>
-                <select
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="PERENCANAAN">Draft</option>
-                  <option value="BERJALAN">Sedang Diproses</option>
-                  <option value="SELESAI">Selesai</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={handleSubmit}
-                className="flex-1 bg-blue-500 hover:bg-blue-400 text-white py-2 rounded-lg font-medium">
-                Simpan
+      {/* Card Mobile */}
+      <div className="md:hidden space-y-3">
+        {filtered.length === 0 ? (
+          <p className="text-center py-10 text-gray-600">Belum ada pekerjaan</p>
+        ) : filtered.map((p) => (
+          <div key={p.id} className="rounded-xl p-4"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex justify-between items-start mb-3">
+              <button onClick={() => router.push(`/proyek/${p.id}`)}
+                className="text-blue-400 text-sm font-medium text-left flex-1 mr-2 hover:text-blue-300 transition">
+                {p.nama || '-'}
               </button>
-              <button onClick={() => { setShowForm(false); resetForm() }}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium">
-                Batal
-              </button>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                p.status === 'BERJALAN' ? 'bg-blue-500/10 text-blue-400' :
+                p.status === 'SELESAI' ? 'bg-emerald-500/10 text-emerald-400' :
+                'bg-gray-500/10 text-gray-400'
+              }`}>{statusLabel[p.status] || p.status}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+              <div><span className="text-gray-600">Jenis: </span><span className="text-gray-400">{p.jenis || '-'}</span></div>
+              <div><span className="text-gray-600">Nilai: </span><span className="text-gray-400">{formatRupiah(p.nilai || 0)}</span></div>
+              <div><span className="text-gray-600">PJ: </span><span className="text-gray-400">{p.penanggungjawab || '-'}</span></div>
+              <div><span className="text-gray-600">Wilayah: </span><span className="text-gray-400">{p.wilayah || '-'}</span></div>
+              <div><span className="text-gray-600">Input: </span><span className="text-gray-400">{p.userName || '-'}</span></div>
+              <div><span className="text-gray-600">Update: </span><span className="text-gray-400">{new Date(p.updatedAt).toLocaleDateString('id-ID')}</span></div>
+            </div>
+            {(() => {
+              const d = getDiffDays(p.tanggalSelesai)
+              if (d <= 7 && d >= 0 && p.status !== 'SELESAI') return <div className="text-xs text-orange-400 mt-2">⚠ {d} hari lagi</div>
+              if (d < 0 && p.status !== 'SELESAI') return <div className="text-xs text-red-400 mt-2">⚠ Lewat batas waktu</div>
+              return null
+            })()}
+            <div className="flex gap-3 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <button onClick={() => router.push(`/proyek/${p.id}`)} className="text-blue-400 text-xs hover:text-blue-300 transition">Detail</button>
+              {(session?.user as any)?.role === 'ADMIN' && (
+                <button onClick={() => handleDelete(p.id)} className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
+              )}
             </div>
           </div>
+        ))}
+      </div>
+    </main>
+
+    {/* Modal */}
+    {showForm && (
+      <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
+        style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
+        <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-6"
+          style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <h3 className="text-base font-semibold text-white mb-5">Tambah Pekerjaan</h3>
+          <div className="space-y-3">
+            {[
+              { label: 'Nama Pekerjaan', key: 'nama', type: 'text', required: true },
+              { label: 'Jenis Pekerjaan', key: 'jenis', type: 'text', required: true },
+              { label: 'Nilai Pekerjaan (Rp)', key: 'nilai', type: 'number', required: false },
+              { label: 'Penanggung Jawab', key: 'penanggungjawab', type: 'text', required: false },
+              { label: 'Wilayah Pengerjaan', key: 'wilayah', type: 'text', required: false },
+              { label: 'Sektor', key: 'sektor', type: 'text', required: true },
+              { label: 'Tanggal Mulai', key: 'tanggalMulai', type: 'date', required: true },
+              { label: 'Tanggal Selesai', key: 'tanggalSelesai', type: 'date', required: false },
+            ].map(({ label, key, type, required }) => (
+              <div key={key}>
+                <label className="block text-xs text-gray-500 mb-1.5">
+                  {label} {required && <span className="text-red-400">*</span>}
+                </label>
+                <input type={type} value={form[key as keyof typeof form]}
+                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none transition"
+                  style={{
+                    background: required && !form[key as keyof typeof form] ? 'rgba(239,68,68,0.05)' : 'rgba(255,255,255,0.04)',
+                    border: required && !form[key as keyof typeof form] ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                  }} />
+              </div>
+            ))}
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">Status</label>
+              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <option value="PERENCANAAN" className="bg-gray-900">Draft</option>
+                <option value="BERJALAN" className="bg-gray-900">Sedang Diproses</option>
+                <option value="SELESAI" className="bg-gray-900">Selesai</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-6">
+            <button onClick={handleSubmit}
+              className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium transition"
+              style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>
+              Simpan
+            </button>
+            <button onClick={() => { setShowForm(false); resetForm() }}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-400 transition"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              Batal
+            </button>
+          </div>
         </div>
-      )}
-    </div>
-  )
+      </div>
+    )}
+  </div>
+)
 }
