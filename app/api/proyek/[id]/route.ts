@@ -11,6 +11,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { id } = await params
+    const userId = (session.user as any).id
+    const role = (session.user as any).role
 
     const proyek = await prisma.$queryRawUnsafe(`
       SELECT p.*, u.name as "userName"
@@ -19,9 +21,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       WHERE p.id = '${id}'
     `)
 
+    const data = Array.isArray(proyek) ? proyek[0] : proyek
+
+    if (role !== 'ADMIN' && data?.userId !== userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     return NextResponse.json(proyek)
   } catch (error) {
-    console.error('GET Error:', error)
     return NextResponse.json({ error: String(error) }, { status: 500 })
   }
 }

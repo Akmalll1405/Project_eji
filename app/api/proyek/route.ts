@@ -10,11 +10,16 @@ export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const userId = (session.user as any).id
+    const role = (session.user as any).role
+
+    const whereClause = role === 'ADMIN' ? '' : `WHERE p."userId" = '${userId}'`
+
     const proyek = await prisma.$queryRawUnsafe(`
       SELECT p.*, u.name as "userName", u.id as "userId"
       FROM "Project" p
       LEFT JOIN "User" u ON p."userId" = u.id
-      ORDER BY p."createdAt" DESC
+      ORDER BY p."updatedAt" DESC
     `)
 
     return NextResponse.json(proyek)
