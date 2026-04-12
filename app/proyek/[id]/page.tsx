@@ -857,7 +857,6 @@ export default function DetailProyekPage() {
                       />
 
                       {isLocked && (session?.user as any)?.role !== 'ADMIN' ? (
-                        // 🔒 LOCKED STATE
                         <>
                           <div className="text-2xl mb-2">🔒</div>
                           <div className="text-xs font-medium text-red-400 mb-1">TERKUNCI</div>
@@ -865,7 +864,6 @@ export default function DetailProyekPage() {
                           <div className="text-xs text-gray-500 mt-1">Ajukan edit ke Admin</div>
                         </>
                       ) : uploading ? (
-                        // ⏳ UPLOADING STATE
                         <>
                           <div className="text-2xl mb-2 animate-spin">⏳</div>
                           <div className="text-xs font-medium text-blue-400 mb-1">Mengupload...</div>
@@ -1087,6 +1085,7 @@ export default function DetailProyekPage() {
           <button onClick={() => { setShowKegiatanForm(true); setEditKegiatan(null); setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }) }}
             className="px-3 py-2 rounded-xl text-white text-xs font-medium whitespace-nowrap"
             style={{ background: 'rgba(37,99,235,0.2)', border: '1px solid rgba(37,99,235,0.3)' }}>
+              + Tambah Kegiatan
           </button>
         )}
       </div>
