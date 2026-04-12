@@ -66,28 +66,25 @@ export async function POST(req: NextRequest) {
 
     // Kirim notifikasi ke semua Admin
     const admins = await prisma.$queryRawUnsafe(`
-      SELECT id FROM "User" WHERE role = 'ADMIN'
+      SELECT id FROM "User" WHERE role = 'ADMIN' AND id != '${uploaderId}'
     `) as any[]
 
     for (const admin of admins) {
       await prisma.$queryRawUnsafe(`
         INSERT INTO "Notification" (
-          "id", "userId", "projectId", "dokumenId",
-          "fileName", "status", "catatanAdmin", "isRead", "createdAt"
-        ) VALUES (
-          gen_random_uuid()::text,
-          '${admin.id}',
-          '${projectId}',
-          '${dokumenId}',
-          '${fileName}',
-          'NEEDS_REVIEW',
-          'Dokumen baru menunggu review dari proyek: ${proyekNama}',
-          false,
-          NOW()
-        )
-      `)
-    }
-
+          "id","userId","projectId","dokumenId","fileName","status","catatanAdmin","isRead","createdAt"
+      ) VALUES (
+        gen_random_uuid()::text,
+        '${admin.id}',
+        '${projectId}',
+        '${dokumenId}',
+        '${fileName}',
+        'NEEDS_REVIEW',
+        'Dokumen baru dari proyek: ${proyekNama}',
+        false, NOW()
+       )
+    `)
+  }
     return NextResponse.json({ message: 'Dokumen berhasil diupload' })
   } catch (error) {
     console.error('POST dokumen error:', error)

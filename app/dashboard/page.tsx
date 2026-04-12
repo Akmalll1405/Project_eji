@@ -39,6 +39,9 @@ export default function DashboardPage() {
 
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [requestEditList, setRequestEditList] = useState<any[]>([])
+  const [showRequestPanel, setShowRequestPanel] = useState(false)
+  const [unlockLoading, setUnlockLoading] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState('SEMUA')
   const [searchNama, setSearchNama] = useState('')
   const [searchWilayah, setSearchWilayah] = useState('')
@@ -58,6 +61,7 @@ export default function DashboardPage() {
     if (status === 'authenticated') {
       fetchProjects()
       fetchPendingDokumen()
+      fetchRequestEdit()
     }
   }, [status])
 
@@ -80,7 +84,7 @@ export default function DashboardPage() {
       const res = await fetch('/api/admin/pending-dokumen')
       const data = await res.json()
       setPendingDokumen(Array.isArray(data) ? data : [])
-    } catch {}
+    } catch { }
   }
 
   const handleSubmit = async () => {
@@ -126,6 +130,74 @@ export default function DashboardPage() {
     }
   }
 
+  const handleUnlockProject = async (projectId: string, notifId: string) => {
+    setUnlockLoading(projectId)
+    try {
+      const unlockRes = await fetch(`/api/proyek/${projectId}/unlock`, {
+        method: 'POST'
+      })
+      if (!unlockRes.ok) {
+        throw new Error('Failed to unlock project')
+      }
+
+      try {
+        await fetch('/api/notifikasi/read', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notifId })
+        })
+      } catch (readError) {
+        console.warn('Failed to mark notification as read:', readError)
+      }
+
+      await Promise.all([
+        fetchRequestEdit(),
+        fetchProjects()
+      ])
+
+      alert('Proyek berhasil dibuka untuk diedit!')
+    } catch (error) {
+      console.error('Error unlocking project:', error)
+      alert('Gagal membuka proyek')
+    } finally {
+      setUnlockLoading(null)
+    }
+  }
+
+const handleRejectRequest = async (projectId: string) => {
+  if (!confirm('Yakin tolak permintaan edit ini?')) return
+  setUnlockLoading(projectId)
+  try {
+    const response = await fetch(`/api/proyek/${projectId}/reject`, {
+      method: 'POST'   
+    })
+
+    if (!response.ok) {
+      const text = await response.text()
+      throw new Error(text || 'Gagal reject')
+    }
+
+    await Promise.all([fetchRequestEdit(), fetchProjects()])
+    alert('Permintaan edit ditolak')
+  } catch (error: any) {
+    console.error('Reject error:', error)
+    alert('Gagal menolak: ' + error.message)
+  } finally {
+    setUnlockLoading(null)
+  }
+}
+
+  const fetchRequestEdit = async () => {
+    if ((session?.user as any)?.role !== 'ADMIN') return
+    try {
+      const res = await fetch('/api/notifikasi')
+      const data = await res.json()
+      const requests = Array.isArray(data)
+        ? data.filter((n: any) => n.status === 'REQUEST_EDIT')
+        : []
+      setRequestEditList(requests)
+    } catch { }
+  }
   const resetForm = () => {
     setForm({ nama: '', jenis: '', nilai: '', penanggungjawab: '', wilayah: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: 'PERENCANAAN' })
   }
@@ -197,10 +269,10 @@ export default function DashboardPage() {
             <div>
               <button onClick={() => setShowUserPanel(prev => !prev)}
                 className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition"
-                style={{ 
-                  background: 'rgba(255,255,255,0.03)', 
-                  border: '1px solid rgba(255,255,255,0.06)' 
-                  }}>
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)'
+                }}>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-400">Ringkasan Per User</span>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">
@@ -251,6 +323,84 @@ export default function DashboardPage() {
                         {data.projects.length > 5 && (
                           <span className="text-xs text-gray-600 px-2 py-1">+{data.projects.length - 5} lagi</span>
                         )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div>
+              <button onClick={() => { setShowRequestPanel(!showRequestPanel); fetchRequestEdit() }}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition"
+                style={{
+                  background: requestEditList.length > 0 ? 'rgba(139,92,246,0.08)' : 'rgba(255,255,255,0.03)',
+                  border: requestEditList.length > 0 ? '1px solid rgba(139,92,246,0.25)' : '1px solid rgba(255,255,255,0.06)'
+                }}>
+                <div className="flex item-center gap-2">
+                  <span className="text-sm font-medium" style={{ color: requestEditList.length > 0 ? '#a78bfa' : '#9ca3af' }}>
+                    Permintaan Edit Proyek
+                  </span>
+                  {requestEditList.length > 0 && (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                      style={{ background: 'rgba(139,92,246,0.2)', color: '#a78bfa' }}>
+                      {requestEditList.length} permintaan
+                    </span>
+                  )}
+                </div>
+                <span className="text-gray-600 text-xs">{showRequestPanel ? '▲ Sembunyikan' : '▼ Tampilkan'}</span>
+              </button>
+
+              {showRequestPanel && (
+                <div className="mt-1 rounded-xl overflow-hidden"
+                  style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+                  {requestEditList.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-gray-600 text-sm">
+                      ✓ Tidak ada permintaan edit
+                    </div>
+                  ) : requestEditList.map((r) => (
+                    <div key={r.id} className="px-4 py-4"
+                      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(255,255,255,0.01)' }}>
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="text-sm font-medium text-gray-200">{r.fileName}</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400">
+                            Request Edit
+                          </span>
+                        </div>
+                        {r.catatanAdmin && (
+                          <div className="text-xs text-gray-400 mt-1 italic">"{r.catatanAdmin}"</div>
+                        )}
+                        <div className="text-xs text-gray-600 mt-1">
+                          {new Date(r.createdAt).toLocaleDateString('id-ID', {
+                            day: '2-digit',
+                            month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button onClick={() => router.push(`/proyek/${r.projectId}`)}
+                          className="text-xs px-3 py-1.5 rounded-lg transition text-blue-400 hover:text-blue-300"
+                          style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)' }}>
+                          Lihat Proyek
+                        </button>
+                        <button
+                          onClick={() => handleUnlockProject(r.projectId, r.id)}
+                          disabled={unlockLoading === r.projectId}
+                          className="px-4 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50"
+                          style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }}>
+                          {unlockLoading === r.projectId ? '...' : 'Izinkan Edit'}
+                        </button>
+                        <button
+                          onClick={() => handleRejectRequest(r.projectId)}
+                          disabled={unlockLoading === r.projectId}
+                          className="px-4 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50"
+                          style={{
+                            background: 'rgba(239,68,68,0.1)',
+                            border: '1px solid rgba(239,68,68,0.2)',
+                            color: '#f87171'
+                          }}>
+                          {unlockLoading === r.projectId ? '...' : 'Tolak'}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -415,11 +565,10 @@ export default function DashboardPage() {
                     <div className="text-xs text-gray-600 mb-1">Diinput oleh</div>
                     <div className="text-sm text-gray-300">{p.userName || '-'}</div>
                     <div className="mt-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        p.status === 'BERJALAN' ? 'bg-blue-500/10 text-blue-400' :
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${p.status === 'BERJALAN' ? 'bg-blue-500/10 text-blue-400' :
                         p.status === 'SELESAI' ? 'bg-emerald-500/10 text-emerald-400' :
-                        'bg-gray-500/10 text-gray-400'
-                      }`}>{statusLabel[p.status] || p.status}</span>
+                          'bg-gray-500/10 text-gray-400'
+                        }`}>{statusLabel[p.status] || p.status}</span>
                     </div>
                     {(() => {
                       const d = getDiffDays(p.tanggalSelesai)
@@ -452,11 +601,10 @@ export default function DashboardPage() {
                   className="text-blue-400 text-sm font-medium text-left flex-1 mr-2 hover:text-blue-300 transition">
                   {p.nama || '-'}
                 </button>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
-                  p.status === 'BERJALAN' ? 'bg-blue-500/10 text-blue-400' :
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${p.status === 'BERJALAN' ? 'bg-blue-500/10 text-blue-400' :
                   p.status === 'SELESAI' ? 'bg-emerald-500/10 text-emerald-400' :
-                  'bg-gray-500/10 text-gray-400'
-                }`}>{statusLabel[p.status] || p.status}</span>
+                    'bg-gray-500/10 text-gray-400'
+                  }`}>{statusLabel[p.status] || p.status}</span>
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                 <div><span className="text-gray-600">Jenis: </span><span className="text-gray-400">{p.jenis || '-'}</span></div>

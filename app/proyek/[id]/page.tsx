@@ -266,6 +266,11 @@ export default function DetailProyekPage() {
   }
 
   const handleUploadDokumen = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isLocked && (session?.user as any)?.role === 'ADMIN') {
+      alert('🔒 Proyek terkunci! Ada dokumen yang sudah disetujui. Ajukan izin edit ke Admin.')
+      return
+    }
+
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -543,6 +548,34 @@ export default function DetailProyekPage() {
     PERENCANAAN: 'Draft', BERJALAN: 'Sedang Diproses', SELESAI: 'Selesai'
   }
 
+  const LockBanner = () => {
+    if ((session?.user as any)?.role === 'ADMIN') return null
+
+    if (isLocked && isOwner) return (
+      <div className="mb-4 px-4 py-3 rounded-xl"
+        style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.2)' }}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-sm font-medium text-yellow-400 mb-1">🔒 Proyek Terkunci</div>
+            <div className="text-xs text-gray-500">Ada dokumen yang sudah disetujui. Ajukan izin edit ke Admin.</div>
+          </div>
+          <button onClick={() => setShowRequestEditModal(true)}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0"
+            style={{ background: 'rgba(234,179,8,0.15)', border: '1px solid rgba(234,179,8,0.3)', color: '#facc15' }}>
+            Ajukan Edit
+          </button>
+        </div>
+      </div>
+    )
+    if (!isOwner) return (
+      <div className="mb-4 px-4 py-3 rounded-xl text-xs"
+        style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
+        ⚠ Kamu hanya bisa melihat data proyek ini
+      </div>
+    )
+    return null
+  }
+
   if (loading) return <Loading />
 
   return (
@@ -615,26 +648,7 @@ export default function DetailProyekPage() {
           <div>
             <div className="px-4 py-2.5 rounded-xl font-bold text-xs mb-4 text-white uppercase tracking-wider"
               style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>DATA PROJEK</div>
-
-            {/* Banner terkunci */}
-            {isLocked && (session?.user as any)?.role !== 'ADMIN' && (
-              <div className="mb-4 px-4 py-3 rounded-xl"
-                style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.2)' }}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-medium text-yellow-400 mb-1">🔒 Proyek Terkunci</div>
-                    <div className="text-xs text-gray-500">Ada dokumen yang sudah disetujui. Hubungi Admin untuk melakukan perubahan.</div>
-                  </div>
-                  <button
-                    onClick={() => setShowRequestEditModal(true)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0"
-                    style={{ background: 'rgba(234,179,8,0.15)', border: '1px solid rgba(234,179,8,0.3)', color: '#facc15' }}>
-                    Ajukan Edit
-                  </button>
-                </div>
-              </div>
-            )}
-
+            <LockBanner />
             {/* Warning bukan owner */}
             {!isOwner && !isLocked && (
               <div className="mb-4 px-4 py-3 rounded-xl text-sm"
@@ -733,7 +747,7 @@ export default function DetailProyekPage() {
             <div className="flex justify-between items-center mb-4">
               <div className="px-4 py-2.5 rounded-xl font-bold text-xs text-white uppercase tracking-wider flex-1 mr-3"
                 style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>DATA PENDONOR</div>
-              {isOwner && (
+              {isOwner && !isLocked && (
                 <button onClick={() => { setShowDonorForm(true); setEditDonor(null); setDonorForm({ nama: '', jenis: '', penanggungjawab: '', wilayah: '', alamat: '', tahunPendirian: '', lamaUsaha: '' }) }}
                   className="px-3 py-2 rounded-xl text-white text-xs font-medium whitespace-nowrap"
                   style={{ background: 'rgba(37,99,235,0.2)', border: '1px solid rgba(37,99,235,0.3)' }}>
@@ -741,14 +755,7 @@ export default function DetailProyekPage() {
                 </button>
               )}
             </div>
-
-            {!isOwner && (
-              <div className="mb-4 px-4 py-3 rounded-xl text-xs"
-                style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
-                ⚠ Kamu tidak memiliki akses untuk mengedit data pendonor ini
-              </div>
-            )}
-
+            <LockBanner />
             {donors.length === 0 ? (
               <p className="text-gray-600 text-sm text-center py-10">Belum ada data pendonor</p>
             ) : donors.map((d) => (
@@ -768,7 +775,7 @@ export default function DetailProyekPage() {
                     <div className="text-gray-600 mt-2 mb-1 uppercase tracking-wider text-xs">Pengurus</div>
                     <div className="text-gray-400">PJ: <span className="text-gray-300 font-medium">{d.penanggungjawab}</span></div>
                   </div>
-                  {isOwner && (
+                  {isOwner && !isLocked && (
                     <div className="flex gap-3 mt-3">
                       <button onClick={() => {
                         setEditDonor(d)
@@ -789,8 +796,9 @@ export default function DetailProyekPage() {
           <div>
             <div className="px-4 py-2.5 rounded-xl font-bold text-xs mb-4 text-white uppercase tracking-wider"
               style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>UPLOAD DOKUMEN</div>
+            < LockBanner />
 
-            {!isOwner && (
+            {!isOwner && !isLocked && (
               <div className="mb-4 px-4 py-3 rounded-xl text-xs"
                 style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
                 ⚠ Kamu hanya bisa melihat dokumen proyek ini
@@ -816,628 +824,676 @@ export default function DetailProyekPage() {
                   </div>
                   <div>
                     <label className="block text-xs text-gray-600 mb-1.5">File</label>
-                    <div className="rounded-xl p-4 text-center cursor-pointer transition"
-                      style={{ border: '2px dashed rgba(255,255,255,0.1)', background: uploading ? 'rgba(37,99,235,0.05)' : 'rgba(255,255,255,0.02)' }}>
-                      <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={handleUploadDokumen} className="hidden" id="fileUpload" />
-                      <label htmlFor="fileUpload" className="cursor-pointer">
-                        <div className="text-2xl mb-1">{uploading ? '⏳' : '📎'}</div>
-                        <div className="text-xs text-gray-500">{uploading ? 'Mengupload...' : 'Klik untuk upload'}</div>
-                        <div className="text-xs text-gray-700 mt-1">PDF, JPG, PNG (maks 10MB)</div>
-                      </label>
+                    <div
+                      className={`rounded-xl p-4 text-center cursor-pointer transition-all duration-200 ${isLocked && (session?.user as any)?.role !== 'ADMIN'
+                          ? 'cursor-not-allowed opacity-60'
+                          : ''
+                        }`}
+                      style={{
+                        border: isLocked && (session?.user as any)?.role !== 'ADMIN'
+                          ? '2px dashed rgba(239,68,68,0.4)'  // 🔴 Red lock border
+                          : uploading
+                            ? '2px dashed rgba(37,99,235,0.4)' // 🔵 Upload border
+                            : '2px dashed rgba(255,255,255,0.15)', // Normal
+                        background: isLocked && (session?.user as any)?.role !== 'ADMIN'
+                          ? 'rgba(239,68,68,0.05)'  // 🔴 Red tint
+                          : uploading
+                            ? 'rgba(37,99,235,0.08)' // 🔵 Upload tint
+                            : 'rgba(255,255,255,0.025)' // Normal
+                      }}
+                      title={isLocked && (session?.user as any)?.role !== 'ADMIN'
+                        ? 'Proyek terkunci - hubungi Admin'
+                        : 'Klik untuk upload'
+                      }
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={handleUploadDokumen}
+                        className="hidden"
+                        id="fileUpload"
+                        disabled={isLocked && (session?.user as any)?.role !== 'ADMIN'}
+                      />
+
+                      {isLocked && (session?.user as any)?.role !== 'ADMIN' ? (
+                        // 🔒 LOCKED STATE
+                        <>
+                          <div className="text-2xl mb-2">🔒</div>
+                          <div className="text-xs font-medium text-red-400 mb-1">TERKUNCI</div>
+                          <div className="text-xs text-red-500">Dokumen approved</div>
+                          <div className="text-xs text-gray-500 mt-1">Ajukan edit ke Admin</div>
+                        </>
+                      ) : uploading ? (
+                        // ⏳ UPLOADING STATE
+                        <>
+                          <div className="text-2xl mb-2 animate-spin">⏳</div>
+                          <div className="text-xs font-medium text-blue-400 mb-1">Mengupload...</div>
+                          <div className="text-xs text-gray-400">Jangan tutup halaman</div>
+                        </>
+                      ) : (
+                        // ✅ NORMAL STATE
+                        <>
+                          <div className="text-2xl mb-2">📎</div>
+                          <div className="text-xs font-medium text-gray-300 mb-1">Klik untuk upload</div>
+                          <div className="text-xs text-gray-500">PDF, JPG, PNG (maks 10MB)</div>
+                        </>
+                      )}
                     </div>
+                    <p className="text-xs text-gray-500 mt-2 text-center">
+                      {isLocked && (session?.user as any)?.role !== 'ADMIN'
+                        ? 'Admin bisa upload meski terkunci'
+                        : 'Upload otomatis simpan ke database'
+                      }
+                    </p>
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* Legend */}
-            <div className="flex gap-3 mb-4 flex-wrap">
-              <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-400">⏳ Menunggu</span>
-              <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400">✓ Disetujui</span>
-              <span className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-400">✗ Ditolak</span>
-            </div>
-
-            {/* List Dokumen */}
-            {dokumen.length === 0 ? (
-              <p className="text-gray-600 text-sm text-center py-10">Belum ada dokumen</p>
-            ) : (
-              <div className="space-y-3">
-                {dokumen.map((d) => (
-                  <div key={d.id} className="rounded-xl p-4"
-                    style={{
-                      background: 'rgba(255,255,255,0.02)',
-                      border: d.status === 'APPROVED' ? '1px solid rgba(52,211,153,0.2)' :
-                        d.status === 'REJECTED' ? '1px solid rgba(239,68,68,0.2)' :
-                          '1px solid rgba(255,255,255,0.06)'
-                    }}>
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm text-gray-200 font-medium truncate">{d.fileName}</div>
-                        <div className="text-xs text-gray-600 mt-0.5">
-                          {jenisDokumenLabel[d.jenisDokumen]} • {new Date(d.tanggalUpload).toLocaleDateString('id-ID')}
-                        </div>
-                        <div className="mt-2">
-                          <span className={`text-xs px-2.5 py-1 rounded-full font-medium inline-block ${d.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400' :
-                            d.status === 'REJECTED' ? 'bg-red-500/10 text-red-400' :
-                              'bg-yellow-500/10 text-yellow-400'
-                            }`}>
-                            {d.status === 'APPROVED' ? '✓ Disetujui' :
-                              d.status === 'REJECTED' ? '✗ Ditolak' : '⏳ Menunggu'}
-                          </span>
-                        </div>
-                        {d.catatanAdmin && (
-                          <div className="mt-2 px-3 py-2 rounded-lg text-xs"
-                            style={{
-                              background: d.status === 'REJECTED' ? 'rgba(239,68,68,0.05)' : 'rgba(255,255,255,0.03)',
-                              border: d.status === 'REJECTED' ? '1px solid rgba(239,68,68,0.15)' : '1px solid rgba(255,255,255,0.06)'
-                            }}>
-                            <span className="text-gray-500">Catatan Admin: </span>
-                            <span className="text-gray-300 italic">"{d.catatanAdmin}"</span>
-                          </div>
-                        )}
-                        {d.approvedByName && d.approvedAt && (
-                          <div className="mt-1 text-xs text-gray-700">
-                            oleh {d.approvedByName} • {new Date(d.approvedAt).toLocaleDateString('id-ID')}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col gap-2 items-end flex-shrink-0">
-                        <a href={d.fileUrl} target="_blank" rel="noopener noreferrer"
-                          className="text-blue-400 text-xs hover:text-blue-300 transition">Download</a>
-
-                        {/* Tombol Review hanya Admin */}
-                        {(session?.user as any)?.role === 'ADMIN' && (
-                          <button onClick={() => { setSelectedDokumen(d); setCatatanAdmin(d.catatanAdmin || ''); setShowApprovalModal(true) }}
-                            className="text-xs px-3 py-1.5 rounded-lg transition whitespace-nowrap"
-                            style={{
-                              background: d.status === 'PENDING' ? 'rgba(234,179,8,0.15)' : 'rgba(37,99,235,0.15)',
-                              border: d.status === 'PENDING' ? '1px solid rgba(234,179,8,0.3)' : '1px solid rgba(37,99,235,0.3)',
-                              color: d.status === 'PENDING' ? '#facc15' : '#60a5fa'
-                            }}>
-                            {d.status === 'PENDING' ? 'Review' : 'Ubah Status'}
-                          </button>
-                        )}
-
-                        {/* Hapus hanya owner dan dokumen belum approved */}
-                        {isOwner && d.status !== 'APPROVED' && (
-                          <button onClick={() => handleDeleteDokumen(d.id, d.fileUrl)}
-                            className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         )}
-        {/* KEUANGAN */}
-        {activeSection === 'keuangan' && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <div className="px-4 py-2.5 rounded-xl font-bold text-xs text-white uppercase tracking-wider flex-1 mr-3"
-                style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>KEUANGAN</div>
-              {isOwner && (
-                <button onClick={() => { setShowTransaksiForm(true); setEditTransaksi(null); resetTransaksiForm() }}
-                  className="px-3 py-2 rounded-xl text-white text-xs font-medium whitespace-nowrap"
-                  style={{ background: 'rgba(37,99,235,0.2)', border: '1px solid rgba(37,99,235,0.3)' }}>
-                  + Pembayaran
-                </button>
-              )}
-            </div>
 
-            {!isOwner && (
-              <div className="mb-4 px-4 py-3 rounded-xl text-xs"
-                style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
-                ⚠ Kamu hanya bisa melihat data keuangan proyek ini
-              </div>
-            )}
+        {/* Legend */}
+        <div className="flex gap-3 mb-4 flex-wrap">
+          <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-400">⏳ Menunggu</span>
+          <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400">✓ Disetujui</span>
+          <span className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-400">✗ Ditolak</span>
+        </div>
 
-            <div className="rounded-xl p-4 mb-4"
-              style={{ background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.15)' }}>
-              <div className="text-xs text-gray-600">Total Pembayaran</div>
-              <div className="text-xl font-bold text-emerald-400 mt-1">
-                {formatRupiah(transaksi.reduce((acc, t) => acc + t.jumlah, 0))}
-              </div>
-            </div>
-
-            {transaksi.map((t) => (
-              <div key={t.id} className="rounded-xl p-4 mb-3"
-                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    {/* Header row */}
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span className="text-sm font-medium text-gray-200">{(t as any).namaProgram || t.keterangan || '-'}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${(t as any).statusTransaksi === 'Transfer successful' ? 'bg-emerald-500/10 text-emerald-400' :
-                        (t as any).statusTransaksi === 'Settlement' ? 'bg-blue-500/10 text-blue-400' :
-                          (t as any).statusTransaksi === 'clear' ? 'bg-purple-500/10 text-purple-400' :
-                            'bg-yellow-500/10 text-yellow-400'
+        {/* List Dokumen */}
+        {dokumen.length === 0 ? (
+          <p className="text-gray-600 text-sm text-center py-10">Belum ada dokumen</p>
+        ) : (
+          <div className="space-y-3">
+            {dokumen.map((d) => (
+              <div key={d.id} className="rounded-xl p-4"
+                style={{
+                  background: 'rgba(255,255,255,0.02)',
+                  border: d.status === 'APPROVED' ? '1px solid rgba(52,211,153,0.2)' :
+                    d.status === 'REJECTED' ? '1px solid rgba(239,68,68,0.2)' :
+                      '1px solid rgba(255,255,255,0.06)'
+                }}>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-gray-200 font-medium truncate">{d.fileName}</div>
+                    <div className="text-xs text-gray-600 mt-0.5">
+                      {jenisDokumenLabel[d.jenisDokumen]} • {new Date(d.tanggalUpload).toLocaleDateString('id-ID')}
+                    </div>
+                    <div className="mt-2">
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium inline-block ${d.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400' :
+                        d.status === 'REJECTED' ? 'bg-red-500/10 text-red-400' :
+                          'bg-yellow-500/10 text-yellow-400'
                         }`}>
-                        {(t as any).statusTransaksi || t.jenisPembayaran}
+                        {d.status === 'APPROVED' ? '✓ Disetujui' :
+                          d.status === 'REJECTED' ? '✗ Ditolak' : '⏳ Menunggu'}
                       </span>
-                      {(t as any).keterangan && (
-                        <span className="text-xs text-gray-600 italic">{(t as any).keterangan}</span>
-                      )}
                     </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1 text-xs">
-                      {(t as any).kegiatan && <div><span className="text-gray-600">Kegiatan: </span><span className="text-gray-300">{(t as any).kegiatan}</span></div>}
-                      {(t as any).staffCA && <div><span className="text-gray-600">Staff CA: </span><span className="text-gray-300">{(t as any).staffCA}</span></div>}
-                      {(t as any).tanggalPengajuan && <div><span className="text-gray-600">Tgl Pengajuan: </span><span className="text-gray-300">{new Date((t as any).tanggalPengajuan).toLocaleDateString('id-ID')}</span></div>}
-                      {(t as any).tanggalPertanggungjawaban && <div><span className="text-gray-600">Tgl PJ: </span><span className="text-gray-300">{new Date((t as any).tanggalPertanggungjawaban).toLocaleDateString('id-ID')}</span></div>}
-                      {(t as any).kelengkapanDokumen && (
-                        <div>
-                          <span className="text-gray-600">Dok: </span>
-                          <span className={(t as any).kelengkapanDokumen === 'Lengkap' ? 'text-emerald-400' : 'text-orange-400'}>
-                            {(t as any).kelengkapanDokumen}
-                          </span>
-                        </div>
-                      )}
-                      <div><span className="text-gray-600">Nominal: </span><span className="text-emerald-400 font-medium">{formatRupiah(t.jumlah)}</span></div>
-                    </div>
-
-                    {t.buktiBayarUrl && (
-                      <a href={t.buktiBayarUrl} target="_blank" rel="noopener noreferrer"
-                        className="text-blue-400 text-xs hover:text-blue-300 transition mt-2 inline-block">
-                        Lihat Bukti →
-                      </a>
+                    {d.catatanAdmin && (
+                      <div className="mt-2 px-3 py-2 rounded-lg text-xs"
+                        style={{
+                          background: d.status === 'REJECTED' ? 'rgba(239,68,68,0.05)' : 'rgba(255,255,255,0.03)',
+                          border: d.status === 'REJECTED' ? '1px solid rgba(239,68,68,0.15)' : '1px solid rgba(255,255,255,0.06)'
+                        }}>
+                        <span className="text-gray-500">Catatan Admin: </span>
+                        <span className="text-gray-300 italic">"{d.catatanAdmin}"</span>
+                      </div>
+                    )}
+                    {d.approvedByName && d.approvedAt && (
+                      <div className="mt-1 text-xs text-gray-700">
+                        oleh {d.approvedByName} • {new Date(d.approvedAt).toLocaleDateString('id-ID')}
+                      </div>
                     )}
                   </div>
 
-                  {isOwner && !isLocked && (
-                    <div className="flex flex-col gap-2 ml-4">
-                      <button onClick={() => {
-                        setEditTransaksi(t)
-                        setTransaksiForm({
-                          namaProgram: (t as any).namaProgram || '',
-                          kegiatan: (t as any).kegiatan || '',
-                          staffCA: (t as any).staffCA || '',
-                          tanggalPengajuan: (t as any).tanggalPengajuan?.split('T')[0] || '',
-                          tanggalPertanggungjawaban: (t as any).tanggalPertanggungjawaban?.split('T')[0] || '',
-                          kelengkapanDokumen: (t as any).kelengkapanDokumen || 'Lengkap',
-                          jumlah: t.jumlah.toString(),
-                          statusTransaksi: (t as any).statusTransaksi || 'Transfer successful',
-                          keterangan: (t as any).keterangan || '',
-                          jenisPembayaran: t.jenisPembayaran || 'TUNAI',
-                          nomorRekening: t.nomorRekening || '',
-                          bankTujuan: t.bankTujuan || '',
-                          tanggalPembayaran: t.tanggalPembayaran?.split('T')[0] || '',
-                          buktiBayarUrl: t.buktiBayarUrl || ''
-                        })
-                        setShowTransaksiForm(true)
-                      }} className="text-blue-400 text-xs hover:text-blue-300 transition">Edit</button>
-                      <button onClick={() => handleDeleteTransaksi(t.id)}
+                  <div className="flex flex-col gap-2 items-end flex-shrink-0">
+                    <a href={d.fileUrl} target="_blank" rel="noopener noreferrer"
+                      className="text-blue-400 text-xs hover:text-blue-300 transition">Download</a>
+
+                    {/* Tombol Review hanya Admin */}
+                    {(session?.user as any)?.role === 'ADMIN' && (
+                      <button onClick={() => { setSelectedDokumen(d); setCatatanAdmin(d.catatanAdmin || ''); setShowApprovalModal(true) }}
+                        className="text-xs px-3 py-1.5 rounded-lg transition whitespace-nowrap"
+                        style={{
+                          background: d.status === 'PENDING' ? 'rgba(234,179,8,0.15)' : 'rgba(37,99,235,0.15)',
+                          border: d.status === 'PENDING' ? '1px solid rgba(234,179,8,0.3)' : '1px solid rgba(37,99,235,0.3)',
+                          color: d.status === 'PENDING' ? '#facc15' : '#60a5fa'
+                        }}>
+                        {d.status === 'PENDING' ? 'Review' : 'Ubah Status'}
+                      </button>
+                    )}
+
+                    {/* Hapus hanya owner dan dokumen belum approved */}
+                    {isOwner && d.status !== 'APPROVED' && (
+                      <button onClick={() => handleDeleteDokumen(d.id, d.fileUrl)}
                         className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
-
-        {/* LAIN-LAIN */}
-        {activeSection === 'lainlain' && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <div className="px-4 py-2.5 rounded-xl font-bold text-xs text-white uppercase tracking-wider flex-1 mr-3"
-                style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>LAIN-LAIN</div>
-              {isOwner && (
-                <button onClick={() => { setShowKegiatanForm(true); setEditKegiatan(null); setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }) }}
-                  className="px-3 py-2 rounded-xl text-white text-xs font-medium whitespace-nowrap"
-                  style={{ background: 'rgba(37,99,235,0.2)', border: '1px solid rgba(37,99,235,0.3)' }}>
-                  + Kegiatan
-                </button>
-              )}
-            </div>
-
-            {!isOwner && (
-              <div className="mb-4 px-4 py-3 rounded-xl text-xs"
-                style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
-                ⚠ Kamu hanya bisa melihat kegiatan proyek ini
-              </div>
-            )}
-
-            {kegiatan.length === 0 ? (
-              <p className="text-gray-600 text-sm text-center py-10">Belum ada kegiatan</p>
-            ) : (
-              <div className="space-y-3">
-                {kegiatan.map((k) => (
-                  <div key={k.id} className="rounded-xl p-4"
-                    style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-200 text-sm">{k.namaKegiatan}</div>
-                        <div className="text-xs text-gray-600 mt-1">
-                          {new Date(k.tanggalKegiatan).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
-                        </div>
-                        {k.fotoUrl && (
-                          <div className="mt-3">
-                            <img src={k.fotoUrl} alt={k.namaKegiatan}
-                              className="w-40 h-28 object-cover rounded-lg"
-                              style={{ border: '1px solid rgba(255,255,255,0.08)' }} />
-                            <a href={k.fotoUrl} target="_blank" rel="noopener noreferrer"
-                              className="text-blue-400 text-xs hover:text-blue-300 transition mt-1 block">Lihat lengkap →</a>
-                          </div>
-                        )}
-                      </div>
-                      {isOwner && (
-                        <div className="flex gap-3 ml-4">
-                          <button onClick={() => {
-                            setEditKegiatan(k)
-                            setKegiatanForm({ namaKegiatan: k.namaKegiatan, tanggalKegiatan: k.tanggalKegiatan.split('T')[0], fotoUrl: k.fotoUrl || '', fotoName: k.fotoName || '' })
-                            setShowKegiatanForm(true)
-                          }} className="text-blue-400 text-xs hover:text-blue-300 transition">Edit</button>
-                          <button onClick={() => handleDeleteKegiatan(k.id)} className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+    </div>
+  )
+}
+{/* KEUANGAN */ }
+{
+  activeSection === 'keuangan' && (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <div className="px-4 py-2.5 rounded-xl font-bold text-xs text-white uppercase tracking-wider flex-1 mr-3"
+          style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>KEUANGAN</div>
+        {isOwner && !isLocked && (
+          <button onClick={() => { setShowTransaksiForm(true); setEditTransaksi(null); resetTransaksiForm() }}
+            className="px-3 py-2 rounded-xl text-white text-xs font-medium whitespace-nowrap"
+            style={{ background: 'rgba(37,99,235,0.2)', border: '1px solid rgba(37,99,235,0.3)' }}>
+            + Pembayaran
+          </button>
         )}
-      </main >
+      </div>
+      <LockBanner />
 
-      {/* Modal Donor */}
-      {
-        showDonorForm && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
-            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
-            <div className="w-full max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto"
-              style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <h3 className="text-base font-semibold text-white mb-5">{editDonor ? 'Edit Donor' : 'Tambah Donor'}</h3>
-              <div className="space-y-3">
-                {[
-                  { label: 'Nama Yayasan/Lembaga', key: 'nama' },
-                  { label: 'Alamat Lengkap', key: 'alamat' },
-                  { label: 'Tahun Pendirian', key: 'tahunPendirian' },
-                  { label: 'Lama Usaha (tahun)', key: 'lamaUsaha' },
-                  { label: 'Penanggung Jawab', key: 'penanggungjawab' },
-                ].map(({ label, key }) => (
-                  <div key={key}>
-                    <label className="block text-xs text-gray-500 mb-1.5">{label}</label>
-                    <input type={['tahunPendirian', 'lamaUsaha'].includes(key) ? 'number' : 'text'}
-                      value={donorForm[key as keyof typeof donorForm]}
-                      onChange={(e) => setDonorForm({ ...donorForm, [key]: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+      <div className="rounded-xl p-4 mb-4"
+        style={{ background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.15)' }}>
+        <div className="text-xs text-gray-600">Total Pembayaran</div>
+        <div className="text-xl font-bold text-emerald-400 mt-1">
+          {formatRupiah(transaksi.reduce((acc, t) => acc + t.jumlah, 0))}
+        </div>
+      </div>
+
+      {transaksi.map((t) => (
+        <div key={t.id} className="rounded-xl p-4 mb-3"
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              {/* Header row */}
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <span className="text-sm font-medium text-gray-200">{(t as any).namaProgram || t.keterangan || '-'}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${(t as any).statusTransaksi === 'Transfer successful' ? 'bg-emerald-500/10 text-emerald-400' :
+                  (t as any).statusTransaksi === 'Settlement' ? 'bg-blue-500/10 text-blue-400' :
+                    (t as any).statusTransaksi === 'clear' ? 'bg-purple-500/10 text-purple-400' :
+                      'bg-yellow-500/10 text-yellow-400'
+                  }`}>
+                  {(t as any).statusTransaksi || t.jenisPembayaran}
+                </span>
+                {(t as any).keterangan && (
+                  <span className="text-xs text-gray-600 italic">{(t as any).keterangan}</span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1 text-xs">
+                {(t as any).kegiatan && <div><span className="text-gray-600">Kegiatan: </span><span className="text-gray-300">{(t as any).kegiatan}</span></div>}
+                {(t as any).staffCA && <div><span className="text-gray-600">Staff CA: </span><span className="text-gray-300">{(t as any).staffCA}</span></div>}
+                {(t as any).tanggalPengajuan && <div><span className="text-gray-600">Tgl Pengajuan: </span><span className="text-gray-300">{new Date((t as any).tanggalPengajuan).toLocaleDateString('id-ID')}</span></div>}
+                {(t as any).tanggalPertanggungjawaban && <div><span className="text-gray-600">Tgl PJ: </span><span className="text-gray-300">{new Date((t as any).tanggalPertanggungjawaban).toLocaleDateString('id-ID')}</span></div>}
+                {(t as any).kelengkapanDokumen && (
+                  <div>
+                    <span className="text-gray-600">Dok: </span>
+                    <span className={(t as any).kelengkapanDokumen === 'Lengkap' ? 'text-emerald-400' : 'text-orange-400'}>
+                      {(t as any).kelengkapanDokumen}
+                    </span>
                   </div>
-                ))}
+                )}
+                <div><span className="text-gray-600">Nominal: </span><span className="text-emerald-400 font-medium">{formatRupiah(t.jumlah)}</span></div>
               </div>
-              <div className="flex gap-3 mt-6">
-                <button onClick={handleSaveDonor}
-                  className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium"
-                  style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>Simpan</button>
-                <button onClick={() => { setShowDonorForm(false); setEditDonor(null) }}
-                  className="flex-1 py-2.5 rounded-xl text-sm text-gray-400"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>Batal</button>
-              </div>
-            </div>
-          </div>
-        )
-      }
 
-      {/* Modal Transaksi */}
-      {showTransaksiForm && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
-          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
-          <div className="w-full max-w-2xl rounded-2xl p-6 max-h-[90vh] overflow-y-auto"
-            style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <h3 className="text-base font-semibold text-white mb-5">
-              {editTransaksi ? 'Edit Pembayaran' : 'Tambah Pembayaran'}
-            </h3>
-
-            {/* Grid 3 kolom seperti foto */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">
-                  Nama Program <span className="text-red-400">*</span>
-                </label>
-                <input type="text"
-                  placeholder="ketik..."
-                  value={transaksiForm.namaProgram}
-                  onChange={(e) => setTransaksiForm({ ...transaksiForm, namaProgram: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }} />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Kegiatan</label>
-                <input type="text"
-                  placeholder="ketik..."
-                  value={transaksiForm.kegiatan}
-                  onChange={(e) => setTransaksiForm({ ...transaksiForm, kegiatan: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }} />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">
-                  Staff CA <span className="text-red-400">*</span>
-                </label>
-                <input type="text"
-                  placeholder="ketik..."
-                  value={transaksiForm.staffCA}
-                  onChange={(e) => setTransaksiForm({ ...transaksiForm, staffCA: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">
-                  Tanggal Pengajuan <span className="text-red-400">*</span>
-                </label>
-                <input type="date"
-                  value={transaksiForm.tanggalPengajuan}
-                  onChange={(e) => setTransaksiForm({ ...transaksiForm, tanggalPengajuan: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }} />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Tanggal Pertanggungjawaban</label>
-                <input type="date"
-                  value={transaksiForm.tanggalPertanggungjawaban}
-                  onChange={(e) => setTransaksiForm({ ...transaksiForm, tanggalPertanggungjawaban: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }} />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Kelengkapan Dokumen</label>
-                <select
-                  value={transaksiForm.kelengkapanDokumen}
-                  onChange={(e) => setTransaksiForm({ ...transaksiForm, kelengkapanDokumen: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }}>
-                  <option value="Lengkap" className="bg-gray-900">Lengkap</option>
-                  <option value="Kurang" className="bg-gray-900">Kurang</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Nominal Transaksi</label>
-                <input type="number"
-                  placeholder="0"
-                  value={transaksiForm.jumlah}
-                  onChange={(e) => setTransaksiForm({ ...transaksiForm, jumlah: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }} />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Status</label>
-                <select
-                  value={transaksiForm.statusTransaksi}
-                  onChange={(e) => setTransaksiForm({ ...transaksiForm, statusTransaksi: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }}>
-                  <option value="Transfer successful" className="bg-gray-900">Transfer successful</option>
-                  <option value="Settlement" className="bg-gray-900">Settlement</option>
-                  <option value="clear" className="bg-gray-900">clear</option>
-                  <option value="Pending" className="bg-gray-900">Pending</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-xs text-gray-500 mb-1.5">Keterangan</label>
-              <input type="text"
-                placeholder="Keterangan tambahan..."
-                value={transaksiForm.keterangan}
-                onChange={(e) => setTransaksiForm({ ...transaksiForm, keterangan: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }} />
-            </div>
-
-            {/* Bukti Pembayaran */}
-            <div className="mb-5">
-              <label className="block text-xs text-gray-500 mb-1.5">Bukti Pembayaran</label>
-              <div className="rounded-xl p-3 text-center"
-                style={{ border: '2px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}>
-                <input ref={buktiBayarRef} type="file" accept=".jpg,.jpeg,.png,.pdf"
-                  onChange={handleUploadBuktiBayar} className="hidden" id="buktiBayarUpload" />
-                <label htmlFor="buktiBayarUpload" className="cursor-pointer">
-                  <div className="text-lg mb-1">📎</div>
-                  <div className="text-xs text-gray-500">{uploadingBukti ? 'Mengupload...' : 'Klik untuk upload'}</div>
-                </label>
-              </div>
-              {transaksiForm.buktiBayarUrl && (
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-emerald-400 text-xs">✓ Terupload</span>
-                  <a href={transaksiForm.buktiBayarUrl} target="_blank" rel="noopener noreferrer"
-                    className="text-blue-400 text-xs hover:text-blue-300">Lihat →</a>
-                </div>
+              {t.buktiBayarUrl && (
+                <a href={t.buktiBayarUrl} target="_blank" rel="noopener noreferrer"
+                  className="text-blue-400 text-xs hover:text-blue-300 transition mt-2 inline-block">
+                  Lihat Bukti →
+                </a>
               )}
             </div>
 
-            <div className="flex gap-3">
-              <button onClick={handleSaveTransaksi}
-                className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium"
-                style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>
-                Simpan
-              </button>
-              <button onClick={() => { setShowTransaksiForm(false); setEditTransaksi(null); resetTransaksiForm() }}
-                className="flex-1 py-2.5 rounded-xl text-sm text-gray-400"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                Batal
-              </button>
-            </div>
+            {isOwner && !isLocked && (
+              <div className="flex flex-col gap-2 ml-4">
+                <button onClick={() => {
+                  setEditTransaksi(t)
+                  setTransaksiForm({
+                    namaProgram: (t as any).namaProgram || '',
+                    kegiatan: (t as any).kegiatan || '',
+                    staffCA: (t as any).staffCA || '',
+                    tanggalPengajuan: (t as any).tanggalPengajuan?.split('T')[0] || '',
+                    tanggalPertanggungjawaban: (t as any).tanggalPertanggungjawaban?.split('T')[0] || '',
+                    kelengkapanDokumen: (t as any).kelengkapanDokumen || 'Lengkap',
+                    jumlah: t.jumlah.toString(),
+                    statusTransaksi: (t as any).statusTransaksi || 'Transfer successful',
+                    keterangan: (t as any).keterangan || '',
+                    jenisPembayaran: t.jenisPembayaran || 'TUNAI',
+                    nomorRekening: t.nomorRekening || '',
+                    bankTujuan: t.bankTujuan || '',
+                    tanggalPembayaran: t.tanggalPembayaran?.split('T')[0] || '',
+                    buktiBayarUrl: t.buktiBayarUrl || ''
+                  })
+                  setShowTransaksiForm(true)
+                }} className="text-blue-400 text-xs hover:text-blue-300 transition">Edit</button>
+                <button onClick={() => handleDeleteTransaksi(t.id)}
+                  className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
+              </div>
+            )}
           </div>
         </div>
-      )}
-      {/* Modal Kegiatan */}
-      {
-        showKegiatanForm && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
-            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
-            <div className="w-full max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto"
-              style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <h3 className="text-base font-semibold text-white mb-5">{editKegiatan ? 'Edit Kegiatan' : 'Tambah Kegiatan'}</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Nama Kegiatan *</label>
-                  <input type="text" value={kegiatanForm.namaKegiatan}
-                    onChange={(e) => setKegiatanForm({ ...kegiatanForm, namaKegiatan: e.target.value })}
-                    placeholder="Masukkan nama kegiatan"
-                    className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Tanggal Kegiatan *</label>
-                  <input type="date" value={kegiatanForm.tanggalKegiatan}
-                    onChange={(e) => setKegiatanForm({ ...kegiatanForm, tanggalKegiatan: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }} />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Foto Dokumentasi</label>
-                  <div className="rounded-xl p-4 text-center"
-                    style={{ border: '2px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}>
-                    <input ref={fotoKegiatanRef} type="file" accept=".jpg,.jpeg,.png"
-                      onChange={handleUploadFotoKegiatan} className="hidden" id="fotoKegiatanUpload" />
-                    <label htmlFor="fotoKegiatanUpload" className="cursor-pointer">
-                      <div className="text-xl mb-1">📷</div>
-                      <div className="text-xs text-gray-500">{uploadingFoto ? 'Mengupload...' : 'Klik untuk upload foto'}</div>
-                    </label>
+      ))}
+    </div>
+  )
+}
+
+{/* LAIN-LAIN */ }
+{
+  activeSection === 'lainlain' && (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <div className="px-4 py-2.5 rounded-xl font-bold text-xs text-white uppercase tracking-wider flex-1 mr-3"
+          style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>LAIN-LAIN</div>
+        {isOwner && !isLocked && (
+          <button onClick={() => { setShowKegiatanForm(true); setEditKegiatan(null); setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }) }}
+            className="px-3 py-2 rounded-xl text-white text-xs font-medium whitespace-nowrap"
+            style={{ background: 'rgba(37,99,235,0.2)', border: '1px solid rgba(37,99,235,0.3)' }}>
+          </button>
+        )}
+      </div>
+      <LockBanner />
+
+      {kegiatan.length === 0 ? (
+        <p className="text-gray-600 text-sm text-center py-10">Belum ada kegiatan</p>
+      ) : (
+        <div className="space-y-3">
+          {kegiatan.map((k) => (
+            <div key={k.id} className="rounded-xl p-4"
+              style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="font-medium text-gray-200 text-sm">{k.namaKegiatan}</div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    {new Date(k.tanggalKegiatan).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                   </div>
-                  {kegiatanForm.fotoUrl && (
-                    <div className="mt-2">
-                      <img src={kegiatanForm.fotoUrl} alt="Preview"
-                        className="w-full h-28 object-cover rounded-xl"
+                  {k.fotoUrl && (
+                    <div className="mt-3">
+                      <img src={k.fotoUrl} alt={k.namaKegiatan}
+                        className="w-40 h-28 object-cover rounded-lg"
                         style={{ border: '1px solid rgba(255,255,255,0.08)' }} />
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-emerald-400 text-xs">✓ Terupload</span>
-                        <button onClick={() => setKegiatanForm({ ...kegiatanForm, fotoUrl: '', fotoName: '' })}
-                          className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
-                      </div>
+                      <a href={k.fotoUrl} target="_blank" rel="noopener noreferrer"
+                        className="text-blue-400 text-xs hover:text-blue-300 transition mt-1 block">Lihat lengkap →</a>
                     </div>
                   )}
                 </div>
-              </div>
-              <div className="flex gap-3 mt-6">
-                <button onClick={handleSaveKegiatan}
-                  className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium"
-                  style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>Simpan</button>
-                <button onClick={() => { setShowKegiatanForm(false); setEditKegiatan(null); setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }) }}
-                  className="flex-1 py-2.5 rounded-xl text-sm text-gray-400"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>Batal</button>
-              </div>
-            </div>
-          </div>
-        )
-      }
-      {
-        showApprovalModal && selectedDokumen && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
-            style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}>
-            <div className="w-full max-w-md rounded-2xl p-6"
-              style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
-
-              <h3 className="text-base font-semibold text-white mb-1">Review Dokumen</h3>
-              <p className="text-sm text-gray-500 mb-1 truncate">{selectedDokumen.fileName}</p>
-              <p className="text-xs text-gray-600 mb-5">{jenisDokumenLabel[selectedDokumen.jenisDokumen]}</p>
-
-              {/* Status saat ini */}
-              <div className="mb-4">
-                <span className="text-xs text-gray-600">Status saat ini: </span>
-                <span className={`text-xs font-medium ${selectedDokumen.status === 'APPROVED' ? 'text-emerald-400' :
-                  selectedDokumen.status === 'REJECTED' ? 'text-red-400' :
-                    'text-yellow-400'
-                  }`}>
-                  {selectedDokumen.status === 'APPROVED' ? 'Disetujui' :
-                    selectedDokumen.status === 'REJECTED' ? 'Ditolak' : 'Menunggu'}
-                </span>
-              </div>
-
-              {/* Textarea catatan */}
-              <div className="mb-5">
-                <label className="block text-xs text-gray-500 mb-1.5">
-                  Catatan untuk user <span className="text-gray-700">(opsional)</span>
-                </label>
-                <textarea
-                  value={catatanAdmin}
-                  onChange={(e) => setCatatanAdmin(e.target.value)}
-                  placeholder="Contoh: Dokumen sudah sesuai / Mohon lengkapi tanda tangan..."
-                  rows={3}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none resize-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-                />
-              </div>
-
-              {/* Tombol aksi */}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => handleApproval('APPROVED')}
-                  disabled={approvalLoading}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-50"
-                  style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.35)', color: '#34d399' }}>
-                  {approvalLoading ? '...' : '✓ Setujui'}
-                </button>
-                <button
-                  onClick={() => handleApproval('REJECTED')}
-                  disabled={approvalLoading}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-50"
-                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171' }}>
-                  {approvalLoading ? '...' : '✗ Tolak'}
-                </button>
-                <button
-                  onClick={() => { setShowApprovalModal(false); setSelectedDokumen(null); setCatatanAdmin('') }}
-                  disabled={approvalLoading}
-                  className="px-4 py-2.5 rounded-xl text-sm text-gray-500 transition disabled:opacity-50"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                  Batal
-                </button>
+                {isOwner && !isLocked && (
+                  <div className="flex gap-3 ml-4">
+                    <button onClick={() => {
+                      setEditKegiatan(k)
+                      setKegiatanForm({ namaKegiatan: k.namaKegiatan, tanggalKegiatan: k.tanggalKegiatan.split('T')[0], fotoUrl: k.fotoUrl || '', fotoName: k.fotoName || '' })
+                      setShowKegiatanForm(true)
+                    }} className="text-blue-400 text-xs hover:text-blue-300 transition">Edit</button>
+                    <button onClick={() => handleDeleteKegiatan(k.id)} className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        )
-      }
-      {/* Modal Request Edit */}
-      {showRequestEditModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
-          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}>
-          <div className="w-full max-w-md rounded-2xl p-6"
-            style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <h3 className="text-base font-semibold text-white mb-1">Ajukan Permintaan Edit</h3>
-            <p className="text-xs text-gray-500 mb-5">
-              Permintaan akan dikirim ke Admin. Admin akan membuka kunci proyek jika disetujui.
-            </p>
-
-            <div className="mb-5">
-              <label className="block text-xs text-gray-500 mb-1.5">Alasan perlu diedit</label>
-              <textarea
-                value={requestEditNote}
-                onChange={(e) => setRequestEditNote(e.target.value)}
-                placeholder="Contoh: Ada perubahan nilai kontrak..."
-                rows={3}
-                className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none resize-none"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleRequestEdit}
-                disabled={requestLoading}
-                className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium transition disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>
-                {requestLoading ? 'Mengirim...' : 'Kirim Permintaan'}
-              </button>
-              <button
-                onClick={() => { setShowRequestEditModal(false); setRequestEditNote('') }}
-                className="px-4 py-2.5 rounded-xl text-sm text-gray-400 transition"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                Batal
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
       )}
+    </div>
+  )
+}
+      </main >
+
+  {/* Modal Donor */ }
+{
+  showDonorForm && (
+    <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
+      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
+      <div className="w-full max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto"
+        style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <h3 className="text-base font-semibold text-white mb-5">{editDonor ? 'Edit Donor' : 'Tambah Donor'}</h3>
+        <div className="space-y-3">
+          {[
+            { label: 'Nama Yayasan/Lembaga', key: 'nama' },
+            { label: 'Alamat Lengkap', key: 'alamat' },
+            { label: 'Tahun Pendirian', key: 'tahunPendirian' },
+            { label: 'Lama Usaha (tahun)', key: 'lamaUsaha' },
+            { label: 'Penanggung Jawab', key: 'penanggungjawab' },
+          ].map(({ label, key }) => (
+            <div key={key}>
+              <label className="block text-xs text-gray-500 mb-1.5">{label}</label>
+              <input type={['tahunPendirian', 'lamaUsaha'].includes(key) ? 'number' : 'text'}
+                value={donorForm[key as keyof typeof donorForm]}
+                onChange={(e) => setDonorForm({ ...donorForm, [key]: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-3 mt-6">
+          <button onClick={handleSaveDonor}
+            className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium"
+            style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>Simpan</button>
+          <button onClick={() => { setShowDonorForm(false); setEditDonor(null) }}
+            className="flex-1 py-2.5 rounded-xl text-sm text-gray-400"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>Batal</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+{/* Modal Transaksi */ }
+{
+  showTransaksiForm && (
+    <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
+      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
+      <div className="w-full max-w-2xl rounded-2xl p-6 max-h-[90vh] overflow-y-auto"
+        style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <h3 className="text-base font-semibold text-white mb-5">
+          {editTransaksi ? 'Edit Pembayaran' : 'Tambah Pembayaran'}
+        </h3>
+
+        {/* Grid 3 kolom seperti foto */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              Nama Program <span className="text-red-400">*</span>
+            </label>
+            <input type="text"
+              placeholder="ketik..."
+              value={transaksiForm.namaProgram}
+              onChange={(e) => setTransaksiForm({ ...transaksiForm, namaProgram: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">Kegiatan</label>
+            <input type="text"
+              placeholder="ketik..."
+              value={transaksiForm.kegiatan}
+              onChange={(e) => setTransaksiForm({ ...transaksiForm, kegiatan: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              Staff CA <span className="text-red-400">*</span>
+            </label>
+            <input type="text"
+              placeholder="ketik..."
+              value={transaksiForm.staffCA}
+              onChange={(e) => setTransaksiForm({ ...transaksiForm, staffCA: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              Tanggal Pengajuan <span className="text-red-400">*</span>
+            </label>
+            <input type="date"
+              value={transaksiForm.tanggalPengajuan}
+              onChange={(e) => setTransaksiForm({ ...transaksiForm, tanggalPengajuan: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">Tanggal Pertanggungjawaban</label>
+            <input type="date"
+              value={transaksiForm.tanggalPertanggungjawaban}
+              onChange={(e) => setTransaksiForm({ ...transaksiForm, tanggalPertanggungjawaban: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">Kelengkapan Dokumen</label>
+            <select
+              value={transaksiForm.kelengkapanDokumen}
+              onChange={(e) => setTransaksiForm({ ...transaksiForm, kelengkapanDokumen: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }}>
+              <option value="Lengkap" className="bg-gray-900">Lengkap</option>
+              <option value="Kurang" className="bg-gray-900">Kurang</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">Nominal Transaksi</label>
+            <input type="number"
+              placeholder="0"
+              value={transaksiForm.jumlah}
+              onChange={(e) => setTransaksiForm({ ...transaksiForm, jumlah: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">Status</label>
+            <select
+              value={transaksiForm.statusTransaksi}
+              onChange={(e) => setTransaksiForm({ ...transaksiForm, statusTransaksi: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }}>
+              <option value="Transfer successful" className="bg-gray-900">Transfer successful</option>
+              <option value="Settlement" className="bg-gray-900">Settlement</option>
+              <option value="clear" className="bg-gray-900">clear</option>
+              <option value="Pending" className="bg-gray-900">Pending</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-xs text-gray-500 mb-1.5">Keterangan</label>
+          <input type="text"
+            placeholder="Keterangan tambahan..."
+            value={transaksiForm.keterangan}
+            onChange={(e) => setTransaksiForm({ ...transaksiForm, keterangan: e.target.value })}
+            className="w-full px-3 py-2 rounded-lg text-white text-sm outline-none"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }} />
+        </div>
+
+        {/* Bukti Pembayaran */}
+        <div className="mb-5">
+          <label className="block text-xs text-gray-500 mb-1.5">Bukti Pembayaran</label>
+          <div className="rounded-xl p-3 text-center"
+            style={{ border: '2px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}>
+            <input ref={buktiBayarRef} type="file" accept=".jpg,.jpeg,.png,.pdf"
+              onChange={handleUploadBuktiBayar} className="hidden" id="buktiBayarUpload" />
+            <label htmlFor="buktiBayarUpload" className="cursor-pointer">
+              <div className="text-lg mb-1">📎</div>
+              <div className="text-xs text-gray-500">{uploadingBukti ? 'Mengupload...' : 'Klik untuk upload'}</div>
+            </label>
+          </div>
+          {transaksiForm.buktiBayarUrl && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-emerald-400 text-xs">✓ Terupload</span>
+              <a href={transaksiForm.buktiBayarUrl} target="_blank" rel="noopener noreferrer"
+                className="text-blue-400 text-xs hover:text-blue-300">Lihat →</a>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3">
+          <button onClick={handleSaveTransaksi}
+            className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium"
+            style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>
+            Simpan
+          </button>
+          <button onClick={() => { setShowTransaksiForm(false); setEditTransaksi(null); resetTransaksiForm() }}
+            className="flex-1 py-2.5 rounded-xl text-sm text-gray-400"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            Batal
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+{/* Modal Kegiatan */ }
+{
+  showKegiatanForm && (
+    <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
+      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
+      <div className="w-full max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto"
+        style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <h3 className="text-base font-semibold text-white mb-5">{editKegiatan ? 'Edit Kegiatan' : 'Tambah Kegiatan'}</h3>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">Nama Kegiatan *</label>
+            <input type="text" value={kegiatanForm.namaKegiatan}
+              onChange={(e) => setKegiatanForm({ ...kegiatanForm, namaKegiatan: e.target.value })}
+              placeholder="Masukkan nama kegiatan"
+              className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">Tanggal Kegiatan *</label>
+            <input type="date" value={kegiatanForm.tanggalKegiatan}
+              onChange={(e) => setKegiatanForm({ ...kegiatanForm, tanggalKegiatan: e.target.value })}
+              className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">Foto Dokumentasi</label>
+            <div className="rounded-xl p-4 text-center"
+              style={{ border: '2px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}>
+              <input ref={fotoKegiatanRef} type="file" accept=".jpg,.jpeg,.png"
+                onChange={handleUploadFotoKegiatan} className="hidden" id="fotoKegiatanUpload" />
+              <label htmlFor="fotoKegiatanUpload" className="cursor-pointer">
+                <div className="text-xl mb-1">📷</div>
+                <div className="text-xs text-gray-500">{uploadingFoto ? 'Mengupload...' : 'Klik untuk upload foto'}</div>
+              </label>
+            </div>
+            {kegiatanForm.fotoUrl && (
+              <div className="mt-2">
+                <img src={kegiatanForm.fotoUrl} alt="Preview"
+                  className="w-full h-28 object-cover rounded-xl"
+                  style={{ border: '1px solid rgba(255,255,255,0.08)' }} />
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-emerald-400 text-xs">✓ Terupload</span>
+                  <button onClick={() => setKegiatanForm({ ...kegiatanForm, fotoUrl: '', fotoName: '' })}
+                    className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-3 mt-6">
+          <button onClick={handleSaveKegiatan}
+            className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium"
+            style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>Simpan</button>
+          <button onClick={() => { setShowKegiatanForm(false); setEditKegiatan(null); setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }) }}
+            className="flex-1 py-2.5 rounded-xl text-sm text-gray-400"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>Batal</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+{
+  showApprovalModal && selectedDokumen && (
+    <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
+      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}>
+      <div className="w-full max-w-md rounded-2xl p-6"
+        style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
+
+        <h3 className="text-base font-semibold text-white mb-1">Review Dokumen</h3>
+        <p className="text-sm text-gray-500 mb-1 truncate">{selectedDokumen.fileName}</p>
+        <p className="text-xs text-gray-600 mb-5">{jenisDokumenLabel[selectedDokumen.jenisDokumen]}</p>
+
+        {/* Status saat ini */}
+        <div className="mb-4">
+          <span className="text-xs text-gray-600">Status saat ini: </span>
+          <span className={`text-xs font-medium ${selectedDokumen.status === 'APPROVED' ? 'text-emerald-400' :
+            selectedDokumen.status === 'REJECTED' ? 'text-red-400' :
+              'text-yellow-400'
+            }`}>
+            {selectedDokumen.status === 'APPROVED' ? 'Disetujui' :
+              selectedDokumen.status === 'REJECTED' ? 'Ditolak' : 'Menunggu'}
+          </span>
+        </div>
+
+        {/* Textarea catatan */}
+        <div className="mb-5">
+          <label className="block text-xs text-gray-500 mb-1.5">
+            Catatan untuk user <span className="text-gray-700">(opsional)</span>
+          </label>
+          <textarea
+            value={catatanAdmin}
+            onChange={(e) => setCatatanAdmin(e.target.value)}
+            placeholder="Contoh: Dokumen sudah sesuai / Mohon lengkapi tanda tangan..."
+            rows={3}
+            className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none resize-none"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          />
+        </div>
+
+        {/* Tombol aksi */}
+        <div className="flex gap-3">
+          <button
+            onClick={() => handleApproval('APPROVED')}
+            disabled={approvalLoading}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-50"
+            style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.35)', color: '#34d399' }}>
+            {approvalLoading ? '...' : '✓ Setujui'}
+          </button>
+          <button
+            onClick={() => handleApproval('REJECTED')}
+            disabled={approvalLoading}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-50"
+            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171' }}>
+            {approvalLoading ? '...' : '✗ Tolak'}
+          </button>
+          <button
+            onClick={() => { setShowApprovalModal(false); setSelectedDokumen(null); setCatatanAdmin('') }}
+            disabled={approvalLoading}
+            className="px-4 py-2.5 rounded-xl text-sm text-gray-500 transition disabled:opacity-50"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            Batal
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+{/* Modal Request Edit */ }
+{
+  showRequestEditModal && (
+    <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
+      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}>
+      <div className="w-full max-w-md rounded-2xl p-6"
+        style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <h3 className="text-base font-semibold text-white mb-1">Ajukan Permintaan Edit</h3>
+        <p className="text-xs text-gray-500 mb-5">
+          Permintaan akan dikirim ke Admin. Admin akan membuka kunci proyek jika disetujui.
+        </p>
+
+        <div className="mb-5">
+          <label className="block text-xs text-gray-500 mb-1.5">Alasan perlu diedit</label>
+          <textarea
+            value={requestEditNote}
+            onChange={(e) => setRequestEditNote(e.target.value)}
+            placeholder="Contoh: Ada perubahan nilai kontrak..."
+            rows={3}
+            className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none resize-none"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          />
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={handleRequestEdit}
+            disabled={requestLoading}
+            className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium transition disabled:opacity-50"
+            style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>
+            {requestLoading ? 'Mengirim...' : 'Kirim Permintaan'}
+          </button>
+          <button
+            onClick={() => { setShowRequestEditModal(false); setRequestEditNote('') }}
+            className="px-4 py-2.5 rounded-xl text-sm text-gray-400 transition"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            Batal
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
     </div >
   )
 }
