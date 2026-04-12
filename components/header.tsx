@@ -22,6 +22,8 @@ export default function Header() {
   const [notifs, setNotifs] = useState<Notif[]>([])
   const [showNotif, setShowNotif] = useState(false)
   const notifRef = useRef<HTMLDivElement>(null)
+  const [headerHeight, setHeaderHeight] = useState(64)
+  const headerRef = useRef<HTMLElement>(null)
 
   const unread = notifs.filter(n => !n.isRead).length
 
@@ -41,6 +43,14 @@ export default function Header() {
     }
   }, [session])
 
+  // Hitung tinggi header untuk posisi dropdown
+  useEffect(() => {
+    if (headerRef.current) {
+      setHeaderHeight(headerRef.current.offsetHeight)
+    }
+  }, [])
+
+  // Tutup notif saat klik di luar
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
@@ -52,170 +62,299 @@ export default function Header() {
   }, [])
 
   const handleOpenNotif = async () => {
-    setShowNotif(!showNotif)
+    setShowNotif(prev => !prev)
     if (!showNotif && unread > 0) {
       await fetch('/api/notifikasi/read', { method: 'PUT' })
       setNotifs(prev => prev.map(n => ({ ...n, isRead: true })))
+      // Hapus notif yang sudah dibaca setelah 3 detik
       setTimeout(async () => {
         await fetch('/api/notifikasi', { method: 'DELETE' })
         fetchNotifs()
-      }, 5000)
+      }, 3000)
     }
   }
+
+  const handleNotifClick = (n: Notif) => {
+    router.push(`/proyek/${n.projectId}`)
+    setShowNotif(false)
+  }
+
+  const statusConfig: Record<string, { icon: string; label: string; color: string }> = {
+    APPROVED: { icon: '✅', label: 'Dokumen disetujui', color: '#34d399' },
+    REJECTED: { icon: '❌', label: 'Dokumen ditolak', color: '#f87171' },
+    NEEDS_REVIEW: { icon: '📋', label: 'Dokumen butuh review', color: '#facc15' },
+    REQUEST_EDIT: { icon: '✏️', label: 'Permintaan edit proyek', color: '#a78bfa' },
+  }
+
   return (
-    <header
-      className="px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-40"
-      style={{
-        background: 'rgba(3,7,18,0.85)',
-        borderBottom: '1px solid rgba(37,99,235,0.2)',
-        backdropFilter: 'blur(20px)',
-        boxShadow: '0 1px 40px rgba(37,99,235,0.08), 0 0 0 1px rgba(255,255,255,0.03)',
-      }}
-    >
-      {/* Logo dengan glow */}
-      <div className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 relative cursor-pointer"
-        onClick={() => router.push('/dashboard')}>
-        <Image
-          src="/logopupuk.png"
-          alt="Logo"
-          fill
-          sizes="40px"
-          priority
-          className="object-contain"
-        />
-      </div>
-
-      <div className="flex items-center gap-2 sm:gap-4 ml-2 flex-1 justify-end">
-        <div className="hidden sm:block px-3 py-1 rounded-full text-xs text-gray-400 max-w-[160px] truncate"
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          {session?.user?.email}
+    <>
+      <header
+        ref={headerRef}
+        className="sticky top-0 z-40 flex items-center justify-between"
+        style={{
+          background: 'rgba(3,7,18,0.9)',
+          borderBottom: '1px solid rgba(37,99,235,0.15)',
+          WebkitBackdropFilter: 'blur(20px)',
+          backdropFilter: 'blur(20px)',
+          boxShadow: '0 1px 30px rgba(37,99,235,0.08)',
+          paddingTop: 'calc(env(safe-area-inset-top) + 0.6rem)',
+          paddingBottom: '0.6rem',
+          paddingLeft: 'calc(env(safe-area-inset-left) + 1rem)',
+          paddingRight: 'calc(env(safe-area-inset-right) + 1rem)',
+        }}
+      >
+        {/* Logo */}
+        <div
+          className="flex-shrink-0 relative cursor-pointer"
+          onClick={() => router.push('/dashboard')}
+          style={{ width: 36, height: 36 }}
+        >
+          <Image
+            src="/logopupuk.png"
+            alt="Logo"
+            fill
+            sizes="36px"
+            priority
+            className="object-contain"
+            style={{ filter: 'drop-shadow(0 0 10px rgba(59,130,246,0.7))' }}
+          />
         </div>
 
-        {[
-          { label: 'Home', path: '/dashboard' },
-          { label: 'Report', path: '/report' },
-        ].map(({ label, path }) => (
-          <button key={path} onClick={() => router.push(path)}
-            className="text-gray-400 hover:text-white text-xs sm:text-sm transition whitespace-nowrap"
-            style={{ textShadow: 'none' }}
-            onMouseEnter={e => (e.currentTarget.style.textShadow = '0 0 8px rgba(96,165,250,0.8)')}
-            onMouseLeave={e => (e.currentTarget.style.textShadow = 'none')}>
-            {label}
-          </button>
-        ))}
+        {/* Nav links + Bell */}
+        <div className="flex items-center gap-1 sm:gap-3 ml-2 flex-1 justify-end">
+          {/* Email — hidden di mobile kecil */}
+          <div className="hidden sm:block px-3 py-1 rounded-full text-xs text-gray-400 max-w-[140px] truncate"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            {session?.user?.email}
+          </div>
 
-        {(session?.user as any)?.role === 'ADMIN' && (
-          <button onClick={() => router.push('/users')}
-            className="text-gray-400 hover:text-white text-xs sm:text-sm transition whitespace-nowrap"
-            onMouseEnter={e => (e.currentTarget.style.textShadow = '0 0 8px rgba(96,165,250,0.8)')}
-            onMouseLeave={e => (e.currentTarget.style.textShadow = 'none')}>
-            Users
-          </button>
-        )}
+          {/* Nav buttons */}
+          {[
+            { label: 'Home', path: '/dashboard' },
+            { label: 'Report', path: '/report' },
+          ].map(({ label, path }) => (
+            <button
+              key={path}
+              onClick={() => router.push(path)}
+              className="text-gray-400 hover:text-white text-xs sm:text-sm transition whitespace-nowrap px-1"
+              style={{ minHeight: '44px' }}
+            >
+              {label}
+            </button>
+          ))}
 
-        {/* Bell dengan glow */}
-        <div className="relative" ref={notifRef}>
-          <button onClick={handleOpenNotif}
-            className="relative w-8 h-8 flex items-center justify-center rounded-lg transition"
-            style={{
-              background: showNotif ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.04)',
-              border: showNotif ? '1px solid rgba(37,99,235,0.4)' : '1px solid rgba(255,255,255,0.08)',
-              boxShadow: showNotif ? '0 0 12px rgba(37,99,235,0.3)' : 'none'
-            }}>
-            <span className="text-sm">🔔</span>
-            {unread > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center"
-                style={{
-                  background: '#ef4444',
-                  fontSize: '9px',
-                  fontWeight: 'bold',
-                  boxShadow: '0 0 8px rgba(239,68,68,0.6)'
-                }}>
-                {unread > 9 ? '9+' : unread}
-              </span>
-            )}
-          </button>
-
-          {/* Dropdown tetap sama */}
-          {showNotif && (
-            <div className="absolute right-0 mt-2 w-80 rounded-xl overflow-hidden z-50"
-              style={{
-                background: '#0f172a',
-                border: '1px solid rgba(37,99,235,0.2)',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(37,99,235,0.1)'
-              }}>
-              <div className="px-4 py-3 flex items-center justify-between"
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <span className="text-sm font-semibold text-white">Notifikasi</span>
-                {unread > 0 && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">
-                    {unread} baru
-                  </span>
-                )}
-              </div>
-              <div className="max-h-80 overflow-y-auto">
-                {notifs.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-gray-600 text-sm">Belum ada notifikasi</div>
-                ) : notifs.map((n) => (
-                  <button key={n.id}
-                    onClick={() => { router.push(`/proyek/${n.projectId}`); setShowNotif(false) }}
-                    className="w-full px-4 py-3 text-left transition hover:bg-white/[0.03]"
-                    style={{
-                      borderBottom: '1px solid rgba(255,255,255,0.04)',
-                      background: !n.isRead ? 'rgba(37,99,235,0.04)' : 'transparent'
-                    }}>
-                    <div className="flex items-start gap-3">
-                      <span className="text-lg flex-shrink-0 mt-0.5">
-                        {n.status === 'APPROVED' ? '✅' :
-                          n.status === 'REJECTED' ? '❌' :
-                            n.status === 'NEEDS_REVIEW' ? '📋' :
-                              n.status === 'REQUEST_EDIT' ? '✏️' : '🔔'}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs text-gray-300 font-medium truncate">{n.fileName}</div>
-                        <div className="text-xs text-gray-600 mt-0.5 truncate">{n.proyekNama}</div>
-                        <div className={`text-xs mt-1 font-medium ${n.status === 'APPROVED' ? 'text-emerald-400' :
-                          n.status === 'REJECTED' ? 'text-red-400' :
-                            n.status === 'NEEDS_REVIEW' ? 'text-yellow-400' :
-                              n.status === 'REQUEST_EDIT' ? 'text-purple-400' : 'text-gray-400'
-                          }`}>
-                          {n.status === 'APPROVED' ? '✅ Dokumen disetujui' :
-                            n.status === 'REJECTED' ? '❌ Dokumen ditolak' :
-                              n.status === 'NEEDS_REVIEW' ? '⏳ Dokumen butuh review' :
-                                n.status === 'REQUEST_EDIT' ? '✏️ Permintaan edit proyek' : n.status}
-                        </div>
-                        {n.catatanAdmin && (
-                          <div className="text-xs text-gray-500 mt-0.5 italic truncate">"{n.catatanAdmin}"</div>
-                        )}
-                        <div className="text-xs text-gray-700 mt-1">
-                          {new Date(n.createdAt).toLocaleDateString('id-ID', {
-                            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-                          })}
-                        </div>
-                      </div>
-                      {!n.isRead && (
-                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5"
-                          style={{ background: '#3b82f6', boxShadow: '0 0 6px rgba(59,130,246,0.8)' }} />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+          {(session?.user as any)?.role === 'ADMIN' && (
+            <button
+              onClick={() => router.push('/users')}
+              className="text-gray-400 hover:text-white text-xs sm:text-sm transition whitespace-nowrap px-1"
+              style={{ minHeight: '44px' }}
+            >
+              Users
+            </button>
           )}
-        </div>
 
-        <button onClick={() => signOut({ callbackUrl: '/login' })}
-          className="text-xs sm:text-sm px-3 py-1.5 rounded-lg text-gray-300 transition whitespace-nowrap"
-          style={{
-            background: 'rgba(239,68,68,0.1)',
-            border: '1px solid rgba(239,68,68,0.2)',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 0 12px rgba(239,68,68,0.3)')}
-          onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}>
-          Logout
-        </button>
-      </div>
-    </header>
+          {/* Bell Notifikasi */}
+          <div className="relative" ref={notifRef}>
+            <button
+              onClick={handleOpenNotif}
+              className="relative flex items-center justify-center rounded-xl transition"
+              style={{
+                width: 40,
+                height: 40,
+                background: showNotif ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.05)',
+                border: showNotif ? '1px solid rgba(37,99,235,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                boxShadow: showNotif ? '0 0 12px rgba(37,99,235,0.3)' : 'none',
+              }}
+            >
+              <span style={{ fontSize: 16 }}>🔔</span>
+              {unread > 0 && (
+                <span
+                  className="absolute flex items-center justify-center text-white font-bold"
+                  style={{
+                    top: -4, right: -4,
+                    width: 18, height: 18,
+                    borderRadius: '50%',
+                    background: '#ef4444',
+                    fontSize: 9,
+                    boxShadow: '0 0 8px rgba(239,68,68,0.6)',
+                  }}
+                >
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Logout */}
+          <button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="text-xs sm:text-sm px-2 sm:px-3 rounded-xl text-gray-300 transition whitespace-nowrap"
+            style={{
+              background: 'rgba(239,68,68,0.1)',
+              border: '1px solid rgba(239,68,68,0.2)',
+              minHeight: '40px',
+            }}
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+
+      {/* Dropdown Notifikasi — FIXED, full width, iOS-safe */}
+      {showNotif && (
+        <>
+          {/* Overlay transparan untuk tutup saat tap di luar */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setShowNotif(false)}
+          />
+
+          {/* Panel notifikasi */}
+          <div
+            className="fixed z-50"
+            style={{
+              top: headerHeight,
+              left: 'calc(env(safe-area-inset-left) + 8px)',
+              right: 'calc(env(safe-area-inset-right) + 8px)',
+            }}
+          >
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{
+                background: '#0d1424',
+                border: '1px solid rgba(37,99,235,0.2)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(37,99,235,0.08)',
+                maxHeight: '65dvh',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              {/* Header panel */}
+              <div
+                className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-white">Notifikasi</span>
+                  {unread > 0 && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">
+                      {unread} baru
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowNotif(false)}
+                  className="flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-300 transition"
+                  style={{
+                    width: 32, height: 32,
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    fontSize: 12,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* List notif */}
+              <div
+                className="overflow-y-auto flex-1"
+                style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+              >
+                {notifs.length === 0 ? (
+                  <div className="px-4 py-10 text-center">
+                    <div className="text-2xl mb-2">🔔</div>
+                    <div className="text-gray-600 text-sm">Belum ada notifikasi</div>
+                  </div>
+                ) : notifs.map((n) => {
+                  const cfg = statusConfig[n.status] || { icon: '🔔', label: n.status, color: '#9ca3af' }
+                  return (
+                    <button
+                      key={n.id}
+                      onClick={() => handleNotifClick(n)}
+                      className="w-full text-left transition"
+                      style={{
+                        borderBottom: '1px solid rgba(255,255,255,0.04)',
+                        background: !n.isRead ? 'rgba(37,99,235,0.05)' : 'transparent',
+                        minHeight: '64px',
+                        padding: '12px 16px',
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        {/* Icon */}
+                        <span className="flex-shrink-0 mt-0.5" style={{ fontSize: 20 }}>
+                          {cfg.icon}
+                        </span>
+
+                        {/* Konten */}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-semibold text-gray-200 truncate">
+                            {n.fileName}
+                          </div>
+                          {n.proyekNama && (
+                            <div className="text-xs text-gray-500 mt-0.5 truncate">
+                              {n.proyekNama}
+                            </div>
+                          )}
+                          <div className="text-xs font-medium mt-1" style={{ color: cfg.color }}>
+                            {cfg.label}
+                          </div>
+                          {n.catatanAdmin && (
+                            <div className="text-xs text-gray-500 mt-0.5 italic truncate">
+                              "{n.catatanAdmin}"
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-700 mt-1">
+                            {new Date(n.createdAt).toLocaleDateString('id-ID', {
+                              day: '2-digit', month: 'short',
+                              hour: '2-digit', minute: '2-digit'
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Unread dot */}
+                        {!n.isRead && (
+                          <div
+                            className="flex-shrink-0 rounded-full mt-1"
+                            style={{
+                              width: 8, height: 8,
+                              background: '#3b82f6',
+                              boxShadow: '0 0 6px rgba(59,130,246,0.8)',
+                            }}
+                          />
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Footer — tandai semua sudah dibaca */}
+              {notifs.length > 0 && (
+                <div
+                  className="flex-shrink-0 px-4 py-2"
+                  style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                  <button
+                    onClick={async () => {
+                      await fetch('/api/notifikasi/read', { method: 'PUT' })
+                      setNotifs(prev => prev.map(n => ({ ...n, isRead: true })))
+                      setTimeout(async () => {
+                        await fetch('/api/notifikasi', { method: 'DELETE' })
+                        fetchNotifs()
+                        setShowNotif(false)
+                      }, 500)
+                    }}
+                    className="w-full text-xs text-gray-500 hover:text-gray-300 transition py-1"
+                  >
+                    Tandai semua sudah dibaca & hapus
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </>
   )
 }

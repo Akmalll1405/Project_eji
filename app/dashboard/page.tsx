@@ -243,8 +243,11 @@ const handleRejectRequest = async (projectId: string) => {
     <div style={{ minHeight: '100dvh', background: '#030712' }}>
       <Header />
 
-      <main className="px-4 sm:px-6 py-4 sm:py-6">
-
+      <main className="px-4 sm:px-6 py-4 sm:py-6"
+          style={{
+            paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))',
+            paddingLeft: 'calc(1rem + env(safe-area-inset-left))',
+            paddingRight: 'calc(1rem + env(safe-area-inset-right))',}}>
         {/* Summary Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
