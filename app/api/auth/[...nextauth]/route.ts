@@ -15,37 +15,30 @@ export const authOptions: NextAuthOptions = {
         try {
           if (!credentials?.email || !credentials?.password) return null
 
-          const user = await prisma.user.findUnique({
-            where: { 
-              email: credentials.email 
-            },
-            select: {
-              id: true,
-              email: true,
-              name: true,
-              password: true,
-              role: true
-            }
-          })
+          const safeEmail = credentials.email.replace(/'/g, "''")
 
-          if (!user) return null
+          // WAJIB pakai $queryRawUnsafe — jangan pernah pakai prisma.user.findUnique()
+          const users = await prisma.$queryRawUnsafe(`
+            SELECT id, email, name, password, role
+            FROM "User"
+            WHERE email = '${safeEmail}'
+            LIMIT 1
+          `) as any[]
 
-          const passwordMatch = await bcrypt.compare(
-            credentials.password,
-            user.password
-          )
+          if (!users || users.length === 0) return null
 
+          const user = users[0]
+          const passwordMatch = await bcrypt.compare(credentials.password, user.password)
           if (!passwordMatch) return null
 
           return {
-            id: user.id.toString(), 
+            id: user.id,
             email: user.email,
             name: user.name,
             role: user.role
           }
-
         } catch (error) {
-          console.error('Auth error:', error)
+          console.error('[AUTH] Error:', error)
           return null
         }
       }
@@ -54,26 +47,23 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role as string
-        token.id = user.id as string
+        token.role = (user as any).role
+        token.id = user.id
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
-        ;(session.user as any).role = token.role as string
-        ;(session.user as any).id = token.id as string
+        (session.user as any).role = token.role
+        ;(session.user as any).id = token.id
       }
       return session
     }
   },
-  pages: {
-    signIn: '/login',
-    error: '/login'
-  },
-  session: { strategy: 'jwt' },
+  pages: { signIn: '/login', error: '/login' },
+  session: { strategy: 'jwt', maxAge: 30 * 24 * 60 * 60 },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === 'development'
+  debug: false
 }
 
 const handler = NextAuth(authOptions)
