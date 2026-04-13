@@ -11,14 +11,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const { id } = await params
 
-    // Hapus saja notif REQUEST_EDIT untuk project ini
     await prisma.$queryRawUnsafe(`
       DELETE FROM "Notification"
       WHERE "projectId" = '${id}'
       AND "status" = 'REQUEST_EDIT'
     `)
 
-    // Kirim notif penolakan ke owner project
     const projekData = await prisma.$queryRawUnsafe(`
       SELECT p.id, p.nama, p."userId"
       FROM "Project" p

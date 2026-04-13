@@ -10,21 +10,26 @@ export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const userId = (session.user as any).id
-    const role = (session.user as any).role
+    const proyek = await prisma.project.findMany({
+      select: {
+        id: true, nama: true, jenis: true, nilai: true,
+        penanggungjawab: true, wilayah: true, sektor: true,
+        tanggalMulai: true, tanggalSelesai: true, status: true,
+        updatedAt: true, createdAt: true, userId: true,
+        user: { select: { id: true, name: true } }
+      },
+      orderBy: { updatedAt: 'desc' }
+    })
 
-    const whereClause = role === 'ADMIN' ? '' : `WHERE p."userId" = '${userId}'`
+    const result = proyek.map(p => ({
+      ...p,
+      userName: p.user?.name || 'Unknown'
+    }))
 
-    const proyek = await prisma.$queryRawUnsafe(`
-      SELECT p.*, u.name as "userName", u.id as "userId"
-      FROM "Project" p
-      LEFT JOIN "User" u ON p."userId" = u.id
-      ORDER BY p."updatedAt" DESC
-    `)
-
-    return NextResponse.json(proyek)
+    console.log('Dashboard: Semua project:', result.length)
+    return NextResponse.json(result)
   } catch (error) {
-    console.error('GET Error:', error)
+    console.error('GET /proyek Error:', error)
     return NextResponse.json({ error: String(error) }, { status: 500 })
   }
 }

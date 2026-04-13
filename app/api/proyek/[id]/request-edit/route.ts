@@ -15,7 +15,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const userId = (session.user as any).id
     const note = (body.note || '').replace(/'/g, "''")
 
-    // Ambil semua admin
     const admins = await prisma.$queryRawUnsafe(`
       SELECT id FROM "User" WHERE role = 'ADMIN'
     `) as any[]
@@ -26,7 +25,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const proyekNama = proyek[0]?.nama || 'Proyek'
 
-    // Kirim notifikasi ke semua admin
     for (const admin of admins) {
       await prisma.$queryRawUnsafe(`
         INSERT INTO "Notification" ("id", "userId", "projectId", "dokumenId", "fileName", "status", "catatanAdmin", "isRead", "createdAt")

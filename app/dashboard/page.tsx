@@ -245,7 +245,7 @@ const handleRejectRequest = async (projectId: string) => {
 
       <main className="px-4 sm:px-6 py-4 sm:py-6"
           style={{
-            paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))',
+            paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
             paddingLeft: 'calc(1rem + env(safe-area-inset-left))',
             paddingRight: 'calc(1rem + env(safe-area-inset-right))',}}>
         {/* Summary Cards */}

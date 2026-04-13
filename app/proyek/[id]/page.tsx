@@ -98,6 +98,32 @@ const inputStyle = (disabled = false): React.CSSProperties => ({
   WebkitAppearance: 'none',
 })
 
+  // iOS-safe modal wrapper
+  const ModalWrapper = ({ children, onClose }: { children: React.ReactNode, onClose: () => void }) => (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.75)', WebkitBackdropFilter: 'blur(6px)', backdropFilter: 'blur(6px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      {children}
+    </div>
+  )
+
+  const ModalContent = ({ children, wide = false }: { children: React.ReactNode, wide?: boolean }) => (
+    <div
+      className={`w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'} rounded-t-3xl sm:rounded-2xl overflow-y-auto`}
+      style={{
+        background: '#0f172a',
+        border: '1px solid rgba(255,255,255,0.08)',
+        maxHeight: '92dvh',
+        paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
+        WebkitOverflowScrolling: 'touch',
+      } as React.CSSProperties}
+    >
+      {children}
+    </div>
+  )
+  
 export default function DetailProyekPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -460,7 +486,7 @@ export default function DetailProyekPage() {
   const isAdmin = (session?.user as any)?.role === 'ADMIN'
   const canEdit = isOwner && !isLocked
 
-  const LockBanner = () => {
+const lockBanner = (() => {
     if (isAdmin) return null
     if (isLocked && isOwner) return (
       <div className="mb-4 px-4 py-3 rounded-xl"
@@ -485,33 +511,7 @@ export default function DetailProyekPage() {
       </div>
     )
     return null
-  }
-
-  // iOS-safe modal wrapper
-  const ModalWrapper = ({ children, onClose }: { children: React.ReactNode, onClose: () => void }) => (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.75)', WebkitBackdropFilter: 'blur(6px)', backdropFilter: 'blur(6px)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      {children}
-    </div>
-  )
-
-  const ModalContent = ({ children, wide = false }: { children: React.ReactNode, wide?: boolean }) => (
-    <div
-      className={`w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'} rounded-t-3xl sm:rounded-2xl overflow-y-auto`}
-      style={{
-        background: '#0f172a',
-        border: '1px solid rgba(255,255,255,0.08)',
-        maxHeight: '92dvh',
-        paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
-        WebkitOverflowScrolling: 'touch',
-      } as React.CSSProperties}
-    >
-      {children}
-    </div>
-  )
+  })()
 
   if (loading) return <Loading />
 
@@ -520,7 +520,7 @@ export default function DetailProyekPage() {
       <Header />
 
       <main
-        className="py-4 sm:py-6 max-w-5xl mx-auto"
+        className="py-4 sm:py-6 py-4 sm:py-6"
         style={{
           paddingLeft: 'calc(1rem + env(safe-area-inset-left))',
           paddingRight: 'calc(1rem + env(safe-area-inset-right))',
@@ -596,7 +596,7 @@ export default function DetailProyekPage() {
           <div>
             <div className="px-4 py-2.5 rounded-xl font-bold text-xs mb-4 text-white uppercase tracking-wider"
               style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>DATA PROJEK</div>
-            <LockBanner />
+            {lockBanner}
             {!isOwner && !isLocked && (
               <div className="mb-4 px-4 py-3 rounded-xl text-sm"
                 style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
@@ -682,7 +682,7 @@ export default function DetailProyekPage() {
                 </button>
               )}
             </div>
-            <LockBanner />
+            {lockBanner}
             {donors.length === 0 ? (
               <p className="text-gray-600 text-sm text-center py-10">Belum ada data pendonor</p>
             ) : donors.map((d) => (
@@ -722,7 +722,7 @@ export default function DetailProyekPage() {
           <div>
             <div className="px-4 py-2.5 rounded-xl font-bold text-xs mb-4 text-white uppercase tracking-wider"
               style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>UPLOAD DOKUMEN</div>
-            <LockBanner />
+            {lockBanner}
 
             {isOwner && !isLocked && (
               <div className="rounded-xl p-4 mb-5"
@@ -855,7 +855,7 @@ export default function DetailProyekPage() {
                 </button>
               )}
             </div>
-            <LockBanner />
+            {lockBanner}
 
             <div className="rounded-xl p-4 mb-4"
               style={{ background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.15)' }}>
@@ -954,7 +954,7 @@ export default function DetailProyekPage() {
                 </button>
               )}
             </div>
-            <LockBanner />
+            {lockBanner}
 
             {kegiatan.length === 0 ? (
               <p className="text-gray-600 text-sm text-center py-10">Belum ada kegiatan</p>

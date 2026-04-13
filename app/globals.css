@@ -39,3 +39,47 @@ html, body {
 .animate-fadeIn {
   animation: fadeIn 0.4s ease-in-out;
 }
+
+/* Reset & iOS base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background-color: #030712;
+}
+
+body {
+  background-color: #030712;
+  color: #fff;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overscroll-behavior-y: none;
+}
+
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea{
+    font-size: 16px !important;
+  }
+}
+
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+select {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+button {
+  -webkit-touch-callout: none;
+  cursor: pointer;
+}
+
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; -ms-overflow-style: none; }

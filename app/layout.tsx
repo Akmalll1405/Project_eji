@@ -10,9 +10,9 @@ export const metadata: Metadata = {
   description: 'Aplikasi Manajemen Proyek',
   appleWebApp: {
     capable: true,
+    title: 'Manajemen Proyek',
     statusBarStyle: 'black-translucent',
-    title: 'Manajemen Proyek'
-  }
+  },
 }
 
 export const viewport: Viewport = {
@@ -20,13 +20,19 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  viewportFit: 'cover'   // <-- penting untuk safe area iOS
+  viewportFit: 'cover',
+  themeColor: '#030712',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id">
-      <body className={inter.className}>
+    <html lang="id" style={{ background: '#030712' }}>
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="theme-color" content="#030712" />
+      </head>
+      <body className={inter.className} style={{ background: '#030712', minHeight: '100dvh' }}>
         <Providers>{children}</Providers>
       </body>
     </html>
