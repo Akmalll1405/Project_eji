@@ -80,10 +80,12 @@ export default function Header() {
   }
 
   const statusConfig: Record<string, { icon: string; label: string; color: string }> = {
-    APPROVED: { icon: '✅', label: 'Dokumen disetujui', color: '#34d399' },
-    REJECTED: { icon: '❌', label: 'Dokumen ditolak', color: '#f87171' },
-    NEEDS_REVIEW: { icon: '📋', label: 'Dokumen butuh review', color: '#facc15' },
+    APPROVED: { icon: '✅', label: 'Disetujui', color: '#34d399' },
+    REJECTED: { icon: '❌', label: 'Ditolak', color: '#f87171' },
+    NEEDS_REVIEW: { icon: '📋', label: 'Butuh review', color: '#facc15' },
     REQUEST_EDIT: { icon: '✏️', label: 'Permintaan edit proyek', color: '#a78bfa' },
+    REQUEST_APPROVAL: { icon: '📤', label: 'Permintaan persetujuan proyek', color: '#34d399' },
+  UNLOCKED:         { icon: '🔓', label: 'Proyek dibuka untuk diedit',    color: '#60a5fa' },
   }
 
   return (
@@ -297,7 +299,11 @@ export default function Header() {
                             </div>
                           )}
                           <div className="text-xs font-medium mt-1" style={{ color: cfg.color }}>
-                            {cfg.label}
+                            {n.status === 'NEEDS_REVIEW'
+                            ? (n.catatanAdmin?.startsWith('Keuangan baru')
+                                ?'Keuangan butuh review'
+                                : 'Dokumen butuh review')
+                              : cfg.label}
                           </div>
                           {n.catatanAdmin && (
                             <div className="text-xs text-gray-500 mt-0.5 italic truncate">

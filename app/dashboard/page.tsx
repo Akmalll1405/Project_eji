@@ -48,6 +48,11 @@ export default function DashboardPage() {
   const [showForm, setShowForm] = useState(false)
   const [showUserPanel, setShowUserPanel] = useState(false)
   const [showApprovalPanel, setShowApprovalPanel] = useState(false)
+  const [pendingKeuangan, setPendingKeuangan] = useState<any[]>([])
+  const [showKeuanganPanel, setShowKeuanganPanel] = useState(false)
+  const [requestApprovalList, setRequestApprovalList] = useState<any[]>([])
+  const [showRequestApprovalPanel, setShowRequestApprovalPanel] = useState(false)
+  const [approveProjectLoading, setApproveProjectLoading] = useState<string | null>(null)
   const [pendingDokumen, setPendingDokumen] = useState<PendingDokumen[]>([])
   const [approvalLoading, setApprovalLoading] = useState<string | null>(null)
   const [catatanMap, setCatatanMap] = useState<Record<string, string>>({})
@@ -62,6 +67,8 @@ export default function DashboardPage() {
       fetchProjects()
       fetchPendingDokumen()
       fetchRequestEdit()
+      fetchPendingKeuangan()
+      fetchRequestApproval()
     }
   }, [status])
 
@@ -164,28 +171,28 @@ export default function DashboardPage() {
     }
   }
 
-const handleRejectRequest = async (projectId: string) => {
-  if (!confirm('Yakin tolak permintaan edit ini?')) return
-  setUnlockLoading(projectId)
-  try {
-    const response = await fetch(`/api/proyek/${projectId}/reject`, {
-      method: 'POST'   
-    })
+  const handleRejectRequest = async (projectId: string) => {
+    if (!confirm('Yakin tolak permintaan edit ini?')) return
+    setUnlockLoading(projectId)
+    try {
+      const response = await fetch(`/api/proyek/${projectId}/reject`, {
+        method: 'POST'
+      })
 
-    if (!response.ok) {
-      const text = await response.text()
-      throw new Error(text || 'Gagal reject')
+      if (!response.ok) {
+        const text = await response.text()
+        throw new Error(text || 'Gagal reject')
+      }
+
+      await Promise.all([fetchRequestEdit(), fetchProjects()])
+      alert('Permintaan edit ditolak')
+    } catch (error: any) {
+      console.error('Reject error:', error)
+      alert('Gagal menolak: ' + error.message)
+    } finally {
+      setUnlockLoading(null)
     }
-
-    await Promise.all([fetchRequestEdit(), fetchProjects()])
-    alert('Permintaan edit ditolak')
-  } catch (error: any) {
-    console.error('Reject error:', error)
-    alert('Gagal menolak: ' + error.message)
-  } finally {
-    setUnlockLoading(null)
   }
-}
 
   const fetchRequestEdit = async () => {
     if ((session?.user as any)?.role !== 'ADMIN') return
@@ -198,6 +205,42 @@ const handleRejectRequest = async (projectId: string) => {
       setRequestEditList(requests)
     } catch { }
   }
+
+  const fetchPendingKeuangan = async () => {
+    if ((session?.user as any)?.role !== 'ADMIN') return
+    try {
+      const res = await fetch('/api/admin/pending-keuangan')
+      const data = await res.json()
+      setPendingKeuangan(Array.isArray(data) ? data : [])
+    } catch { }
+  }
+
+  const fetchRequestApproval = async () => {
+    if ((session?.user as any)?.role !== 'ADMIN') return
+    try {
+      const res = await fetch('/api/notifikasi')
+      const data = await res.json()
+      const requests = Array.isArray(data)
+        ? data.filter((n: any) => n.status === 'REQUEST_APPROVAL')
+        : []
+      setRequestApprovalList(requests)
+    } catch { }
+  }
+
+  const handleApproveProjectFromDashboard = async (projectId: string) => {
+    setApproveProjectLoading(projectId)
+    try {
+      const res = await fetch(`/api/proyek/${projectId}/approve`, { method: 'POST' })
+      if (!res.ok) throw new Error('Gagal')
+      alert('Proyek disetujui!')
+      await Promise.all([fetchRequestApproval(), fetchProjects()])
+    } catch {
+      alert('Gagal menyetujui proyek')
+    } finally {
+      setApproveProjectLoading(null)
+    }
+  }
+
   const resetForm = () => {
     setForm({ nama: '', jenis: '', nilai: '', penanggungjawab: '', wilayah: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: 'PERENCANAAN' })
   }
@@ -244,10 +287,11 @@ const handleRejectRequest = async (projectId: string) => {
       <Header />
 
       <main className="px-4 sm:px-6 py-4 sm:py-6"
-          style={{
-            paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
-            paddingLeft: 'calc(1rem + env(safe-area-inset-left))',
-            paddingRight: 'calc(1rem + env(safe-area-inset-right))',}}>
+        style={{
+          paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
+          paddingLeft: 'calc(1rem + env(safe-area-inset-left))',
+          paddingRight: 'calc(1rem + env(safe-area-inset-right))',
+        }}>
         {/* Summary Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
@@ -405,6 +449,146 @@ const handleRejectRequest = async (projectId: string) => {
                           {unlockLoading === r.projectId ? '...' : 'Tolak'}
                         </button>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Panel Request Approval Proyek */}
+            <div>
+              <button onClick={() => { setShowRequestApprovalPanel(!showRequestApprovalPanel); fetchRequestApproval() }}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition"
+                style={{
+                  background: requestApprovalList.length > 0 ? 'rgba(52,211,153,0.08)' : 'rgba(255,255,255,0.03)',
+                  border: requestApprovalList.length > 0 ? '1px solid rgba(52,211,153,0.25)' : '1px solid rgba(255,255,255,0.06)'
+                }}>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium" style={{ color: requestApprovalList.length > 0 ? '#34d399' : '#9ca3af' }}>
+                    Permintaan Persetujuan Proyek
+                  </span>
+                  {requestApprovalList.length > 0 && (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                      style={{ background: 'rgba(52,211,153,0.2)', color: '#34d399' }}>
+                      {requestApprovalList.length} permintaan
+                    </span>
+                  )}
+                </div>
+                <span className="text-gray-600 text-xs">{showRequestApprovalPanel ? '▲ Sembunyikan' : '▼ Tampilkan'}</span>
+              </button>
+
+              {showRequestApprovalPanel && (
+                <div className="mt-1 rounded-xl overflow-hidden"
+                  style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+                  {requestApprovalList.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-gray-600 text-sm">
+                      Tidak ada permintaan persetujuan
+                    </div>
+                  ) : requestApprovalList.map((r) => (
+                    <div key={r.id} className="px-4 py-4"
+                      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(255,255,255,0.01)' }}>
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="text-sm font-medium text-gray-200">{r.fileName}</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">
+                            Minta Persetujuan
+                          </span>
+                        </div>
+                        {r.catatanAdmin && (
+                          <div className="text-xs text-gray-400 mt-1 italic">"{r.catatanAdmin}"</div>
+                        )}
+                        <div className="text-xs text-gray-600 mt-1">
+                          {new Date(r.createdAt).toLocaleDateString('id-ID', {
+                            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button onClick={() => router.push(`/proyek/${r.projectId}`)}
+                          className="text-xs px-3 py-1.5 rounded-lg transition text-blue-400 hover:text-blue-300"
+                          style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)' }}>
+                          Lihat Proyek
+                        </button>
+                        <button
+                          onClick={() => handleApproveProjectFromDashboard(r.projectId)}
+                          disabled={approveProjectLoading === r.projectId}
+                          className="px-4 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50"
+                          style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }}>
+                          {approveProjectLoading === r.projectId ? '...' : '✓ Setujui Proyek'}
+                        </button>
+                        <button
+                          onClick={() => handleRejectRequest(r.projectId)}
+                          disabled={approveProjectLoading === r.projectId}
+                          className="px-4 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50"
+                          style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
+                          ✗ Tolak
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Panel Keuangan Pending */}
+            <div>
+              <button onClick={() => { setShowKeuanganPanel(!showKeuanganPanel); fetchPendingKeuangan() }}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition"
+                style={{
+                  background: pendingKeuangan.length > 0 ? 'rgba(96,165,250,0.08)' : 'rgba(255,255,255,0.03)',
+                  border: pendingKeuangan.length > 0 ? '1px solid rgba(96,165,250,0.25)' : '1px solid rgba(255,255,255,0.06)'
+                }}>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium" style={{ color: pendingKeuangan.length > 0 ? '#60a5fa' : '#9ca3af' }}>
+                  Keuangan Menunggu Review
+                  </span>
+                  {pendingKeuangan.length > 0 && (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                      style={{ background: 'rgba(96,165,250,0.2)', color: '#60a5fa' }}>
+                      {pendingKeuangan.length} pending
+                    </span>
+                  )}
+                </div>
+                <span className="text-gray-600 text-xs">{showKeuanganPanel ? '▲ Sembunyikan' : '▼ Tampilkan'}</span>
+              </button>
+
+              {showKeuanganPanel && (
+                <div className="mt-1 rounded-xl overflow-hidden"
+                  style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+                  {pendingKeuangan.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-gray-600 text-sm">
+                      Tidak ada keuangan yang menunggu review
+                    </div>
+                  ) : pendingKeuangan.map((t) => (
+                    <div key={t.id} className="px-4 py-4"
+                      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(255,255,255,0.01)' }}>
+                      <div className="mb-2">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="text-sm font-medium text-gray-200 truncate">
+                            {t.namaProgram || t.keterangan || '-'}
+                          </span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">Pending</span>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Proyek:{' '}
+                          <button onClick={() => router.push(`/proyek/${t.projectId}?tab=keuangan`)}
+                            className="text-blue-400 hover:text-blue-300 transition">
+                            {t.proyekNama}
+                          </button>
+                        </div>
+                        <div className="text-xs text-gray-600 mt-0.5">
+                          Oleh:   <span className="text-gray-400">{t.uploaderName}</span>
+                            {t.jumlah && (
+                            <span className="ml-2 text-emerald-400 font-medium">
+                              {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(t.jumlah)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <button onClick={() => router.push(`/proyek/${t.projectId}`)}
+                        className="text-xs px-3 py-1.5 rounded-lg transition text-blue-400 hover:text-blue-300"
+                        style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)' }}>
+                        Review di Proyek →
+                      </button>
                     </div>
                   ))}
                 </div>

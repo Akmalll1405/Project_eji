@@ -14,39 +14,32 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await prisma.$queryRawUnsafe(`
       DELETE FROM "Notification"
       WHERE "projectId" = '${id}'
-      AND "status" = 'REQUEST_EDIT'
+      AND "status" IN ('REQUEST_EDIT', 'REQUEST_APPROVAL')
     `)
 
-    const projekData = await prisma.$queryRawUnsafe(`
-      SELECT p.id, p.nama, p."userId"
-      FROM "Project" p
-      WHERE p.id = '${id}'
-      LIMIT 1
+    const proyekData = await prisma.$queryRawUnsafe(`
+      SELECT "userId", nama FROM "Project" WHERE id = '${id}' LIMIT 1
     `) as any[]
 
-    if (projekData.length > 0) {
-      const proyek = projekData[0]
-      const safeNama = (proyek.nama || '').replace(/'/g, "''")
-
+    if (proyekData.length > 0 && proyekData[0].userId) {
+      const safeNama = (proyekData[0].nama || '').replace(/'/g, "''")
       await prisma.$queryRawUnsafe(`
         INSERT INTO "Notification" (
-          "id", "userId", "projectId", "dokumenId", "fileName",
-          "status", "catatanAdmin", "isRead", "createdAt"
+          "id", "userId", "projectId", "dokumenId",
+          "fileName", "status", "catatanAdmin", "isRead", "createdAt"
         ) VALUES (
           gen_random_uuid()::text,
-          '${proyek.userId}',
-          '${id}',
-          '${id}',
+          '${proyekData[0].userId}',
+          '${id}', '${id}',
           '${safeNama}',
           'REJECTED',
-          'Permintaan edit proyek ditolak oleh Admin',
-          false,
-          NOW()
+          'Permintaan ditolak oleh Admin',
+          false, NOW()
         )
       `)
     }
 
-    return NextResponse.json({ success: true, message: 'Permintaan edit ditolak' })
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Reject error:', error)
     return NextResponse.json({ error: String(error) }, { status: 500 })

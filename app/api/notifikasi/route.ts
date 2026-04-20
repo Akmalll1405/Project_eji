@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
@@ -16,7 +15,7 @@ export async function GET(req: NextRequest) {
       LEFT JOIN "Project" p ON n."projectId" = p.id
       WHERE n."userId" = '${userId}'
       ORDER BY n."createdAt" DESC
-      LIMIT 30
+      LIMIT 50
     `)
     return NextResponse.json(notifs)
   } catch (error) {
@@ -24,7 +23,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// DELETE — hapus notif yang sudah dibaca
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)

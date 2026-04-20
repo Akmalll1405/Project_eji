@@ -5,31 +5,22 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../auth/[...nextauth]/route'
 
+// GET /api/proyek/[id]
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
     const { id } = await params
-    const userId = (session.user as any).id
-    const role = (session.user as any).role
-
-    const proyek = await prisma.$queryRawUnsafe(`
-      SELECT p.*, u.name as "userName"
-      FROM "Project" p
-      LEFT JOIN "User" u ON p."userId" = u.id
-      WHERE p.id = '${id}'
-    `)
-
-    const data = Array.isArray(proyek) ? proyek[0] : proyek
-
-    if (role !== 'ADMIN' && data?.userId !== userId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    return NextResponse.json(proyek)
+    const project = await prisma.project.findUnique({
+      where: { id },
+      include: { user: { select: { name: true } } }
+    })
+    
+    if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    
+    return NextResponse.json(project, { 
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } 
+    })
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
