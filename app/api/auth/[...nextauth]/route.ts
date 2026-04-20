@@ -6,64 +6,85 @@ import bcrypt from 'bcryptjs'
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: 'credentials',
+      name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' }
+        email:    { label: 'Email',    type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null
+
         try {
-          if (!credentials?.email || !credentials?.password) return null
-
-          const safeEmail = credentials.email.replace(/'/g, "''")
-
-          // WAJIB pakai $queryRawUnsafe — jangan pernah pakai prisma.user.findUnique()
           const users = await prisma.$queryRawUnsafe(`
-            SELECT id, email, name, password, role
+            SELECT id, name, email, password, role
             FROM "User"
-            WHERE email = '${safeEmail}'
+            WHERE email = '${credentials.email.replace(/'/g, "''")}'
             LIMIT 1
           `) as any[]
 
           if (!users || users.length === 0) return null
 
           const user = users[0]
-          const passwordMatch = await bcrypt.compare(credentials.password, user.password)
-          if (!passwordMatch) return null
+          const isValid = await bcrypt.compare(credentials.password, user.password)
+          if (!isValid) return null
 
           return {
-            id: user.id,
+            id:    String(user.id),
+            name:  user.name,
             email: user.email,
-            name: user.name,
-            role: user.role
+            role:  user.role,
           }
         } catch (error) {
-          console.error('[AUTH] Error:', error)
+          console.error('Auth error:', error)
           return null
         }
-      }
-    })
+      },
+    }),
   ],
+
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role
-        token.id = user.id
+        ;(token as any).uid = String(user.id)
+        ;(token as any).role = String((user as any).role)
       }
       return token
     },
     async session({ session, token }) {
-      if (session.user) {
-        (session.user as any).role = token.role
-        ;(session.user as any).id = token.id
+      if (token && session.user) {
+        (session.user as any).id   = (token as any).uid
+        (session.user as any).role = (token as any).role
       }
       return session
-    }
+    },
   },
-  pages: { signIn: '/login', error: '/login' },
-  session: { strategy: 'jwt', maxAge: 30 * 24 * 60 * 60 },
+
+  pages: {
+    signIn: '/login',
+    error:  '/login',
+  },
+
+  session: {
+    strategy: 'jwt',
+    maxAge:   30 * 24 * 60 * 60,
+  },
+
   secret: process.env.NEXTAUTH_SECRET,
-  debug: false
+
+  useSecureCookies: process.env.NODE_ENV === 'production',
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production'
+        ? '__Secure-next-auth.session-token'
+        : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path:     '/',
+        secure:   process.env.NODE_ENV === 'production',
+      },
+    },
+  },
 }
 
 const handler = NextAuth(authOptions)
