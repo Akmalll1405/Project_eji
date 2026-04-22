@@ -11,14 +11,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const { id } = await params
 
-    // 1. Lock project
     await prisma.$queryRawUnsafe(`
       UPDATE "Project"
       SET "isApproved" = true, "updatedAt" = NOW()
       WHERE id = '${id}'
     `)
 
-    // 2. Ambil data project + owner
     const proyekRows = await prisma.$queryRawUnsafe(`
       SELECT p.id, p.nama, p."userId"
       FROM "Project" p
@@ -31,7 +29,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const ownerId = proyek.userId
       const safeNama = (proyek.nama || '').replace(/'/g, "''")
 
-      // 3. Kirim notif APPROVED ke owner
       if (ownerId) {
         await prisma.$queryRawUnsafe(`
           INSERT INTO "Notification" (
@@ -50,7 +47,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         `)
       }
 
-      // 4. Hapus notif REQUEST_APPROVAL yang sudah diproses
       await prisma.$queryRawUnsafe(`
         DELETE FROM "Notification"
         WHERE "projectId" = '${id}'

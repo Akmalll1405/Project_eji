@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Jangan tambahkan output: 'standalone' kecuali memang perlu
+  experimental: {
+    serverComponentsExternalPackages: ['@prisma/client'],
+  },
+}
 
-export default nextConfig;
+module.exports = nextConfig

@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const userId = (session.user as any).id
     const userName = ((session.user as any).name || 'User').replace(/'/g, "''")
     const note = (body.note || '').replace(/'/g, "''")
-    const type = body.type || 'REQUEST_EDIT' // REQUEST_EDIT atau REQUEST_APPROVAL
+    const type = body.type || 'REQUEST_EDIT' 
 
     const proyek = await prisma.$queryRawUnsafe(`
       SELECT nama FROM "Project" WHERE id = '${id}'

@@ -95,8 +95,8 @@ export default function DashboardPage() {
   }
 
   const handleSubmit = async () => {
-    if (!form.nama.trim()) { alert('Nama Pekerjaan wajib diisi!'); return }
-    if (!form.jenis.trim()) { alert('Jenis Pekerjaan wajib diisi!'); return }
+    if (!form.nama.trim()) { alert('Nama Program wajib diisi!'); return }
+    if (!form.jenis.trim()) { alert('Deskripsi Program wajib diisi!'); return }
     if (!form.sektor.trim()) { alert('Sektor wajib diisi!'); return }
     if (!form.tanggalMulai) { alert('Tanggal Mulai wajib diisi!'); return }
     if (form.tanggalSelesai && new Date(form.tanggalSelesai) < new Date(form.tanggalMulai)) {
@@ -677,7 +677,7 @@ export default function DashboardPage() {
         {/* Search */}
         <div className="flex flex-col sm:flex-row gap-2 mb-4">
           {[
-            { placeholder: 'Cari nama pekerjaan...', value: searchNama, onChange: setSearchNama },
+            { placeholder: 'Cari nama Program...', value: searchNama, onChange: setSearchNama },
             { placeholder: 'Cari wilayah pengerjaan...', value: searchWilayah, onChange: setSearchWilayah },
           ].map(({ placeholder, value, onChange }) => (
             <div key={placeholder} className="flex items-center flex-1 px-3 py-2 rounded-xl gap-2"
@@ -735,18 +735,18 @@ export default function DashboardPage() {
                     {formatDate(p.updatedAt)}
                   </td>
                   <td className="py-4 px-4 align-top">
-                    <div className="text-gray-600 text-xs mb-1">Nama pekerjaan</div>
+                    <div className="text-gray-600 text-xs mb-1">Nama Program</div>
                     <button onClick={() => router.push(`/proyek/${p.id}`)}
                       className="text-blue-400 hover:text-blue-300 text-sm font-medium transition text-left">
                       {p.nama || '-'}
                     </button>
-                    <div className="mt-1 text-xs text-gray-600">PJ: <span className="text-gray-400">{p.penanggungjawab || '-'}</span></div>
+                    <div className="mt-1 text-xs text-gray-600">Program manager: <span className="text-gray-400">{p.penanggungjawab || '-'}</span></div>
                     <div className="text-xs text-gray-600">Wilayah: <span className="text-gray-400">{p.wilayah || '-'}</span></div>
                   </td>
                   <td className="py-4 px-4 align-top">
                     <div className="text-xs text-gray-600 mb-1">Nilai</div>
                     <div className="text-sm font-medium text-gray-300">{formatRupiah(p.nilai || 0)}</div>
-                    <div className="mt-1 text-xs text-gray-600">Jenis: <span className="text-gray-400">{p.jenis || '-'}</span></div>
+                    <div className="mt-1 text-xs text-gray-600">Deskripsi: <span className="text-gray-400">{p.jenis || '-'}</span></div>
                   </td>
                   <td className="py-4 px-4 align-top">
                     <div className="text-xs text-gray-600 mb-1">Diinput oleh</div>
@@ -794,9 +794,9 @@ export default function DashboardPage() {
                   }`}>{statusLabel[p.status] || p.status}</span>
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-                <div><span className="text-gray-600">Jenis: </span><span className="text-gray-400">{p.jenis || '-'}</span></div>
+                <div><span className="text-gray-600">Deskripsi Program: </span><span className="text-gray-400">{p.jenis || '-'}</span></div>
                 <div><span className="text-gray-600">Nilai: </span><span className="text-gray-400">{formatRupiah(p.nilai || 0)}</span></div>
-                <div><span className="text-gray-600">PJ: </span><span className="text-gray-400">{p.penanggungjawab || '-'}</span></div>
+                <div><span className="text-gray-600">PM: </span><span className="text-gray-400">{p.penanggungjawab || '-'}</span></div>
                 <div><span className="text-gray-600">Wilayah: </span><span className="text-gray-400">{p.wilayah || '-'}</span></div>
                 <div><span className="text-gray-600">Input: </span><span className="text-gray-400">{p.userName || '-'}</span></div>
                 <div><span className="text-gray-600">Update: </span><span className="text-gray-400">{new Date(p.updatedAt).toLocaleDateString('id-ID')}</span></div>
@@ -827,10 +827,10 @@ export default function DashboardPage() {
             <h3 className="text-base font-semibold text-white mb-5">Tambah Pekerjaan</h3>
             <div className="space-y-3">
               {[
-                { label: 'Nama Pekerjaan', key: 'nama', type: 'text', required: true },
-                { label: 'Jenis Pekerjaan', key: 'jenis', type: 'text', required: true },
-                { label: 'Nilai Pekerjaan (Rp)', key: 'nilai', type: 'number', required: false },
-                { label: 'Penanggung Jawab', key: 'penanggungjawab', type: 'text', required: false },
+                { label: 'Nama Program', key: 'nama', type: 'text', required: true },
+                { label: 'Deskripsi Program', key: 'jenis', type: 'text', required: true },
+                { label: 'Nilai Kontrak (Rp)', key: 'nilai', type: 'number', required: false },
+                { label: 'Program Manager', key: 'penanggungjawab', type: 'text', required: false },
                 { label: 'Wilayah Pengerjaan', key: 'wilayah', type: 'text', required: false },
                 { label: 'Sektor', key: 'sektor', type: 'text', required: true },
                 { label: 'Tanggal Mulai', key: 'tanggalMulai', type: 'date', required: true },

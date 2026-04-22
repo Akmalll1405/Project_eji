@@ -333,8 +333,8 @@ export default function DetailProyekPage() {
   }
 
   const handleUpdateProyek = async () => {
-    if (!editProyekForm.nama.trim()) { alert('Nama Pekerjaan wajib diisi!'); return }
-    if (!editProyekForm.jenis.trim()) { alert('Jenis Pekerjaan wajib diisi!'); return }
+    if (!editProyekForm.nama.trim()) { alert('Nama Program wajib diisi!'); return }
+    if (!editProyekForm.jenis.trim()) { alert('Deskripsi Program wajib diisi!'); return }
     if (!editProyekForm.sektor.trim()) { alert('Sektor wajib diisi!'); return }
     if (!editProyekForm.tanggalMulai) { alert('Tanggal Mulai wajib diisi!'); return }
     await fetch(`/api/proyek/${id}`, {
@@ -522,7 +522,9 @@ export default function DetailProyekPage() {
 
   const jenisDokumenLabel: Record<string, string> = {
     PROPOSAL: 'Proposal', KONTRAK_KERJA: 'Kontrak Kerja', SURAT_IZIN: 'Surat Izin',
-    DOKUMENTASI_KEGIATAN: 'Dokumentasi Kegiatan', LAPORAN_PEKERJAAN: 'Laporan Pekerjaan'
+    DOKUMENTASI_KEGIATAN: 'Dokumentasi Kegiatan', LAPORAN_AKHIR: 'Laporan Akhir',
+    SURAT_REKOMENDASI: 'Surat Rekomendasi', LAPORAN_PERIODIK: 'Laporan Periodik',
+    LAIN_LAIN: 'Lain-lain'
   }
 
   const statusLabel: Record<string, string> = { PERENCANAAN: 'Draft', BERJALAN: 'Sedang Diproses', SELESAI: 'Selesai' }
@@ -655,8 +657,8 @@ export default function DetailProyekPage() {
             {lockBanner}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
-                { label: 'Jenis Proyek', key: 'jenis' }, { label: 'Nama Pekerjaan', key: 'nama' },
-                { label: 'Nilai Pekerjaan (Rp)', key: 'nilai' }, { label: 'Penanggung Jawab', key: 'penanggungjawab' },
+                { label: 'Deskripsi Program', key: 'jenis' }, { label: 'Nama Program', key: 'nama' },
+                { label: 'Nilai Kontrak (Rp)', key: 'nilai' }, { label: 'Program Manager', key: 'penanggungjawab' },
                 { label: 'Wilayah Pengerjaan', key: 'wilayah' }, { label: 'Sektor', key: 'sektor' },
               ].map(({ label, key }) => (
                 <div key={key}>
@@ -763,7 +765,10 @@ export default function DetailProyekPage() {
                       <option value="PROPOSAL" className="bg-gray-900">Proposal</option>
                       <option value="SURAT_IZIN" className="bg-gray-900">Surat Izin</option>
                       <option value="DOKUMENTASI_KEGIATAN" className="bg-gray-900">Dokumentasi Kegiatan</option>
-                      <option value="LAPORAN_PEKERJAAN" className="bg-gray-900">Laporan Pekerjaan</option>
+                      <option value="LAPORAN_AKHIR" className="bg-gray-900">Laporan Akhir</option>
+                      <option value="SURAT_REKOMENDASI" className="bg-gray-900">Surat Rekomendasi</option>
+                      <option value="LAPORAN_PERIODIK" className="bg-gray-900">Laporan Periodik</option>
+                      <option value="LAIN_LAIN" className="bg-gray-900">Lain-lain</option>
                     </select>
                   </div>
                   <div>
@@ -795,6 +800,7 @@ export default function DetailProyekPage() {
               <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400">✓ Disetujui</span>
               <span className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-400">✗ Ditolak</span>
             </div>
+            
             {dokumen.length === 0 ? <p className="text-gray-600 text-sm text-center py-10">Belum ada dokumen</p>
               : (
                 <div className="space-y-3">

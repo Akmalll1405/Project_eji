@@ -113,13 +113,14 @@ export default function ReportPage() {
   const jenisDokumenLabel: Record<string, string> = {
     PROPOSAL: 'Proposal', KONTRAK_KERJA: 'Kontrak Kerja',
     SURAT_IZIN: 'Surat Izin', DOKUMENTASI_KEGIATAN: 'Dokumentasi Kegiatan',
-    LAPORAN_PEKERJAAN: 'Laporan Pekerjaan'
+    LAPORAN_AKHIR: 'Laporan Akhir', SURAT_REKOMENDASI: 'Surat Rekomendasi',
+    LAPORAN_PERIODIK: 'Laporan Periodik', LAIN_LAIN: 'Lain-lain'
   }
 
   const uniqueJenis = ['Semua', ...Array.from(new Set(projects.map(p => p.jenis).filter(Boolean)))]
   const uniqueWilayah = ['Semua', ...Array.from(new Set(projects.map(p => p.wilayah).filter(Boolean)))]
   const uniqueStatus = ['Semua', 'PERENCANAAN', 'BERJALAN', 'SELESAI']
-  const uniqueDokumen = ['Semua', 'KONTRAK_KERJA', 'PROPOSAL', 'SURAT_IZIN', 'DOKUMENTASI_KEGIATAN', 'LAPORAN_PEKERJAAN']
+  const uniqueDokumen = ['Semua', 'KONTRAK_KERJA', 'PROPOSAL', 'SURAT_IZIN', 'DOKUMENTASI_KEGIATAN', 'LAPORAN_AKHIR', 'SURAT_REKOMENDASI','LAPORAN_PERIODIK','LAIN_LAIN']
 
   const filteredProjects = projects.filter(p => {
     const matchJenis = filterJenis === 'Semua' || p.jenis === filterJenis
@@ -182,11 +183,11 @@ export default function ReportPage() {
                     <div className="flex-1">
                       <div className="font-semibold text-gray-200 text-sm mb-2">{p.nama}</div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1 text-xs">
-                        <div><span className="text-gray-600">Jenis: </span><span className="text-gray-400">{p.jenis}</span></div>
+                        <div><span className="text-gray-600">Deskripsi Program: </span><span className="text-gray-400">{p.jenis}</span></div>
                         <div><span className="text-gray-600">Wilayah: </span><span className="text-gray-400">{p.wilayah}</span></div>
                         <div><span className="text-gray-600">Sektor: </span><span className="text-gray-400">{p.sektor}</span></div>
                         <div><span className="text-gray-600">Nilai: </span><span className="text-gray-400">{formatRupiah(p.nilai)}</span></div>
-                        <div><span className="text-gray-600">PJ: </span><span className="text-gray-400">{p.penanggungjawab}</span></div>
+                        <div><span className="text-gray-600">PM: </span><span className="text-gray-400">{p.penanggungjawab}</span></div>
                         <div>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${p.status === 'BERJALAN' ? 'bg-blue-500/10 text-blue-400' :
                               p.status === 'SELESAI' ? 'bg-emerald-500/10 text-emerald-400' :
