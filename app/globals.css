@@ -47,12 +47,12 @@ html, body {
 }
 
 html {
-  background-color: #030712;
+  background-color: #f0f4ff;
 }
 
 body {
-  background-color: #030712;
-  color: #fff;
+  background-color: #f0f4ff;
+  color: #1e293b;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   overscroll-behavior-y: none;

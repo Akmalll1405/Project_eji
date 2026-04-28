@@ -29,8 +29,7 @@ export default function UsersPage() {
     if (status === 'unauthenticated') router.push('/login')
     if (status === 'authenticated') {
       if ((session?.user as any)?.role !== 'ADMIN') {
-        router.push('/dashboard')
-        return
+        router.push('/dashboard'); return
       }
       fetchUsers()
     }
@@ -42,9 +41,6 @@ export default function UsersPage() {
     setUsers(Array.isArray(data) ? data : [])
     setLoading(false)
   }
-
-  if (status === 'loading' || loading) return <Loading />
-  if (status === 'unauthenticated') return null
 
   const handleSubmit = async () => {
     if (!form.name.trim()) { alert('Nama wajib diisi!'); return }
@@ -81,64 +77,139 @@ export default function UsersPage() {
     fetchUsers()
   }
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500">Loading...</p>
-    </div>
-  )
+  if (status === 'loading' || loading) return <Loading />
+  if (status === 'unauthenticated') return null
+
+  const card: React.CSSProperties = {
+    background: '#ffffff',
+    borderRadius: 14,
+    border: '1px solid #e2e8f0',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(37,99,235,0.05)',
+  }
+
+  const inputSt: React.CSSProperties = {
+    width: '100%',
+    padding: '11px 14px',
+    borderRadius: 10,
+    border: '1.5px solid #e2e8f0',
+    background: '#f8fafc',
+    color: '#1e293b',
+    fontSize: 14,
+    outline: 'none',
+  }
+
+  const rolePill = (role: string): React.CSSProperties => ({
+    fontSize: 11,
+    padding: '3px 10px',
+    borderRadius: 99,
+    fontWeight: 700,
+    background: role === 'ADMIN' ? '#f5f3ff' : '#eff6ff',
+    color:      role === 'ADMIN' ? '#7c3aed'  : '#1d4ed8',
+    border:     role === 'ADMIN' ? '1px solid #ddd6fe' : '1px solid #bfdbfe',
+    display: 'inline-block',
+    whiteSpace: 'nowrap',
+  })
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#030712' }}>
+    <div style={{ minHeight: '100dvh', background: '#f5f7ff' }}>
       <Header />
 
-      <main className="px-4 sm:px-6 py-4 sm:py-6 max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+      <main style={{
+        maxWidth: 900,
+        margin: '0 auto',
+        padding: '1.5rem calc(1rem + env(safe-area-inset-left,0px)) calc(2rem + env(safe-area-inset-bottom,0px)) calc(1rem + env(safe-area-inset-right,0px))',
+      }}>
+
+        {/* ─── Page header ─── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
           <div>
-            <h1 className="text-lg font-semibold text-white">Manajemen User</h1>
-            <p className="text-xs text-gray-600 mt-1">Kelola akun Admin dan Project Manager</p>
+            <h1 style={{ fontSize: 18, fontWeight: 800, color: '#1e293b', marginBottom: 4 }}>
+              Manajemen User
+            </h1>
+            <p style={{ fontSize: 13, color: '#94a3b8' }}>
+              Kelola akun Admin dan Project Manager
+            </p>
           </div>
-          <button onClick={() => { setShowForm(true); setEditUser(null); setForm({ name: '', email: '', password: '', role: 'PROJECT_MANAGER' }) }}
-            className="px-4 py-2 rounded-xl text-white text-xs font-medium transition"
-            style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', boxShadow: '0 4px 12px rgba(37,99,235,0.3)' }}>
+          <button
+            onClick={() => { setShowForm(true); setEditUser(null); setForm({ name: '', email: '', password: '', role: 'PROJECT_MANAGER' }) }}
+            style={{
+              padding: '9px 18px', borderRadius: 10, border: 'none',
+              background: 'linear-gradient(135deg,#2563eb,#1d4ed8)',
+              color: '#ffffff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(37,99,235,0.3)', minHeight: 'auto',
+              whiteSpace: 'nowrap',
+            }}
+          >
             + Tambah User
           </button>
         </div>
 
-        {/* Tabel Desktop */}
-        <div className="hidden md:block rounded-xl overflow-hidden"
-          style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
-          <table className="w-full text-sm">
+        {/* ─── Tabel Desktop ─── */}
+        <div className="hidden md:block" style={{ ...card, overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <tr style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>
                 {['Nama', 'Email', 'Role', 'Dibuat', 'Aksi'].map(h => (
-                  <th key={h} className="text-left py-3 px-4 text-xs text-gray-500 font-medium">{h}</th>
+                  <th key={h} style={{
+                    textAlign: 'left', padding: '12px 16px',
+                    fontSize: 11, color: 'rgba(255,255,255,0.85)',
+                    fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+                  }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {users.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-10 text-gray-600">Belum ada user</td></tr>
-              ) : users.map((u) => (
-                <tr key={u.id} className="border-b hover:bg-white/[0.02] transition"
-                  style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
-                  <td className="py-3 px-4">
-                    <div className="text-gray-200 text-sm">{u.name}</div>
-                    {u.id === (session?.user as any)?.id && <span className="text-xs text-blue-400">(Anda)</span>}
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: 48, color: '#94a3b8', fontSize: 14 }}>
+                    Belum ada user
                   </td>
-                  <td className="py-3 px-4 text-gray-400 text-sm">{u.email}</td>
-                  <td className="py-3 px-4">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${u.role === 'ADMIN' ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400'
-                      }`}>
+                </tr>
+              ) : users.map((u, i) => (
+                <tr key={u.id}
+                  style={{
+                    borderBottom: '1px solid #f1f5f9',
+                    background: i % 2 === 0 ? '#ffffff' : '#fafbff',
+                  }}
+                >
+                  <td style={{ padding: '13px 16px' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{u.name}</div>
+                    {u.id === (session?.user as any)?.id && (
+                      <span style={{ fontSize: 11, color: '#2563eb', fontWeight: 600 }}>(Anda)</span>
+                    )}
+                  </td>
+                  <td style={{ padding: '13px 16px', fontSize: 13, color: '#475569' }}>{u.email}</td>
+                  <td style={{ padding: '13px 16px' }}>
+                    <span style={rolePill(u.role)}>
                       {u.role === 'ADMIN' ? 'Admin' : 'Project Manager'}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-gray-600 text-xs">{new Date(u.createdAt).toLocaleDateString('id-ID')}</td>
-                  <td className="py-3 px-4">
-                    <div className="flex gap-3">
-                      <button onClick={() => { setEditUser(u); setForm({ name: u.name, email: u.email, password: '', role: u.role }); setShowForm(true) }}
-                        className="text-blue-400 text-xs hover:text-blue-300 transition">Edit</button>
+                  <td style={{ padding: '13px 16px', fontSize: 12, color: '#94a3b8' }}>
+                    {new Date(u.createdAt).toLocaleDateString('id-ID')}
+                  </td>
+                  <td style={{ padding: '13px 16px' }}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => { setEditUser(u); setForm({ name: u.name, email: u.email, password: '', role: u.role }); setShowForm(true) }}
+                        style={{
+                          fontSize: 12, padding: '5px 12px', borderRadius: 8, cursor: 'pointer',
+                          background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8',
+                          fontWeight: 600, minHeight: 'auto',
+                        }}
+                      >
+                        Edit
+                      </button>
                       {u.id !== (session?.user as any)?.id && (
-                        <button onClick={() => handleDelete(u.id)} className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
+                        <button
+                          onClick={() => handleDelete(u.id)}
+                          style={{
+                            fontSize: 12, padding: '5px 12px', borderRadius: 8, cursor: 'pointer',
+                            background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626',
+                            fontWeight: 600, minHeight: 'auto',
+                          }}
+                        >
+                          Hapus
+                        </button>
                       )}
                     </div>
                   </td>
@@ -148,32 +219,61 @@ export default function UsersPage() {
           </table>
         </div>
 
-        {/* Card Mobile */}
+        {/* ─── Card Mobile ─── */}
         <div className="md:hidden space-y-3">
           {users.length === 0 ? (
-            <p className="text-center py-10 text-gray-600">Belum ada user</p>
-          ) : users.map((u) => (
-            <div key={u.id} className="rounded-xl p-4"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div className="flex justify-between items-start mb-2">
+            <div style={{ ...card, padding: 40, textAlign: 'center', color: '#94a3b8' }}>
+              Belum ada user
+            </div>
+          ) : users.map(u => (
+            <div key={u.id} style={{ ...card, padding: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                 <div>
-                  <div className="text-gray-200 text-sm font-medium">{u.name}</div>
-                  {u.id === (session?.user as any)?.id && <span className="text-xs text-blue-400">(Anda)</span>}
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1e293b' }}>{u.name}</div>
+                  {u.id === (session?.user as any)?.id && (
+                    <span style={{ fontSize: 11, color: '#2563eb', fontWeight: 600 }}>(Anda)</span>
+                  )}
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${u.role === 'ADMIN' ? 'bg-purple-500/10 text-purple-400' : 'bg-blue-500/10 text-blue-400'
-                  }`}>
+                <span style={rolePill(u.role)}>
                   {u.role === 'ADMIN' ? 'Admin' : 'Project Manager'}
                 </span>
               </div>
-              <div className="text-xs text-gray-500 space-y-1 mb-3">
-                <div>Email: <span className="text-gray-400 break-all">{u.email}</span></div>
-                <div>Dibuat: <span className="text-gray-400">{new Date(u.createdAt).toLocaleDateString('id-ID')}</span></div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
+                <div style={{ fontSize: 12 }}>
+                  <span style={{ color: '#94a3b8' }}>Email: </span>
+                  <span style={{ color: '#334155', fontWeight: 500, wordBreak: 'break-all' }}>{u.email}</span>
+                </div>
+                <div style={{ fontSize: 12 }}>
+                  <span style={{ color: '#94a3b8' }}>Dibuat: </span>
+                  <span style={{ color: '#334155', fontWeight: 500 }}>
+                    {new Date(u.createdAt).toLocaleDateString('id-ID')}
+                  </span>
+                </div>
               </div>
-              <div className="flex gap-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <button onClick={() => { setEditUser(u); setForm({ name: u.name, email: u.email, password: '', role: u.role }); setShowForm(true) }}
-                  className="text-blue-400 text-xs hover:text-blue-300 transition">Edit</button>
+
+              <div style={{ display: 'flex', gap: 8, borderTop: '1px solid #f1f5f9', paddingTop: 12 }}>
+                <button
+                  onClick={() => { setEditUser(u); setForm({ name: u.name, email: u.email, password: '', role: u.role }); setShowForm(true) }}
+                  style={{
+                    fontSize: 12, padding: '6px 14px', borderRadius: 8, cursor: 'pointer',
+                    background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8',
+                    fontWeight: 600, minHeight: 'auto',
+                  }}
+                >
+                  Edit
+                </button>
                 {u.id !== (session?.user as any)?.id && (
-                  <button onClick={() => handleDelete(u.id)} className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
+                  <button
+                    onClick={() => handleDelete(u.id)}
+                    style={{
+                      fontSize: 12, padding: '6px 14px', borderRadius: 8, cursor: 'pointer',
+                      background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626',
+                      fontWeight: 600, minHeight: 'auto',
+                    }}
+                  >
+                    Hapus
+                  </button>
                 )}
               </div>
             </div>
@@ -181,58 +281,116 @@ export default function UsersPage() {
         </div>
       </main>
 
-      {/* Modal */}
+      {/* ─── Modal ─── */}
       {showForm && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
-          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
-          <div className="w-full max-w-md rounded-2xl p-6 max-h-[90vh] overflow-y-auto"
-            style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <h3 className="text-base font-semibold text-white mb-5">
-              {editUser ? 'Edit User' : 'Tambah User Baru'}
-            </h3>
-            <div className="space-y-3">
-              {[
-                { label: 'Nama Lengkap', key: 'name', type: 'text', placeholder: 'Masukkan nama' },
-                { label: 'Email', key: 'email', type: 'email', placeholder: 'nama@email.com' },
-                { label: editUser ? 'Password (kosongkan jika tidak diganti)' : 'Password', key: 'password', type: 'password', placeholder: editUser ? 'Kosongkan jika tidak diganti' : 'Masukkan password' },
-              ].map(({ label, key, type, placeholder }) => (
-                <div key={key}>
-                  <label className="block text-xs text-gray-500 mb-1.5">{label}</label>
-                  <input type={type} value={form[key as keyof typeof form]}
-                    onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                    placeholder={placeholder}
-                    className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none transition"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
-                </div>
-              ))}
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Role</label>
-                <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <option value="PROJECT_MANAGER" className="bg-gray-900">Project Manager</option>
-                  <option value="ADMIN" className="bg-gray-900">Admin</option>
-                </select>
-              </div>
-              <div className={`rounded-xl p-3 text-xs ${form.role === 'ADMIN' ? 'bg-purple-500/5 border border-purple-500/15 text-purple-400' : 'bg-blue-500/5 border border-blue-500/15 text-blue-400'}`}>
-                {form.role === 'ADMIN' ? (
-                  <div><div className="font-medium mb-1">Akses Admin</div><div>✓ Mengelola semua data & user</div></div>
-                ) : (
-                  <div><div className="font-medium mb-1">Akses Project Manager</div><div>✓ Proyek, dokumen, keuangan</div><div>✗ Tidak bisa kelola user</div></div>
-                )}
-              </div>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(15,23,42,0.35)', backdropFilter: 'blur(4px)' }}
+        >
+          <div style={{
+            ...card,
+            width: '100%', maxWidth: 440,
+            maxHeight: '90vh', overflowY: 'auto',
+          }}>
+            {/* Modal header */}
+            <div style={{
+              background: 'linear-gradient(135deg,#2563eb,#1d4ed8)',
+              padding: '20px 24px',
+              borderRadius: '14px 14px 0 0',
+            }}>
+              <h3 style={{ color: '#ffffff', fontWeight: 800, fontSize: 16 }}>
+                {editUser ? 'Edit User' : 'Tambah User Baru'}
+              </h3>
             </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={handleSubmit}
-                className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium transition"
-                style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>
-                {editUser ? 'Simpan' : 'Tambah User'}
-              </button>
-              <button onClick={() => { setShowForm(false); setEditUser(null) }}
-                className="flex-1 py-2.5 rounded-xl text-sm text-gray-400 transition"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                Batal
-              </button>
+
+            <div style={{ padding: 24 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {[
+                  { label: 'Nama Lengkap', key: 'name', type: 'text', placeholder: 'Masukkan nama' },
+                  { label: 'Email', key: 'email', type: 'email', placeholder: 'nama@email.com' },
+                  {
+                    label: editUser ? 'Password (kosongkan jika tidak diganti)' : 'Password',
+                    key: 'password', type: 'password',
+                    placeholder: editUser ? 'Kosongkan jika tidak diganti' : 'Masukkan password',
+                  },
+                ].map(({ label, key, type, placeholder }) => (
+                  <div key={key}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6 }}>
+                      {label}
+                    </label>
+                    <input
+                      type={type}
+                      value={form[key as keyof typeof form]}
+                      onChange={e => setForm({ ...form, [key]: e.target.value })}
+                      placeholder={placeholder}
+                      style={inputSt}
+                      onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.background = '#fff' }}
+                      onBlur={e => { e.target.style.borderColor = '#e2e8f0'; e.target.style.background = '#f8fafc' }}
+                    />
+                  </div>
+                ))}
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6 }}>
+                    Role
+                  </label>
+                  <select
+                    value={form.role}
+                    onChange={e => setForm({ ...form, role: e.target.value })}
+                    style={inputSt}
+                  >
+                    <option value="PROJECT_MANAGER">Project Manager</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
+                </div>
+
+                {/* Info Role */}
+                <div style={{
+                  padding: '12px 14px', borderRadius: 10,
+                  background: form.role === 'ADMIN' ? '#f5f3ff' : '#eff6ff',
+                  border: form.role === 'ADMIN' ? '1px solid #ddd6fe' : '1px solid #bfdbfe',
+                  fontSize: 12,
+                  color: form.role === 'ADMIN' ? '#6d28d9' : '#1d4ed8',
+                }}>
+                  {form.role === 'ADMIN' ? (
+                    <div>
+                      <div style={{ fontWeight: 700, marginBottom: 4 }}>Akses Admin</div>
+                      <div>✓ Mengelola semua data & user</div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ fontWeight: 700, marginBottom: 4 }}>Akses Project Manager</div>
+                      <div>✓ Kelola proyek, dokumen, keuangan</div>
+                      <div style={{ marginTop: 2, color: '#64748b' }}>✗ Tidak bisa kelola user</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+                <button
+                  onClick={handleSubmit}
+                  style={{
+                    flex: 1, padding: 13, borderRadius: 11, border: 'none',
+                    background: 'linear-gradient(135deg,#2563eb,#1d4ed8)',
+                    color: '#fff', fontWeight: 800, fontSize: 14, cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(37,99,235,0.3)',
+                  }}
+                >
+                  {editUser ? 'Simpan Perubahan' : 'Tambah User'}
+                </button>
+                <button
+                  onClick={() => { setShowForm(false); setEditUser(null) }}
+                  style={{
+                    flex: 1, padding: 13, borderRadius: 11,
+                    border: '1.5px solid #e2e8f0',
+                    background: '#f8fafc', color: '#64748b',
+                    fontWeight: 700, fontSize: 14, cursor: 'pointer',
+                  }}
+                >
+                  Batal
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -19,6 +19,7 @@ interface Project {
   status: string
   userName: string
   updatedAt: string
+  isApproved?: boolean
 }
 
 interface PendingDokumen {
@@ -32,6 +33,80 @@ interface PendingDokumen {
   proyekNama: string
   uploaderName: string
 }
+
+// ─── Design tokens ───
+const C = {
+  bg:        '#f5f7ff',
+  white:     '#ffffff',
+  border:    '#e2e8f0',
+  text:      '#1e293b',
+  textSub:   '#475569',
+  textMute:  '#94a3b8',
+  blue:      '#2563eb',
+  blueDark:  '#1d4ed8',
+  blueBg:    '#eff6ff',
+  blueBd:    '#bfdbfe',
+  blueText:  '#1d4ed8',
+  green:     '#16a34a',
+  greenBg:   '#f0fdf4',
+  greenBd:   '#bbf7d0',
+  amber:     '#d97706',
+  amberBg:   '#fffbeb',
+  amberBd:   '#fde68a',
+  red:       '#dc2626',
+  redBg:     '#fef2f2',
+  redBd:     '#fecaca',
+  purple:    '#7c3aed',
+  purpleBg:  '#f5f3ff',
+  purpleBd:  '#ddd6fe',
+}
+
+const card: React.CSSProperties = {
+  background: C.white,
+  borderRadius: 14,
+  border: `1px solid ${C.border}`,
+  boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(37,99,235,0.05)',
+}
+
+const inputSt: React.CSSProperties = {
+  background: '#f8fafc',
+  border: `1.5px solid ${C.border}`,
+  color: C.text,
+  fontSize: 13,
+  borderRadius: 9,
+  padding: '8px 12px',
+  outline: 'none',
+  width: '100%',
+}
+
+// pill badge
+const pill = (bg: string, color: string, bd: string): React.CSSProperties => ({
+  display: 'inline-block',
+  fontSize: 11, padding: '3px 10px',
+  borderRadius: 99, background: bg,
+  color, border: `1px solid ${bd}`,
+  fontWeight: 700, whiteSpace: 'nowrap',
+})
+
+// small action button
+const btn = (bg: string, color: string, bd: string): React.CSSProperties => ({
+  fontSize: 12, padding: '5px 13px',
+  borderRadius: 8, background: bg,
+  color, border: `1px solid ${bd}`,
+  cursor: 'pointer', fontWeight: 600,
+  minHeight: 'auto',
+})
+
+// collapsible panel header
+const panelBtn = (active: boolean): React.CSSProperties => ({
+  width: '100%', display: 'flex',
+  alignItems: 'center', justifyContent: 'space-between',
+  padding: '13px 16px', borderRadius: 11,
+  cursor: 'pointer', minHeight: 48,
+  background: active ? C.blueBg : '#fafbff',
+  border: `1px solid ${active ? C.blueBd : C.border}`,
+  transition: 'all 0.15s',
+})
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -61,14 +136,16 @@ export default function DashboardPage() {
     wilayah: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: 'PERENCANAAN'
   })
 
+  const isAdmin = (session?.user as any)?.role === 'ADMIN'
+
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login')
     if (status === 'authenticated') {
       fetchProjects()
-      fetchPendingDokumen()
-      fetchRequestEdit()
-      fetchPendingKeuangan()
-      fetchRequestApproval()
+      if (isAdmin) {
+        fetchPendingDokumen(); fetchRequestEdit()
+        fetchPendingKeuangan(); fetchRequestApproval()
+      }
     }
   }, [status])
 
@@ -78,19 +155,32 @@ export default function DashboardPage() {
       const res = await fetch('/api/proyek')
       const data = await res.json()
       setProjects(Array.isArray(data) ? data : [])
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }
 
   const fetchPendingDokumen = async () => {
-    if ((session?.user as any)?.role !== 'ADMIN') return
+    if (!isAdmin) return
+    try { const r = await fetch('/api/admin/pending-dokumen'); setPendingDokumen(await r.json()) } catch { }
+  }
+
+  const fetchRequestEdit = async () => {
+    if (!isAdmin) return
     try {
-      const res = await fetch('/api/admin/pending-dokumen')
-      const data = await res.json()
-      setPendingDokumen(Array.isArray(data) ? data : [])
+      const r = await fetch('/api/notifikasi'); const d = await r.json()
+      setRequestEditList(Array.isArray(d) ? d.filter((n: any) => n.status === 'REQUEST_EDIT') : [])
+    } catch { }
+  }
+
+  const fetchPendingKeuangan = async () => {
+    if (!isAdmin) return
+    try { const r = await fetch('/api/admin/pending-keuangan'); setPendingKeuangan(await r.json()) } catch { }
+  }
+
+  const fetchRequestApproval = async () => {
+    if (!isAdmin) return
+    try {
+      const r = await fetch('/api/notifikasi'); const d = await r.json()
+      setRequestApprovalList(Array.isArray(d) ? d.filter((n: any) => n.status === 'REQUEST_APPROVAL') : [])
     } catch { }
   }
 
@@ -100,428 +190,208 @@ export default function DashboardPage() {
     if (!form.sektor.trim()) { alert('Sektor wajib diisi!'); return }
     if (!form.tanggalMulai) { alert('Tanggal Mulai wajib diisi!'); return }
     if (form.tanggalSelesai && new Date(form.tanggalSelesai) < new Date(form.tanggalMulai)) {
-      alert('Tanggal Selesai tidak boleh sebelum Tanggal Mulai!')
-      return
+      alert('Tanggal Selesai tidak boleh sebelum Tanggal Mulai!'); return
     }
     await fetch('/api/proyek', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form)
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form)
     })
     setShowForm(false)
-    resetForm()
+    setForm({ nama: '', jenis: '', nilai: '', penanggungjawab: '', wilayah: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: 'PERENCANAAN' })
     fetchProjects()
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Yakin ingin menghapus pekerjaan ini?')) return
-    await fetch(`/api/proyek/${id}`, { method: 'DELETE' })
-    fetchProjects()
+    if (!confirm('Yakin ingin menghapus program ini?')) return
+    await fetch(`/api/proyek/${id}`, { method: 'DELETE' }); fetchProjects()
   }
 
-  const handleQuickApproval = async (dokumenId: string, approvalStatus: 'APPROVED' | 'REJECTED') => {
+  const handleQuickApproval = async (dokumenId: string, s: 'APPROVED' | 'REJECTED') => {
     setApprovalLoading(dokumenId)
     try {
-      const res = await fetch(`/api/dokumen/${dokumenId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: approvalStatus, catatanAdmin: catatanMap[dokumenId] || '' })
+      await fetch(`/api/dokumen/${dokumenId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: s, catatanAdmin: catatanMap[dokumenId] || '' })
       })
-      if (!res.ok) throw new Error('Gagal')
-      await fetchPendingDokumen()
-      await fetchProjects()
-    } catch {
-      alert('Gagal update status dokumen')
-    } finally {
-      setApprovalLoading(null)
-    }
+      await fetchPendingDokumen(); await fetchProjects()
+    } finally { setApprovalLoading(null) }
   }
 
   const handleUnlockProject = async (projectId: string, notifId: string) => {
     setUnlockLoading(projectId)
     try {
-      const unlockRes = await fetch(`/api/proyek/${projectId}/unlock`, {
-        method: 'POST'
-      })
-      if (!unlockRes.ok) {
-        throw new Error('Failed to unlock project')
-      }
-
-      try {
-        await fetch('/api/notifikasi/read', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ notifId })
-        })
-      } catch (readError) {
-        console.warn('Failed to mark notification as read:', readError)
-      }
-
-      await Promise.all([
-        fetchRequestEdit(),
-        fetchProjects()
-      ])
-
-      alert('Proyek berhasil dibuka untuk diedit!')
-    } catch (error) {
-      console.error('Error unlocking project:', error)
-      alert('Gagal membuka proyek')
-    } finally {
-      setUnlockLoading(null)
-    }
+      await fetch(`/api/proyek/${projectId}/unlock`, { method: 'POST' })
+      await Promise.all([fetchRequestEdit(), fetchProjects()])
+      alert('Proyek berhasil dibuka!')
+    } finally { setUnlockLoading(null) }
   }
 
   const handleRejectRequest = async (projectId: string) => {
-    if (!confirm('Yakin tolak permintaan edit ini?')) return
+    if (!confirm('Yakin tolak permintaan ini?')) return
     setUnlockLoading(projectId)
     try {
-      const response = await fetch(`/api/proyek/${projectId}/reject`, {
-        method: 'POST'
-      })
-
-      if (!response.ok) {
-        const text = await response.text()
-        throw new Error(text || 'Gagal reject')
-      }
-
-      await Promise.all([fetchRequestEdit(), fetchProjects()])
-      alert('Permintaan edit ditolak')
-    } catch (error: any) {
-      console.error('Reject error:', error)
-      alert('Gagal menolak: ' + error.message)
-    } finally {
-      setUnlockLoading(null)
-    }
-  }
-
-  const fetchRequestEdit = async () => {
-    if ((session?.user as any)?.role !== 'ADMIN') return
-    try {
-      const res = await fetch('/api/notifikasi')
-      const data = await res.json()
-      const requests = Array.isArray(data)
-        ? data.filter((n: any) => n.status === 'REQUEST_EDIT')
-        : []
-      setRequestEditList(requests)
-    } catch { }
-  }
-
-  const fetchPendingKeuangan = async () => {
-    if ((session?.user as any)?.role !== 'ADMIN') return
-    try {
-      const res = await fetch('/api/admin/pending-keuangan')
-      const data = await res.json()
-      setPendingKeuangan(Array.isArray(data) ? data : [])
-    } catch { }
-  }
-
-  const fetchRequestApproval = async () => {
-    if ((session?.user as any)?.role !== 'ADMIN') return
-    try {
-      const res = await fetch('/api/notifikasi')
-      const data = await res.json()
-      const requests = Array.isArray(data)
-        ? data.filter((n: any) => n.status === 'REQUEST_APPROVAL')
-        : []
-      setRequestApprovalList(requests)
-    } catch { }
+      const r = await fetch(`/api/proyek/${projectId}/reject`, { method: 'POST' })
+      if (!r.ok) throw new Error(await r.text())
+      await Promise.all([fetchRequestEdit(), fetchRequestApproval(), fetchProjects()])
+    } catch (e: any) { alert('Gagal: ' + e.message) }
+    finally { setUnlockLoading(null) }
   }
 
   const handleApproveProjectFromDashboard = async (projectId: string) => {
     setApproveProjectLoading(projectId)
     try {
-      const res = await fetch(`/api/proyek/${projectId}/approve`, { method: 'POST' })
-      if (!res.ok) throw new Error('Gagal')
-      alert('Proyek disetujui!')
+      const r = await fetch(`/api/proyek/${projectId}/approve`, { method: 'POST' })
+      if (!r.ok) throw new Error('Gagal')
+      alert('✓ Proyek disetujui!')
       await Promise.all([fetchRequestApproval(), fetchProjects()])
-    } catch {
-      alert('Gagal menyetujui proyek')
-    } finally {
-      setApproveProjectLoading(null)
-    }
+    } catch { alert('Gagal menyetujui proyek') }
+    finally { setApproveProjectLoading(null) }
   }
 
-  const resetForm = () => {
-    setForm({ nama: '', jenis: '', nilai: '', penanggungjawab: '', wilayah: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: 'PERENCANAAN' })
+  const fmtRp = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
+  const fmtDate = (s: string) => {
+    if (!s) return '-'
+    const d = new Date(s)
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      + '\n' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+  }
+  const diffDays = (t: string) => t ? Math.ceil((new Date(t).getTime() - Date.now()) / 86400000) : 999
+
+  const statusLabel: Record<string, string> = { PERENCANAAN: 'Draft', BERJALAN: 'Berjalan', SELESAI: 'Selesai' }
+  const statusPill: Record<string, [string, string, string]> = {
+    PERENCANAAN: ['#f1f5f9', '#64748b', '#cbd5e1'],
+    BERJALAN:    [C.blueBg,  C.blueText, C.blueBd],
+    SELESAI:     [C.greenBg, C.green,    C.greenBd],
   }
 
-  const formatRupiah = (num: number) => new Intl.NumberFormat('id-ID').format(num)
+  const filtered = projects.filter(p =>
+    (filterStatus === 'SEMUA' || p.status === filterStatus) &&
+    (p.nama || '').toLowerCase().includes(searchNama.toLowerCase()) &&
+    (p.wilayah || '').toLowerCase().includes(searchWilayah.toLowerCase())
+  )
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return '-'
-    const d = new Date(dateStr)
-    return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
-      '\n' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-  }
-
-  const statusLabel: Record<string, string> = {
-    PERENCANAAN: 'Draft', BERJALAN: 'Sedang Diproses', SELESAI: 'Selesai'
-  }
-
-  const filtered = projects.filter(p => {
-    const matchStatus = filterStatus === 'SEMUA' || p.status === filterStatus
-    const matchNama = (p.nama || '').toLowerCase().includes(searchNama.toLowerCase())
-    const matchWilayah = (p.wilayah || '').toLowerCase().includes(searchWilayah.toLowerCase())
-    return matchStatus && matchNama && matchWilayah
-  })
-
-  const getDiffDays = (tanggalSelesai: string) => {
-    if (!tanggalSelesai) return 999
-    return Math.ceil((new Date(tanggalSelesai).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-  }
-
-  // Hitung ringkasan per user
   const userMap: Record<string, { name: string; projects: Project[] }> = {}
   projects.forEach(p => {
-    const key = p.userName || 'Unknown'
-    if (!userMap[key]) userMap[key] = { name: key, projects: [] }
-    userMap[key].projects.push(p)
+    const k = p.userName || 'Unknown'
+    if (!userMap[k]) userMap[k] = { name: k, projects: [] }
+    userMap[k].projects.push(p)
   })
   const userEntries = Object.entries(userMap)
 
   if (status === 'loading' || loading) return <Loading />
   if (status === 'unauthenticated') return null
 
+  const EmptyMsg = ({ text }: { text: string }) => (
+    <div style={{ padding: '24px', textAlign: 'center', color: C.textMute, fontSize: 13 }}>✓ {text}</div>
+  )
+
   return (
-    <div style={{ minHeight: '100dvh', background: '#030712' }}>
+    <div style={{ minHeight: '100dvh', background: C.bg }}>
       <Header />
 
-      <main className="px-4 sm:px-6 py-4 sm:py-6"
-        style={{
-          paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
-          paddingLeft: 'calc(1rem + env(safe-area-inset-left))',
-          paddingRight: 'calc(1rem + env(safe-area-inset-right))',
-        }}>
-        {/* Summary Cards */}
+      <main style={{
+        maxWidth: 1100, margin: '0 auto',
+        padding: '1.5rem calc(1rem + env(safe-area-inset-left,0px)) calc(2rem + env(safe-area-inset-bottom,0px)) calc(1rem + env(safe-area-inset-right,0px))',
+      }}>
+
+        {/* ─── Summary Cards ─── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
-            { label: 'Total Proyek', value: projects.length, color: '#f9fafb' },
-            { label: 'Sedang Berjalan', value: projects.filter(p => p.status === 'BERJALAN').length, color: '#60a5fa' },
-            { label: 'Selesai', value: projects.filter(p => p.status === 'SELESAI').length, color: '#34d399' },
-            { label: 'Hampir Selesai', value: projects.filter(p => { const d = getDiffDays(p.tanggalSelesai); return d <= 7 && d >= 0 && p.status !== 'SELESAI' }).length, color: '#fb923c' },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="rounded-xl p-4"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-xs text-gray-500">{label}</p>
-              <p className="text-2xl sm:text-3xl font-bold mt-1" style={{ color }}>{value}</p>
+            { label: 'Total Program',   value: projects.length,                                                                                                               color:C.blue,  bg:C.blueBg,  bd:C.blueBd  },
+            { label: 'Sedang Berjalan', value: projects.filter(p => p.status === 'BERJALAN').length,                                                                          color:C.amber, bg:C.amberBg, bd:C.amberBd },
+            { label: 'Selesai',         value: projects.filter(p => p.status === 'SELESAI').length,                                                                           color:C.green, bg:C.greenBg, bd:C.greenBd },
+            { label: 'Hampir Selesai',  value: projects.filter(p => { const d = diffDays(p.tanggalSelesai); return d<=7&&d>=0&&p.status!=='SELESAI' }).length,                color:C.red,   bg:C.redBg,   bd:C.redBd   },
+          ].map(({ label, value, color, bg, bd }) => (
+            <div key={label} style={{ ...card, padding: '16px 20px', background: bg, border: `1px solid ${bd}` }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+                <span style={{ fontSize:11, color:C.textSub, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.04em' }}>{label}</span>
+              </div>
+              <span style={{ fontSize:36, fontWeight:900, color, lineHeight:1 }}>{value}</span>
             </div>
           ))}
         </div>
 
-        {/* Panel Admin */}
-        {(session?.user as any)?.role === 'ADMIN' && (
-          <div className="mb-4 space-y-2">
+        {/* ─── Panel Admin ─── */}
+        {isAdmin && (
+          <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:24 }}>
 
-            {/* Ringkasan Per User */}
-            <div>
-              <button onClick={() => setShowUserPanel(prev => !prev)}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition"
-                style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)'
-                }}>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-400">Ringkasan Per User</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">
-                    {userEntries.length} user
-                  </span>
+            {/* Label */}
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:2 }}>
+              <div style={{ width:3, height:14, borderRadius:99, background:C.blue }} />
+              <span style={{ fontSize:11, fontWeight:800, color:C.blue, textTransform:'uppercase', letterSpacing:'0.08em' }}>
+                Panel Admin
+              </span>
+            </div>
+
+            {/* ── Ringkasan Per User ── */}
+            <div style={card}>
+              <button onClick={() => setShowUserPanel(p => !p)} style={panelBtn(showUserPanel)}>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <span style={{ fontSize:13, fontWeight:700, color:C.text }}>Ringkasan Per User</span>
+                  <span style={pill(C.blueBg, C.blueText, C.blueBd)}>{userEntries.length} user</span>
                 </div>
-                <span className="text-gray-600 text-xs">{showUserPanel ? '▲ Sembunyikan' : '▼ Tampilkan'}</span>
+                <span style={{ fontSize:11, color:C.textMute }}>{showUserPanel ? '▲' : '▼'}</span>
               </button>
-
               {showUserPanel && (
-                <div className="mt-1 rounded-xl overflow-hidden"
-                  style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
-                  {userEntries.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-gray-600 text-sm">Belum ada data</div>
-                  ) : userEntries.map(([name, data]) => (
-                    <div key={name} className="px-4 py-3 hover:bg-white/[0.02] transition"
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                            style={{ background: 'rgba(37,99,235,0.4)' }}>
-                            {name.charAt(0).toUpperCase()}
+                <div style={{ borderTop:`1px solid ${C.border}` }}>
+                  {userEntries.length === 0 ? <EmptyMsg text="Belum ada data" /> : userEntries.map(([name, data]) => (
+                    <div key={name} style={{ padding:'12px 16px', borderBottom:`1px solid #f8fafc` }}>
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8, flexWrap:'wrap', gap:6 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                          <div style={{ width:28, height:28, borderRadius:'50%', background:`linear-gradient(135deg,${C.blue},${C.blueDark})`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                            <span style={{ color:'#fff', fontSize:11, fontWeight:700 }}>{name.charAt(0).toUpperCase()}</span>
                           </div>
-                          <span className="text-sm text-gray-300 font-medium">{name}</span>
+                          <span style={{ fontSize:13, fontWeight:700, color:C.text }}>{name}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="text-gray-600">{data.projects.length} proyek</span>
-                          <span className="bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full">
-                            {data.projects.filter(p => p.status === 'BERJALAN').length} berjalan
-                          </span>
-                          <span className="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full">
-                            {data.projects.filter(p => p.status === 'SELESAI').length} selesai
-                          </span>
+                        <div style={{ display:'flex', gap:6 }}>
+                          <span style={pill(C.blueBg, C.blueText, C.blueBd)}>{data.projects.filter(p=>p.status==='BERJALAN').length} berjalan</span>
+                          <span style={pill(C.greenBg, C.green, C.greenBd)}>{data.projects.filter(p=>p.status==='SELESAI').length} selesai</span>
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {data.projects.slice(0, 5).map(p => (
-                          <button key={p.id} onClick={() => router.push(`/proyek/${p.id}`)}
-                            className="text-xs px-2 py-1 rounded-lg transition hover:opacity-80"
-                            style={{
-                              background: p.status === 'BERJALAN' ? 'rgba(37,99,235,0.1)' : p.status === 'SELESAI' ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.04)',
-                              border: p.status === 'BERJALAN' ? '1px solid rgba(37,99,235,0.2)' : p.status === 'SELESAI' ? '1px solid rgba(52,211,153,0.2)' : '1px solid rgba(255,255,255,0.07)',
-                              color: p.status === 'BERJALAN' ? '#60a5fa' : p.status === 'SELESAI' ? '#34d399' : '#9ca3af'
-                            }}>
-                            {p.nama.length > 25 ? p.nama.slice(0, 25) + '...' : p.nama}
-                          </button>
-                        ))}
-                        {data.projects.length > 5 && (
-                          <span className="text-xs text-gray-600 px-2 py-1">+{data.projects.length - 5} lagi</span>
-                        )}
+                      <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+                        {data.projects.slice(0,5).map(p => {
+                          const [bg,tc,bd] = statusPill[p.status] || statusPill.PERENCANAAN
+                          return (
+                            <button key={p.id} onClick={() => router.push(`/proyek/${p.id}`)}
+                              style={{ fontSize:11, padding:'4px 10px', borderRadius:8, background:bg, border:`1px solid ${bd}`, color:tc, cursor:'pointer', minHeight:'auto' }}>
+                              {p.nama.length > 25 ? p.nama.slice(0,25)+'…' : p.nama}
+                            </button>
+                          )
+                        })}
+                        {data.projects.length > 5 && <span style={{ fontSize:11, color:C.textMute, padding:'4px 6px' }}>+{data.projects.length-5} lagi</span>}
                       </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            <div>
-              <button onClick={() => { setShowRequestPanel(!showRequestPanel); fetchRequestEdit() }}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition"
-                style={{
-                  background: requestEditList.length > 0 ? 'rgba(139,92,246,0.08)' : 'rgba(255,255,255,0.03)',
-                  border: requestEditList.length > 0 ? '1px solid rgba(139,92,246,0.25)' : '1px solid rgba(255,255,255,0.06)'
-                }}>
-                <div className="flex item-center gap-2">
-                  <span className="text-sm font-medium" style={{ color: requestEditList.length > 0 ? '#a78bfa' : '#9ca3af' }}>
-                    Permintaan Edit Proyek
-                  </span>
-                  {requestEditList.length > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded-full font-bold"
-                      style={{ background: 'rgba(139,92,246,0.2)', color: '#a78bfa' }}>
-                      {requestEditList.length} permintaan
-                    </span>
-                  )}
-                </div>
-                <span className="text-gray-600 text-xs">{showRequestPanel ? '▲ Sembunyikan' : '▼ Tampilkan'}</span>
-              </button>
 
-              {showRequestPanel && (
-                <div className="mt-1 rounded-xl overflow-hidden"
-                  style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
-                  {requestEditList.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-gray-600 text-sm">
-                      ✓ Tidak ada permintaan edit
-                    </div>
-                  ) : requestEditList.map((r) => (
-                    <div key={r.id} className="px-4 py-4"
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(255,255,255,0.01)' }}>
-                      <div className="mb-3">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-sm font-medium text-gray-200">{r.fileName}</span>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400">
-                            Request Edit
-                          </span>
-                        </div>
-                        {r.catatanAdmin && (
-                          <div className="text-xs text-gray-400 mt-1 italic">"{r.catatanAdmin}"</div>
-                        )}
-                        <div className="text-xs text-gray-600 mt-1">
-                          {new Date(r.createdAt).toLocaleDateString('id-ID', {
-                            day: '2-digit',
-                            month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                          })}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <button onClick={() => router.push(`/proyek/${r.projectId}`)}
-                          className="text-xs px-3 py-1.5 rounded-lg transition text-blue-400 hover:text-blue-300"
-                          style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)' }}>
-                          Lihat Proyek
-                        </button>
-                        <button
-                          onClick={() => handleUnlockProject(r.projectId, r.id)}
-                          disabled={unlockLoading === r.projectId}
-                          className="px-4 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50"
-                          style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }}>
-                          {unlockLoading === r.projectId ? '...' : 'Izinkan Edit'}
-                        </button>
-                        <button
-                          onClick={() => handleRejectRequest(r.projectId)}
-                          disabled={unlockLoading === r.projectId}
-                          className="px-4 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50"
-                          style={{
-                            background: 'rgba(239,68,68,0.1)',
-                            border: '1px solid rgba(239,68,68,0.2)',
-                            color: '#f87171'
-                          }}>
-                          {unlockLoading === r.projectId ? '...' : 'Tolak'}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            {/* Panel Request Approval Proyek */}
-            <div>
-              <button onClick={() => { setShowRequestApprovalPanel(!showRequestApprovalPanel); fetchRequestApproval() }}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition"
-                style={{
-                  background: requestApprovalList.length > 0 ? 'rgba(52,211,153,0.08)' : 'rgba(255,255,255,0.03)',
-                  border: requestApprovalList.length > 0 ? '1px solid rgba(52,211,153,0.25)' : '1px solid rgba(255,255,255,0.06)'
-                }}>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium" style={{ color: requestApprovalList.length > 0 ? '#34d399' : '#9ca3af' }}>
+            {/* ── Permintaan Persetujuan Proyek ── */}
+            <div style={card}>
+              <button onClick={() => { setShowRequestApprovalPanel(p=>!p); fetchRequestApproval() }} style={panelBtn(requestApprovalList.length > 0)}>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <span style={{ fontSize:13, fontWeight:700, color: requestApprovalList.length > 0 ? C.blueText : C.text }}>
                     Permintaan Persetujuan Proyek
                   </span>
-                  {requestApprovalList.length > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded-full font-bold"
-                      style={{ background: 'rgba(52,211,153,0.2)', color: '#34d399' }}>
-                      {requestApprovalList.length} permintaan
-                    </span>
-                  )}
+                  {requestApprovalList.length > 0 && <span style={pill(C.blueBg, C.blueText, C.blueBd)}>{requestApprovalList.length}</span>}
                 </div>
-                <span className="text-gray-600 text-xs">{showRequestApprovalPanel ? '▲ Sembunyikan' : '▼ Tampilkan'}</span>
+                <span style={{ fontSize:11, color:C.textMute }}>{showRequestApprovalPanel ? '▲' : '▼'}</span>
               </button>
-
               {showRequestApprovalPanel && (
-                <div className="mt-1 rounded-xl overflow-hidden"
-                  style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
-                  {requestApprovalList.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-gray-600 text-sm">
-                      Tidak ada permintaan persetujuan
-                    </div>
-                  ) : requestApprovalList.map((r) => (
-                    <div key={r.id} className="px-4 py-4"
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(255,255,255,0.01)' }}>
-                      <div className="mb-3">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-sm font-medium text-gray-200">{r.fileName}</span>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">
-                            Minta Persetujuan
-                          </span>
-                        </div>
-                        {r.catatanAdmin && (
-                          <div className="text-xs text-gray-400 mt-1 italic">"{r.catatanAdmin}"</div>
-                        )}
-                        <div className="text-xs text-gray-600 mt-1">
-                          {new Date(r.createdAt).toLocaleDateString('id-ID', {
-                            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                          })}
-                        </div>
+                <div style={{ borderTop:`1px solid ${C.border}` }}>
+                  {requestApprovalList.length === 0 ? <EmptyMsg text="Tidak ada permintaan persetujuan" /> : requestApprovalList.map(r => (
+                    <div key={r.id} style={{ padding:'14px 16px', borderBottom:`1px solid #f8fafc` }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:C.text, marginBottom:4 }}>{r.fileName}</div>
+                      {r.catatanAdmin && <div style={{ fontSize:12, color:C.textSub, fontStyle:'italic', marginBottom:6 }}>"{r.catatanAdmin}"</div>}
+                      <div style={{ fontSize:11, color:C.textMute, marginBottom:10 }}>
+                        {new Date(r.createdAt).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
                       </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <button onClick={() => router.push(`/proyek/${r.projectId}`)}
-                          className="text-xs px-3 py-1.5 rounded-lg transition text-blue-400 hover:text-blue-300"
-                          style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)' }}>
-                          Lihat Proyek
+                      <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                        <button onClick={() => router.push(`/proyek/${r.projectId}`)} style={btn(C.blueBg, C.blueText, C.blueBd)}>Lihat Proyek</button>
+                        <button onClick={() => handleApproveProjectFromDashboard(r.projectId)} disabled={approveProjectLoading===r.projectId}
+                          style={{ ...btn(C.greenBg, C.green, C.greenBd), opacity: approveProjectLoading===r.projectId ? 0.5 : 1 }}>
+                          {approveProjectLoading===r.projectId ? '...' : '✓ Setujui Proyek'}
                         </button>
-                        <button
-                          onClick={() => handleApproveProjectFromDashboard(r.projectId)}
-                          disabled={approveProjectLoading === r.projectId}
-                          className="px-4 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50"
-                          style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }}>
-                          {approveProjectLoading === r.projectId ? '...' : '✓ Setujui Proyek'}
-                        </button>
-                        <button
-                          onClick={() => handleRejectRequest(r.projectId)}
-                          disabled={approveProjectLoading === r.projectId}
-                          className="px-4 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50"
-                          style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
-                          ✗ Tolak
-                        </button>
+                        <button onClick={() => handleRejectRequest(r.projectId)} style={btn(C.redBg, C.red, C.redBd)}>✗ Tolak</button>
                       </div>
                     </div>
                   ))}
@@ -529,142 +399,97 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Panel Keuangan Pending */}
-            <div>
-              <button onClick={() => { setShowKeuanganPanel(!showKeuanganPanel); fetchPendingKeuangan() }}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition"
-                style={{
-                  background: pendingKeuangan.length > 0 ? 'rgba(96,165,250,0.08)' : 'rgba(255,255,255,0.03)',
-                  border: pendingKeuangan.length > 0 ? '1px solid rgba(96,165,250,0.25)' : '1px solid rgba(255,255,255,0.06)'
-                }}>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium" style={{ color: pendingKeuangan.length > 0 ? '#60a5fa' : '#9ca3af' }}>
-                  Keuangan Menunggu Review
+            {/* ── Permintaan Edit Proyek ── */}
+            <div style={card}>
+              <button onClick={() => { setShowRequestPanel(p=>!p); fetchRequestEdit() }} style={panelBtn(requestEditList.length > 0)}>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <span style={{ fontSize:13, fontWeight:700, color: requestEditList.length > 0 ? C.purple : C.text }}>
+                    Permintaan Edit Proyek
                   </span>
-                  {pendingKeuangan.length > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded-full font-bold"
-                      style={{ background: 'rgba(96,165,250,0.2)', color: '#60a5fa' }}>
-                      {pendingKeuangan.length} pending
-                    </span>
-                  )}
+                  {requestEditList.length > 0 && <span style={pill(C.purpleBg, C.purple, C.purpleBd)}>{requestEditList.length}</span>}
                 </div>
-                <span className="text-gray-600 text-xs">{showKeuanganPanel ? '▲ Sembunyikan' : '▼ Tampilkan'}</span>
+                <span style={{ fontSize:11, color:C.textMute }}>{showRequestPanel ? '▲' : '▼'}</span>
               </button>
-
-              {showKeuanganPanel && (
-                <div className="mt-1 rounded-xl overflow-hidden"
-                  style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
-                  {pendingKeuangan.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-gray-600 text-sm">
-                      Tidak ada keuangan yang menunggu review
-                    </div>
-                  ) : pendingKeuangan.map((t) => (
-                    <div key={t.id} className="px-4 py-4"
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(255,255,255,0.01)' }}>
-                      <div className="mb-2">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-sm font-medium text-gray-200 truncate">
-                            {t.namaProgram || t.keterangan || '-'}
-                          </span>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">Pending</span>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Proyek:{' '}
-                          <button onClick={() => router.push(`/proyek/${t.projectId}?tab=keuangan`)}
-                            className="text-blue-400 hover:text-blue-300 transition">
-                            {t.proyekNama}
-                          </button>
-                        </div>
-                        <div className="text-xs text-gray-600 mt-0.5">
-                          Oleh:   <span className="text-gray-400">{t.uploaderName}</span>
-                            {t.jumlah && (
-                            <span className="ml-2 text-emerald-400 font-medium">
-                              {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(t.jumlah)}
-                            </span>
-                          )}
-                        </div>
+              {showRequestPanel && (
+                <div style={{ borderTop:`1px solid ${C.border}` }}>
+                  {requestEditList.length === 0 ? <EmptyMsg text="Tidak ada permintaan edit" /> : requestEditList.map(r => (
+                    <div key={r.id} style={{ padding:'14px 16px', borderBottom:`1px solid #f8fafc` }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:C.text, marginBottom:4 }}>{r.fileName}</div>
+                      {r.catatanAdmin && <div style={{ fontSize:12, color:C.textSub, fontStyle:'italic', marginBottom:6 }}>"{r.catatanAdmin}"</div>}
+                      <div style={{ fontSize:11, color:C.textMute, marginBottom:10 }}>
+                        {new Date(r.createdAt).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
                       </div>
-                      <button onClick={() => router.push(`/proyek/${t.projectId}`)}
-                        className="text-xs px-3 py-1.5 rounded-lg transition text-blue-400 hover:text-blue-300"
-                        style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)' }}>
-                        Review di Proyek →
-                      </button>
+                      <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                        <button onClick={() => router.push(`/proyek/${r.projectId}`)} style={btn(C.blueBg, C.blueText, C.blueBd)}>Lihat Proyek</button>
+                        <button onClick={() => handleUnlockProject(r.projectId, r.id)} disabled={unlockLoading===r.projectId}
+                          style={{ ...btn(C.greenBg, C.green, C.greenBd), opacity: unlockLoading===r.projectId ? 0.5 : 1 }}>
+                          {unlockLoading===r.projectId ? '...' : '🔓 Izinkan Edit'}
+                        </button>
+                        <button onClick={() => handleRejectRequest(r.projectId)} style={btn(C.redBg, C.red, C.redBd)}>✗ Tolak</button>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Panel Dokumen Pending */}
-            <div>
-              <button onClick={() => { setShowApprovalPanel(!showApprovalPanel); if (!showApprovalPanel) fetchPendingDokumen() }}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition"
-                style={{
-                  background: pendingDokumen.length > 0 ? 'rgba(234,179,8,0.08)' : 'rgba(255,255,255,0.03)',
-                  border: pendingDokumen.length > 0 ? '1px solid rgba(234,179,8,0.25)' : '1px solid rgba(255,255,255,0.06)'
-                }}>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium" style={{ color: pendingDokumen.length > 0 ? '#facc15' : '#9ca3af' }}>
+            {/* ── Keuangan Pending ── */}
+            <div style={card}>
+              <button onClick={() => { setShowKeuanganPanel(p=>!p); fetchPendingKeuangan() }} style={panelBtn(pendingKeuangan.length > 0)}>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <span style={{ fontSize:13, fontWeight:700, color: pendingKeuangan.length > 0 ? C.amber : C.text }}>
+                    Keuangan Menunggu Review
+                  </span>
+                  {pendingKeuangan.length > 0 && <span style={pill(C.amberBg, C.amber, C.amberBd)}>{pendingKeuangan.length} pending</span>}
+                </div>
+                <span style={{ fontSize:11, color:C.textMute }}>{showKeuanganPanel ? '▲' : '▼'}</span>
+              </button>
+              {showKeuanganPanel && (
+                <div style={{ borderTop:`1px solid ${C.border}` }}>
+                  {pendingKeuangan.length === 0 ? <EmptyMsg text="Tidak ada keuangan pending" /> : pendingKeuangan.map(t => (
+                    <div key={t.id} style={{ padding:'14px 16px', borderBottom:`1px solid #f8fafc` }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:C.text, marginBottom:2 }}>{t.namaProgram || t.keterangan || '-'}</div>
+                      <div style={{ fontSize:12, color:C.textSub, marginBottom:8 }}>
+                        <button onClick={() => router.push(`/proyek/${t.projectId}`)} style={{ color:C.blue, background:'none', border:'none', cursor:'pointer', fontSize:12, padding:0, fontWeight:600 }}>{t.proyekNama}</button>
+                        {t.jumlah && <span style={{ marginLeft:8, color:C.green, fontWeight:700 }}>{fmtRp(t.jumlah)}</span>}
+                      </div>
+                      <button onClick={() => router.push(`/proyek/${t.projectId}`)} style={btn(C.blueBg, C.blueText, C.blueBd)}>Review →</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* ── Dokumen Pending ── */}
+            <div style={card}>
+              <button onClick={() => { setShowApprovalPanel(p=>!p); if (!showApprovalPanel) fetchPendingDokumen() }} style={panelBtn(pendingDokumen.length > 0)}>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <span style={{ fontSize:13, fontWeight:700, color: pendingDokumen.length > 0 ? C.amber : C.text }}>
                     Dokumen Menunggu Approval
                   </span>
-                  {pendingDokumen.length > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded-full font-bold"
-                      style={{ background: 'rgba(234,179,8,0.2)', color: '#facc15' }}>
-                      {pendingDokumen.length} pending
-                    </span>
-                  )}
+                  {pendingDokumen.length > 0 && <span style={pill(C.amberBg, C.amber, C.amberBd)}>{pendingDokumen.length} pending</span>}
                 </div>
-                <span className="text-gray-600 text-xs">{showApprovalPanel ? '▲ Sembunyikan' : '▼ Tampilkan'}</span>
+                <span style={{ fontSize:11, color:C.textMute }}>{showApprovalPanel ? '▲' : '▼'}</span>
               </button>
-
               {showApprovalPanel && (
-                <div className="mt-1 rounded-xl overflow-hidden"
-                  style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
-                  {pendingDokumen.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-gray-600 text-sm">
-                      ✓ Tidak ada dokumen yang menunggu approval
-                    </div>
-                  ) : pendingDokumen.map((d) => (
-                    <div key={d.id} className="px-4 py-4"
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(255,255,255,0.01)' }}>
-                      <div className="mb-3">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-sm font-medium text-gray-200 truncate">{d.fileName}</span>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400">⏳ Pending</span>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Proyek:{' '}
-                          <button onClick={() => router.push(`/proyek/${d.projectId}`)}
-                            className="text-blue-400 hover:text-blue-300 transition">{d.proyekNama}</button>
-                        </div>
-                        <div className="text-xs text-gray-600 mt-0.5">
-                          Oleh: <span className="text-gray-400">{d.uploaderName}</span>
-                          <span className="mx-1 text-gray-700">•</span>
-                          {new Date(d.tanggalUpload).toLocaleDateString('id-ID')}
-                        </div>
-                        <a href={d.fileUrl} target="_blank" rel="noopener noreferrer"
-                          className="text-blue-400 text-xs hover:text-blue-300 transition mt-1 inline-block">
-                          Lihat File →
-                        </a>
+                <div style={{ borderTop:`1px solid ${C.border}` }}>
+                  {pendingDokumen.length === 0 ? <EmptyMsg text="Tidak ada dokumen pending" /> : pendingDokumen.map(d => (
+                    <div key={d.id} style={{ padding:'14px 16px', borderBottom:`1px solid #f8fafc` }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:C.text, marginBottom:2 }}>{d.fileName}</div>
+                      <div style={{ fontSize:12, color:C.textSub, marginBottom:2 }}>
+                        <button onClick={() => router.push(`/proyek/${d.projectId}`)} style={{ color:C.blue, background:'none', border:'none', cursor:'pointer', fontSize:12, padding:0, fontWeight:600 }}>{d.proyekNama}</button>
+                        {' • '}{d.uploaderName}{' • '}{new Date(d.tanggalUpload).toLocaleDateString('id-ID')}
                       </div>
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <a href={d.fileUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize:12, color:C.blue, display:'block', marginBottom:8, fontWeight:600 }}>Lihat File →</a>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
                         <input type="text" placeholder="Catatan (opsional)..."
                           value={catatanMap[d.id] || ''}
-                          onChange={(e) => setCatatanMap(prev => ({ ...prev, [d.id]: e.target.value }))}
-                          className="flex-1 min-w-0 px-3 py-1.5 rounded-lg text-white text-xs outline-none"
-                          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
-                        <button onClick={() => handleQuickApproval(d.id, 'APPROVED')}
-                          disabled={approvalLoading === d.id}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50 whitespace-nowrap"
-                          style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }}>
-                          {approvalLoading === d.id ? '...' : '✓ Setujui'}
-                        </button>
-                        <button onClick={() => handleQuickApproval(d.id, 'REJECTED')}
-                          disabled={approvalLoading === d.id}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50 whitespace-nowrap"
-                          style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171' }}>
-                          {approvalLoading === d.id ? '...' : '✗ Tolak'}
-                        </button>
+                          onChange={e => setCatatanMap(p => ({ ...p, [d.id]: e.target.value }))}
+                          style={{ ...inputSt, flex:1, minWidth:110, fontSize:12, padding:'6px 10px' }} />
+                        <button onClick={() => handleQuickApproval(d.id,'APPROVED')} disabled={approvalLoading===d.id}
+                          style={{ ...btn(C.greenBg, C.green, C.greenBd), opacity: approvalLoading===d.id ? 0.5:1 }}>✓ Setujui</button>
+                        <button onClick={() => handleQuickApproval(d.id,'REJECTED')} disabled={approvalLoading===d.id}
+                          style={btn(C.redBg, C.red, C.redBd)}>✗ Tolak</button>
                       </div>
                     </div>
                   ))}
@@ -674,204 +499,194 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Search */}
-        <div className="flex flex-col sm:flex-row gap-2 mb-4">
-          {[
-            { placeholder: 'Cari nama Program...', value: searchNama, onChange: setSearchNama },
-            { placeholder: 'Cari wilayah pengerjaan...', value: searchWilayah, onChange: setSearchWilayah },
-          ].map(({ placeholder, value, onChange }) => (
-            <div key={placeholder} className="flex items-center flex-1 px-3 py-2 rounded-xl gap-2"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <input type="text" placeholder={placeholder} value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="bg-transparent outline-none text-sm text-gray-300 w-full placeholder-gray-600" />
-              <span className="text-gray-600 text-xs">🔍</span>
-            </div>
-          ))}
-          {(searchNama || searchWilayah) && (
-            <button onClick={() => { setSearchNama(''); setSearchWilayah('') }}
-              className="text-xs text-gray-500 hover:text-red-400 transition px-2">Reset</button>
-          )}
+        {/* ─── Search ─── */}
+        <div style={{ ...card, padding:'12px 16px', marginBottom:14 }}>
+          <div className="flex flex-col sm:flex-row gap-2">
+            {[
+              { ph:'🔍 Cari nama program...', val:searchNama, set:setSearchNama },
+              { ph:'🔍 Cari wilayah...',      val:searchWilayah, set:setSearchWilayah },
+            ].map(({ ph, val, set }) => (
+              <input key={ph} type="text" placeholder={ph} value={val}
+                onChange={e => set(e.target.value)}
+                style={{ ...inputSt, flex:1 }} />
+            ))}
+            {(searchNama || searchWilayah) && (
+              <button onClick={() => { setSearchNama(''); setSearchWilayah('') }}
+                style={{ fontSize:12, color:C.red, background:'none', border:'none', cursor:'pointer', minHeight:'auto', whiteSpace:'nowrap' }}>
+                Reset
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Filter */}
-        <div className="flex gap-2 mb-6 flex-wrap">
-          {['SEMUA', 'PERENCANAAN', 'BERJALAN', 'SELESAI'].map((s) => (
+        {/* ─── Filter + Tambah ─── */}
+        <div className="flex gap-2 mb-4 flex-wrap items-center">
+          {['SEMUA','PERENCANAAN','BERJALAN','SELESAI'].map(s => (
             <button key={s} onClick={() => setFilterStatus(s)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium transition"
               style={{
-                background: filterStatus === s ? '#2563eb' : 'rgba(255,255,255,0.04)',
-                border: filterStatus === s ? '1px solid #2563eb' : '1px solid rgba(255,255,255,0.07)',
-                color: filterStatus === s ? '#fff' : '#9ca3af'
+                padding:'6px 14px', borderRadius:99, fontSize:12, fontWeight:700,
+                cursor:'pointer', minHeight:'auto', transition:'all 0.15s',
+                background: filterStatus===s ? C.blue : C.white,
+                border: `1px solid ${filterStatus===s ? C.blue : C.border}`,
+                color: filterStatus===s ? '#fff' : C.textSub,
+                boxShadow: filterStatus===s ? '0 2px 8px rgba(37,99,235,0.2)' : 'none',
               }}>
-              {s === 'SEMUA' ? 'Semua' : statusLabel[s]}
+              {s==='SEMUA' ? 'Semua' : statusLabel[s]}
             </button>
           ))}
           <button onClick={() => setShowForm(true)}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium text-white ml-auto transition"
-            style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', boxShadow: '0 4px 12px rgba(37,99,235,0.3)' }}>
-            + Pekerjaan
+            style={{
+              marginLeft:'auto', padding:'8px 18px', borderRadius:10, fontSize:13,
+              fontWeight:700, cursor:'pointer', minHeight:'auto',
+              background:`linear-gradient(135deg,${C.blue},${C.blueDark})`,
+              border:'none', color:'#fff',
+              boxShadow:'0 2px 8px rgba(37,99,235,0.3)',
+            }}>
+            + Tambah Program
           </button>
         </div>
 
-        {/* Tabel Desktop */}
-        <div className="hidden md:block rounded-xl overflow-hidden"
-          style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
-          <table className="w-full text-sm">
+        {/* ─── Tabel Desktop ─── */}
+        <div className="hidden md:block" style={{ ...card, overflow:'hidden' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse' }}>
             <thead>
-              <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                {['Update', 'Pekerjaan', 'Nilai', 'Progres'].map(h => (
-                  <th key={h} className="text-left py-3 px-4 text-xs text-gray-500 font-medium">{h}</th>
+              <tr style={{ background:`linear-gradient(135deg,${C.blue},${C.blueDark})` }}>
+                {['Diperbarui','Nama Program','Nilai Kontrak','Status & Aksi'].map(h => (
+                  <th key={h} style={{ textAlign:'left', padding:'12px 16px', fontSize:11, color:'rgba(255,255,255,0.85)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={4} className="text-center py-10 text-gray-600">Belum ada pekerjaan</td></tr>
-              ) : filtered.map((p) => (
-                <tr key={p.id} className="border-b transition hover:bg-white/[0.02]"
-                  style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
-                  <td className="py-4 px-4 text-gray-600 text-xs whitespace-pre-line align-top">
-                    {formatDate(p.updatedAt)}
-                  </td>
-                  <td className="py-4 px-4 align-top">
-                    <div className="text-gray-600 text-xs mb-1">Nama Program</div>
-                    <button onClick={() => router.push(`/proyek/${p.id}`)}
-                      className="text-blue-400 hover:text-blue-300 text-sm font-medium transition text-left">
-                      {p.nama || '-'}
-                    </button>
-                    <div className="mt-1 text-xs text-gray-600">Program manager: <span className="text-gray-400">{p.penanggungjawab || '-'}</span></div>
-                    <div className="text-xs text-gray-600">Wilayah: <span className="text-gray-400">{p.wilayah || '-'}</span></div>
-                  </td>
-                  <td className="py-4 px-4 align-top">
-                    <div className="text-xs text-gray-600 mb-1">Nilai</div>
-                    <div className="text-sm font-medium text-gray-300">{formatRupiah(p.nilai || 0)}</div>
-                    <div className="mt-1 text-xs text-gray-600">Deskripsi: <span className="text-gray-400">{p.jenis || '-'}</span></div>
-                  </td>
-                  <td className="py-4 px-4 align-top">
-                    <div className="text-xs text-gray-600 mb-1">Diinput oleh</div>
-                    <div className="text-sm text-gray-300">{p.userName || '-'}</div>
-                    <div className="mt-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${p.status === 'BERJALAN' ? 'bg-blue-500/10 text-blue-400' :
-                        p.status === 'SELESAI' ? 'bg-emerald-500/10 text-emerald-400' :
-                          'bg-gray-500/10 text-gray-400'
-                        }`}>{statusLabel[p.status] || p.status}</span>
-                    </div>
-                    {(() => {
-                      const d = getDiffDays(p.tanggalSelesai)
-                      if (d <= 7 && d >= 0 && p.status !== 'SELESAI') return <div className="text-xs text-orange-400 mt-1">⚠ {d} hari lagi</div>
-                      if (d < 0 && p.status !== 'SELESAI') return <div className="text-xs text-red-400 mt-1">⚠ Lewat batas</div>
-                      return null
-                    })()}
-                    <div className="flex gap-3 mt-2">
-                      <button onClick={() => router.push(`/proyek/${p.id}`)} className="text-blue-400 text-xs hover:text-blue-300 transition">Detail</button>
-                      {(session?.user as any)?.role === 'ADMIN' && (
-                        <button onClick={() => handleDelete(p.id)} className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                <tr><td colSpan={4} style={{ textAlign:'center', padding:48, color:C.textMute, fontSize:14 }}>Belum ada data program</td></tr>
+              ) : filtered.map((p, i) => {
+                const d = diffDays(p.tanggalSelesai)
+                const [bg,tc,bd] = statusPill[p.status] || statusPill.PERENCANAAN
+                return (
+                  <tr key={p.id} style={{ borderBottom:`1px solid #f1f5f9`, background: i%2===0 ? '#fff' : '#fafbff' }}>
+                    <td style={{ padding:'13px 16px', color:C.textMute, fontSize:12, whiteSpace:'pre-line' }}>{fmtDate(p.updatedAt)}</td>
+                    <td style={{ padding:'13px 16px' }}>
+                      <button onClick={() => router.push(`/proyek/${p.id}`)}
+                        style={{ color:C.blue, fontWeight:700, fontSize:13, background:'none', border:'none', cursor:'pointer', padding:0, textAlign:'left', display:'block' }}>
+                        {p.nama || '-'}
+                      </button>
+                      <div style={{ fontSize:11, color:C.textMute, marginTop:2 }}>
+                        PM: {p.penanggungjawab || '-'}{p.wilayah ? ` • ${p.wilayah}` : ''}
+                      </div>
+                    </td>
+                    <td style={{ padding:'13px 16px' }}>
+                      <div style={{ fontSize:13, fontWeight:800, color:C.green }}>{p.nilai ? fmtRp(p.nilai) : '-'}</div>
+                      <div style={{ fontSize:11, color:C.textMute, marginTop:2 }}>{p.jenis || '-'}</div>
+                    </td>
+                    <td style={{ padding:'13px 16px' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap', marginBottom:8 }}>
+                        <span style={pill(bg,tc,bd)}>{statusLabel[p.status] || p.status}</span>
+                        {(p as any).isApproved && <span style={pill(C.greenBg, C.green, C.greenBd)}>✓ Disetujui</span>}
+                        {d<=7&&d>=0&&p.status!=='SELESAI' && <span style={{ fontSize:11, color:C.amber, fontWeight:700 }}>⚠ {d}h lagi</span>}
+                        {d<0&&p.status!=='SELESAI' && <span style={{ fontSize:11, color:C.red, fontWeight:700 }}>⚠ Lewat batas</span>}
+                      </div>
+                      <div style={{ display:'flex', gap:6 }}>
+                        <button onClick={() => router.push(`/proyek/${p.id}`)} style={btn(C.blueBg, C.blueText, C.blueBd)}>Detail</button>
+                        {isAdmin && <button onClick={() => handleDelete(p.id)} style={btn(C.redBg, C.red, C.redBd)}>Hapus</button>}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* Card Mobile */}
+        {/* ─── Card Mobile ─── */}
         <div className="md:hidden space-y-3">
           {filtered.length === 0 ? (
-            <p className="text-center py-10 text-gray-600">Belum ada pekerjaan</p>
-          ) : filtered.map((p) => (
-            <div key={p.id} className="rounded-xl p-4"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div className="flex justify-between items-start mb-3">
-                <button onClick={() => router.push(`/proyek/${p.id}`)}
-                  className="text-blue-400 text-sm font-medium text-left flex-1 mr-2 hover:text-blue-300 transition">
-                  {p.nama || '-'}
-                </button>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${p.status === 'BERJALAN' ? 'bg-blue-500/10 text-blue-400' :
-                  p.status === 'SELESAI' ? 'bg-emerald-500/10 text-emerald-400' :
-                    'bg-gray-500/10 text-gray-400'
-                  }`}>{statusLabel[p.status] || p.status}</span>
+            <div style={{ ...card, padding:40, textAlign:'center', color:C.textMute }}>Belum ada data program</div>
+          ) : filtered.map(p => {
+            const d = diffDays(p.tanggalSelesai)
+            const [bg,tc,bd] = statusPill[p.status] || statusPill.PERENCANAAN
+            return (
+              <div key={p.id} style={{ ...card, padding:16 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
+                  <button onClick={() => router.push(`/proyek/${p.id}`)}
+                    style={{ color:C.blue, fontWeight:700, fontSize:14, background:'none', border:'none', cursor:'pointer', padding:0, textAlign:'left', flex:1, marginRight:8 }}>
+                    {p.nama || '-'}
+                  </button>
+                  <span style={pill(bg,tc,bd)}>{statusLabel[p.status] || p.status}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5" style={{ marginBottom:10 }}>
+                  {[
+                    ['Deskripsi', p.jenis||'-'],
+                    ['Nilai', p.nilai ? fmtRp(p.nilai) : '-'],
+                    ['Program Manager', p.penanggungjawab||'-'],
+                    ['Wilayah', p.wilayah||'-'],
+                    ['Input oleh', p.userName||'-'],
+                    ['Update', new Date(p.updatedAt).toLocaleDateString('id-ID')],
+                  ].map(([lbl,val]) => (
+                    <div key={lbl} style={{ fontSize:12 }}>
+                      <span style={{ color:C.textMute }}>{lbl}: </span>
+                      <span style={{ color:'#334155', fontWeight:600 }}>{val}</span>
+                    </div>
+                  ))}
+                </div>
+                {d<=7&&d>=0&&p.status!=='SELESAI' && <div style={{ fontSize:12, color:C.amber, fontWeight:700, marginBottom:8 }}>⚠ {d} hari lagi</div>}
+                {d<0&&p.status!=='SELESAI' && <div style={{ fontSize:12, color:C.red, fontWeight:700, marginBottom:8 }}>⚠ Lewat batas waktu</div>}
+                <div style={{ display:'flex', gap:8, borderTop:`1px solid #f1f5f9`, paddingTop:10 }}>
+                  <button onClick={() => router.push(`/proyek/${p.id}`)} style={btn(C.blueBg, C.blueText, C.blueBd)}>Detail</button>
+                  {isAdmin && <button onClick={() => handleDelete(p.id)} style={btn(C.redBg, C.red, C.redBd)}>Hapus</button>}
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-                <div><span className="text-gray-600">Deskripsi Program: </span><span className="text-gray-400">{p.jenis || '-'}</span></div>
-                <div><span className="text-gray-600">Nilai: </span><span className="text-gray-400">{formatRupiah(p.nilai || 0)}</span></div>
-                <div><span className="text-gray-600">PM: </span><span className="text-gray-400">{p.penanggungjawab || '-'}</span></div>
-                <div><span className="text-gray-600">Wilayah: </span><span className="text-gray-400">{p.wilayah || '-'}</span></div>
-                <div><span className="text-gray-600">Input: </span><span className="text-gray-400">{p.userName || '-'}</span></div>
-                <div><span className="text-gray-600">Update: </span><span className="text-gray-400">{new Date(p.updatedAt).toLocaleDateString('id-ID')}</span></div>
-              </div>
-              {(() => {
-                const d = getDiffDays(p.tanggalSelesai)
-                if (d <= 7 && d >= 0 && p.status !== 'SELESAI') return <div className="text-xs text-orange-400 mt-2">⚠ {d} hari lagi</div>
-                if (d < 0 && p.status !== 'SELESAI') return <div className="text-xs text-red-400 mt-2">⚠ Lewat batas waktu</div>
-                return null
-              })()}
-              <div className="flex gap-3 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <button onClick={() => router.push(`/proyek/${p.id}`)} className="text-blue-400 text-xs hover:text-blue-300 transition">Detail</button>
-                {(session?.user as any)?.role === 'ADMIN' && (
-                  <button onClick={() => handleDelete(p.id)} className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
-                )}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </main>
 
-      {/* Modal Tambah Pekerjaan */}
+      {/* ─── Modal Tambah ─── */}
       {showForm && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 px-4"
-          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
-          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-6"
-            style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <h3 className="text-base font-semibold text-white mb-5">Tambah Pekerjaan</h3>
-            <div className="space-y-3">
-              {[
-                { label: 'Nama Program', key: 'nama', type: 'text', required: true },
-                { label: 'Deskripsi Program', key: 'jenis', type: 'text', required: true },
-                { label: 'Nilai Kontrak (Rp)', key: 'nilai', type: 'number', required: false },
-                { label: 'Program Manager', key: 'penanggungjawab', type: 'text', required: false },
-                { label: 'Wilayah Pengerjaan', key: 'wilayah', type: 'text', required: false },
-                { label: 'Sektor', key: 'sektor', type: 'text', required: true },
-                { label: 'Tanggal Mulai', key: 'tanggalMulai', type: 'date', required: true },
-                { label: 'Tanggal Selesai', key: 'tanggalSelesai', type: 'date', required: false },
-              ].map(({ label, key, type, required }) => (
-                <div key={key}>
-                  <label className="block text-xs text-gray-500 mb-1.5">
-                    {label} {required && <span className="text-red-400">*</span>}
-                  </label>
-                  <input type={type} value={form[key as keyof typeof form]}
-                    onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none transition"
-                    style={{
-                      background: required && !form[key as keyof typeof form] ? 'rgba(239,68,68,0.05)' : 'rgba(255,255,255,0.04)',
-                      border: required && !form[key as keyof typeof form] ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                      colorScheme: type === 'date' ? 'dark' : undefined
-                    } as React.CSSProperties} />
-                </div>
-              ))}
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Status</label>
-                <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', colorScheme: 'dark' }}>
-                  <option value="PERENCANAAN" className="bg-gray-900">Draft</option>
-                  <option value="BERJALAN" className="bg-gray-900">Sedang Diproses</option>
-                  <option value="SELESAI" className="bg-gray-900">Selesai</option>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background:'rgba(15,23,42,0.35)', backdropFilter:'blur(4px)' }}>
+          <div style={{ ...card, width:'100%', maxWidth:520, maxHeight:'90vh', overflowY:'auto' }}>
+            <div style={{ background:`linear-gradient(135deg,${C.blue},${C.blueDark})`, padding:'20px 24px', borderRadius:'14px 14px 0 0' }}>
+              <h3 style={{ color:'#fff', fontWeight:800, fontSize:16 }}>Tambah Program Baru</h3>
+            </div>
+            <div style={{ padding:24 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                {[
+                  { lbl:'Nama Program *',      key:'nama',            type:'text',   full:true  },
+                  { lbl:'Deskripsi Program *', key:'jenis',           type:'text',   full:false },
+                  { lbl:'Sektor *',            key:'sektor',          type:'text',   full:false },
+                  { lbl:'Nilai Kontrak (Rp)',  key:'nilai',           type:'number', full:false },
+                  { lbl:'Program Manager',     key:'penanggungjawab', type:'text',   full:false },
+                  { lbl:'Wilayah',             key:'wilayah',         type:'text',   full:false },
+                  { lbl:'Tanggal Mulai *',     key:'tanggalMulai',   type:'date',   full:false },
+                  { lbl:'Tanggal Selesai',     key:'tanggalSelesai', type:'date',   full:false },
+                ].map(({ lbl, key, type, full }) => (
+                  <div key={key} style={{ gridColumn: full ? '1 / -1' : 'auto' }}>
+                    <label style={{ display:'block', fontSize:12, fontWeight:700, color:C.textSub, marginBottom:5 }}>{lbl}</label>
+                    <input type={type} value={form[key as keyof typeof form]}
+                      onChange={e => setForm({ ...form, [key]: e.target.value })}
+                      style={{ ...inputSt, fontSize:14, colorScheme: type==='date' ? 'light' : undefined } as React.CSSProperties} />
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginBottom:20 }}>
+                <label style={{ display:'block', fontSize:12, fontWeight:700, color:C.textSub, marginBottom:5 }}>Status</label>
+                <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
+                  style={{ ...inputSt, fontSize:14 }}>
+                  <option value="PERENCANAAN">Draft</option>
+                  <option value="BERJALAN">Sedang Berjalan</option>
+                  <option value="SELESAI">Selesai</option>
                 </select>
               </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={handleSubmit}
-                className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium transition"
-                style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>
-                Simpan
-              </button>
-              <button onClick={() => { setShowForm(false); resetForm() }}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-400 transition"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                Batal
-              </button>
+              <div style={{ display:'flex', gap:12 }}>
+                <button onClick={handleSubmit}
+                  style={{ flex:1, padding:13, borderRadius:11, border:'none', background:`linear-gradient(135deg,${C.blue},${C.blueDark})`, color:'#fff', fontWeight:800, fontSize:14, cursor:'pointer', boxShadow:'0 2px 8px rgba(37,99,235,0.3)' }}>
+                  Simpan
+                </button>
+                <button onClick={() => setShowForm(false)}
+                  style={{ flex:1, padding:13, borderRadius:11, border:`1.5px solid ${C.border}`, background:'#f8fafc', color:C.textSub, fontWeight:700, fontSize:14, cursor:'pointer' }}>
+                  Batal
+                </button>
+              </div>
             </div>
           </div>
         </div>

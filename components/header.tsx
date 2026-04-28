@@ -80,12 +80,12 @@ export default function Header() {
   }
 
   const statusConfig: Record<string, { icon: string; label: string; color: string }> = {
-    APPROVED: { icon: '✅', label: 'Disetujui', color: '#34d399' },
-    REJECTED: { icon: '❌', label: 'Ditolak', color: '#f87171' },
-    NEEDS_REVIEW: { icon: '📋', label: 'Butuh review', color: '#facc15' },
-    REQUEST_EDIT: { icon: '✏️', label: 'Permintaan edit proyek', color: '#a78bfa' },
-    REQUEST_APPROVAL: { icon: '📤', label: 'Permintaan persetujuan proyek', color: '#34d399' },
-  UNLOCKED:         { icon: '🔓', label: 'Proyek dibuka untuk diedit',    color: '#60a5fa' },
+    APPROVED: { icon: '✅', label: 'Disetujui', color: '#10b981' },
+    REJECTED: { icon: '❌', label: 'Ditolak', color: '#ef4444' },
+    NEEDS_REVIEW: { icon: '📋', label: 'Butuh review', color: '#f59e0b' },
+    REQUEST_EDIT: { icon: '✏️', label: 'Permintaan edit proyek', color: '#8b5cf6' },
+    REQUEST_APPROVAL: { icon: '📤', label: 'Permintaan persetujuan proyek', color: '#3b82f6' },
+    UNLOCKED: { icon: '🔓', label: 'Proyek dibuka untuk diedit', color: '#06b6d4' },
   }
 
   return (
@@ -94,43 +94,47 @@ export default function Header() {
         ref={headerRef}
         className="sticky top-0 z-40 flex items-center justify-between"
         style={{
-          background: 'rgba(3,7,18,0.9)',
-          borderBottom: '1px solid rgba(37,99,235,0.15)',
+          background: 'rgba(59, 130, 246, 0.95)',
+          borderBottom: '1px solid rgba(99, 102, 241, 0.3)',
           WebkitBackdropFilter: 'blur(20px)',
           backdropFilter: 'blur(20px)',
-          boxShadow: '0 1px 30px rgba(37,99,235,0.08)',
-          paddingTop: 'calc(env(safe-area-inset-top) + 0.6rem)',
-          paddingBottom: '0.6rem',
-          paddingLeft: 'calc(env(safe-area-inset-left) + 1rem)',
-          paddingRight: 'calc(env(safe-area-inset-right) + 1rem)',
+          boxShadow: '0 4px 20px rgba(59, 130, 246, 0.3), 0 2px 10px rgba(0, 0, 0, 0.1)',
+          paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)',
+          paddingBottom: '0.75rem',
+          paddingLeft: 'calc(env(safe-area-inset-left) + 1.25rem)',
+          paddingRight: 'calc(env(safe-area-inset-right) + 1.25rem)',
         }}
       >
         {/* Logo */}
         <div
           className="flex-shrink-0 relative cursor-pointer"
           onClick={() => router.push('/dashboard')}
-          style={{ width: 36, height: 36 }}
+          style={{ width: 44, height: 44 }}
         >
           <Image
             src="/logopupuk.png"
             alt="Logo"
             fill
-            sizes="36px"
+            sizes="44px"
             priority
-            className="object-contain"
-            style={{ filter: 'drop-shadow(0 0 10px rgba(59,130,246,0.7))' }}
+            className="object-contain rounded-xl"
+            style={{ filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2))' }}
           />
         </div>
 
         {/* Nav links + Bell */}
-        <div className="flex items-center gap-1 sm:gap-3 ml-2 flex-1 justify-end">
+        <div className="flex items-center gap-2 sm:gap-4 ml-4 flex-1 justify-end">
           {/* Email — hidden di mobile kecil */}
-          <div className="hidden sm:block px-3 py-1 rounded-full text-xs text-gray-400 max-w-[140px] truncate"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="hidden sm:block px-3 py-2 rounded-xl text-sm text-white/90 font-medium max-w-[160px] truncate backdrop-blur-sm"
+            style={{ 
+              background: 'rgba(255, 255, 255, 0.15)', 
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+            }}>
             {session?.user?.email}
           </div>
 
-          {/* Nav buttons */}
+          {/* Nav buttons - NO BOX */}
           {[
             { label: 'Home', path: '/dashboard' },
             { label: 'Report', path: '/report' },
@@ -138,7 +142,7 @@ export default function Header() {
             <button
               key={path}
               onClick={() => router.push(path)}
-              className="text-gray-400 hover:text-white text-xs sm:text-sm transition whitespace-nowrap px-1"
+              className="text-white/90 hover:text-white font-medium text-sm transition-all duration-200 whitespace-nowrap px-3 py-2 rounded-xl hover:scale-105"
               style={{ minHeight: '44px' }}
             >
               {label}
@@ -148,7 +152,7 @@ export default function Header() {
           {(session?.user as any)?.role === 'ADMIN' && (
             <button
               onClick={() => router.push('/users')}
-              className="text-gray-400 hover:text-white text-xs sm:text-sm transition whitespace-nowrap px-1"
+              className="text-white/90 hover:text-white font-medium text-sm transition-all duration-200 whitespace-nowrap px-3 py-2 rounded-xl hover:scale-105"
               style={{ minHeight: '44px' }}
             >
               Users
@@ -159,26 +163,32 @@ export default function Header() {
           <div className="relative" ref={notifRef}>
             <button
               onClick={handleOpenNotif}
-              className="relative flex items-center justify-center rounded-xl transition"
+              className="relative flex items-center justify-center rounded-xl transition-all duration-200 hover:scale-105 group"
               style={{
-                width: 40,
-                height: 40,
-                background: showNotif ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.05)',
-                border: showNotif ? '1px solid rgba(37,99,235,0.4)' : '1px solid rgba(255,255,255,0.08)',
-                boxShadow: showNotif ? '0 0 12px rgba(37,99,235,0.3)' : 'none',
+                width: 44,
+                height: 44,
+                background: showNotif 
+                  ? 'rgba(255, 255, 255, 0.25)' 
+                  : 'rgba(255, 255, 255, 0.15)',
+                border: showNotif 
+                  ? '1px solid rgba(255, 255, 255, 0.4)' 
+                  : '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: showNotif 
+                  ? '0 4px 16px rgba(59, 130, 246, 0.4)' 
+                  : '0 2px 8px rgba(0, 0, 0, 0.1)',
               }}
             >
-              <span style={{ fontSize: 16 }}>🔔</span>
+              <span style={{ fontSize: 18 }}>🔔</span>
               {unread > 0 && (
                 <span
-                  className="absolute flex items-center justify-center text-white font-bold"
+                  className="absolute flex items-center justify-center text-white font-bold shadow-lg"
                   style={{
-                    top: -4, right: -4,
-                    width: 18, height: 18,
+                    top: -2, right: -2,
+                    width: 20, height: 20,
                     borderRadius: '50%',
                     background: '#ef4444',
-                    fontSize: 9,
-                    boxShadow: '0 0 8px rgba(239,68,68,0.6)',
+                    fontSize: 10,
+                    boxShadow: '0 2px 8px rgba(239, 68, 68, 0.5)',
                   }}
                 >
                   {unread > 9 ? '9+' : unread}
@@ -190,11 +200,12 @@ export default function Header() {
           {/* Logout */}
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
-            className="text-xs sm:text-sm px-2 sm:px-3 rounded-xl text-gray-300 transition whitespace-nowrap"
+            className="text-sm font-medium px-4 py-2 rounded-xl text-white transition-all duration-200 hover:scale-105 shadow-lg"
             style={{
-              background: 'rgba(239,68,68,0.1)',
-              border: '1px solid rgba(239,68,68,0.2)',
-              minHeight: '40px',
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              minHeight: '44px',
+              boxShadow: '0 2px 12px rgba(59, 130, 246, 0.3)'
             }}
           >
             Logout
@@ -207,7 +218,7 @@ export default function Header() {
         <>
           {/* Overlay transparan untuk tutup saat tap di luar */}
           <div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
             onClick={() => setShowNotif(false)}
           />
 
@@ -216,16 +227,16 @@ export default function Header() {
             className="fixed z-50"
             style={{
               top: headerHeight,
-              left: 'calc(env(safe-area-inset-left) + 8px)',
-              right: 'calc(env(safe-area-inset-right) + 8px)',
+              left: 'calc(env(safe-area-inset-left) + 12px)',
+              right: 'calc(env(safe-area-inset-right) + 12px)',
             }}
           >
             <div
-              className="rounded-2xl overflow-hidden"
+              className="rounded-3xl overflow-hidden"
               style={{
-                background: '#0d1424',
-                border: '1px solid rgba(37,99,235,0.2)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(37,99,235,0.08)',
+                background: 'rgba(255, 255, 255, 0.98)',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                boxShadow: '0 20px 40px rgba(59, 130, 246, 0.25), 0 0 0 1px rgba(59, 130, 246, 0.1)',
                 maxHeight: '65dvh',
                 display: 'flex',
                 flexDirection: 'column',
@@ -233,25 +244,24 @@ export default function Header() {
             >
               {/* Header panel */}
               <div
-                className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                className="flex items-center justify-between px-6 py-4 flex-shrink-0 bg-gradient-to-r from-blue-500/10 to-indigo-500/10"
+                style={{ borderBottom: '1px solid rgba(59, 130, 246, 0.15)' }}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-white">Notifikasi</span>
+                  <span className="text-lg font-bold text-gray-900">Notifikasi</span>
                   {unread > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-blue-500 text-white font-semibold">
                       {unread} baru
                     </span>
                   )}
                 </div>
                 <button
                   onClick={() => setShowNotif(false)}
-                  className="flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-300 transition"
+                  className="flex items-center justify-center rounded-2xl text-gray-600 hover:text-gray-900 hover:bg-white/50 transition-all duration-200"
                   style={{
-                    width: 32, height: 32,
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    fontSize: 12,
+                    width: 36, height: 36,
+                    fontSize: 16,
+                    fontWeight: 'bold'
                   }}
                 >
                   ✕
@@ -264,41 +274,45 @@ export default function Header() {
                 style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
               >
                 {notifs.length === 0 ? (
-                  <div className="px-4 py-10 text-center">
-                    <div className="text-2xl mb-2">🔔</div>
-                    <div className="text-gray-600 text-sm">Belum ada notifikasi</div>
+                  <div className="px-8 py-12 text-center">
+                    <div className="text-4xl mb-4 mx-auto w-20 h-20 flex items-center justify-center rounded-2xl bg-blue-100 mb-4">
+                      🔔
+                    </div>
+                    <div className="text-gray-600 text-lg font-medium mb-1">Belum ada notifikasi</div>
+                    <div className="text-gray-500 text-sm">Notifikasi akan muncul di sini</div>
                   </div>
                 ) : notifs.map((n) => {
-                  const cfg = statusConfig[n.status] || { icon: '🔔', label: n.status, color: '#9ca3af' }
+                  const cfg = statusConfig[n.status] || { icon: '🔔', label: n.status, color: '#3b82f6' }
                   return (
                     <button
                       key={n.id}
                       onClick={() => handleNotifClick(n)}
-                      className="w-full text-left transition"
+                      className="w-full text-left transition-all duration-200 hover:bg-blue-50 group"
                       style={{
-                        borderBottom: '1px solid rgba(255,255,255,0.04)',
-                        background: !n.isRead ? 'rgba(37,99,235,0.05)' : 'transparent',
-                        minHeight: '64px',
-                        padding: '12px 16px',
+                        borderBottom: '1px solid rgba(0, 0, 0, 0.04)',
+                        background: !n.isRead ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
+                        minHeight: '72px',
+                        padding: '16px 20px',
                       }}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-4">
                         {/* Icon */}
-                        <span className="flex-shrink-0 mt-0.5" style={{ fontSize: 20 }}>
+                        <div className="flex-shrink-0 mt-1 w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-100 group-hover:from-blue-200 group-hover:to-indigo-200 transition-all duration-200"
+                          style={{ fontSize: 20 }}>
                           {cfg.icon}
-                        </span>
+                        </div>
 
                         {/* Konten */}
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs font-semibold text-gray-200 truncate">
+                          <div className="text-sm font-bold text-gray-900 truncate mb-1">
                             {n.fileName}
                           </div>
                           {n.proyekNama && (
-                            <div className="text-xs text-gray-500 mt-0.5 truncate">
+                            <div className="text-sm text-gray-600 mb-1 truncate">
                               {n.proyekNama}
                             </div>
                           )}
-                          <div className="text-xs font-medium mt-1" style={{ color: cfg.color }}>
+                          <div className="text-sm font-semibold mb-1" style={{ color: cfg.color }}>
                             {n.status === 'NEEDS_REVIEW'
                             ? (n.catatanAdmin?.startsWith('Keuangan baru')
                                 ?'Keuangan butuh review'
@@ -306,11 +320,11 @@ export default function Header() {
                               : cfg.label}
                           </div>
                           {n.catatanAdmin && (
-                            <div className="text-xs text-gray-500 mt-0.5 italic truncate">
+                            <div className="text-xs text-gray-500 italic truncate bg-gray-100 px-2 py-1 rounded-lg">
                               "{n.catatanAdmin}"
                             </div>
                           )}
-                          <div className="text-xs text-gray-700 mt-1">
+                          <div className="text-xs text-gray-500 mt-2">
                             {new Date(n.createdAt).toLocaleDateString('id-ID', {
                               day: '2-digit', month: 'short',
                               hour: '2-digit', minute: '2-digit'
@@ -321,11 +335,11 @@ export default function Header() {
                         {/* Unread dot */}
                         {!n.isRead && (
                           <div
-                            className="flex-shrink-0 rounded-full mt-1"
+                            className="flex-shrink-0 rounded-full mt-2 shadow-lg"
                             style={{
-                              width: 8, height: 8,
+                              width: 10, height: 10,
                               background: '#3b82f6',
-                              boxShadow: '0 0 6px rgba(59,130,246,0.8)',
+                              boxShadow: '0 0 12px rgba(59, 130, 246, 0.6)',
                             }}
                           />
                         )}
@@ -338,8 +352,8 @@ export default function Header() {
               {/* Footer — tandai semua sudah dibaca */}
               {notifs.length > 0 && (
                 <div
-                  className="flex-shrink-0 px-4 py-2"
-                  style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+                  className="flex-shrink-0 px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50"
+                  style={{ borderTop: '1px solid rgba(59, 130, 246, 0.1)' }}
                 >
                   <button
                     onClick={async () => {
@@ -351,7 +365,7 @@ export default function Header() {
                         setShowNotif(false)
                       }, 500)
                     }}
-                    className="w-full text-xs text-gray-500 hover:text-gray-300 transition py-1"
+                    className="w-full text-sm font-semibold text-gray-700 hover:text-blue-600 transition-all duration-200 py-2.5 rounded-2xl hover:bg-white hover:shadow-md"
                   >
                     Tandai semua sudah dibaca & hapus
                   </button>

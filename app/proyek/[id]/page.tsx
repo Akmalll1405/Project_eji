@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, cache } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -8,121 +8,85 @@ import Header from '@/components/header'
 import Loading from '@/components/Loading'
 
 interface Project {
-  id: string
-  nama: string
-  jenis: string
-  nilai: number
-  penanggungjawab: string
-  wilayah: string
-  sektor: string
-  tanggalMulai: string
-  tanggalSelesai: string
-  status: string
-  userName: string
-  isApproved?: boolean
+  id: string; nama: string; jenis: string; nilai: number
+  penanggungjawab: string; wilayah: string; sektor: string
+  tanggalMulai: string; tanggalSelesai: string; status: string
+  userName: string; isApproved?: boolean
 }
-
 interface Donor {
-  id: string
-  nama: string
-  jenis: string
-  penanggungjawab: string
-  wilayah: string
-  alamat: string
-  tahunPendirian: number
-  lamaUsaha: number
+  id: string; nama: string; jenis: string; penanggungjawab: string
+  wilayah: string; alamat: string; tahunPendirian: number; lamaUsaha: number
 }
-
 interface Dokumen {
-  id: string
-  jenisDokumen: string
-  fileUrl: string
-  fileName: string
-  tanggalUpload: string
-  status: string
-  catatanAdmin: string
-  approvedByName?: string
-  approvedAt?: string
+  id: string; jenisDokumen: string; fileUrl: string; fileName: string
+  tanggalUpload: string; status: string; catatanAdmin: string
+  approvedByName?: string; approvedAt?: string
 }
-
 interface Transaksi {
-  id: string
-  namaProgram?: string
-  kegiatan?: string
-  staffCA?: string
-  tanggalPengajuan?: string
-  tanggalPertanggungjawaban?: string
-  kelengkapanDokumen?: string
-  statusTransaksi?: string
-  jenisPembayaran: string
-  keterangan?: string
-  nomorRekening?: string
-  bankTujuan?: string
-  jumlah: number
-  tanggalPembayaran: string
-  buktiBayarUrl?: string
-  catatanAdmin?: string
-  statusApproval?: string
-  approvedByName?: string
-  approvedAt?: string
+  id: string; namaProgram?: string; kegiatan?: string; staffCA?: string
+  tanggalPengajuan?: string; tanggalPertanggungjawaban?: string
+  kelengkapanDokumen?: string; statusTransaksi?: string; jenisPembayaran: string
+  keterangan?: string; nomorRekening?: string; bankTujuan?: string
+  jumlah: number; tanggalPembayaran: string; buktiBayarUrl?: string
+  catatanAdmin?: string; statusApproval?: string
+  approvedByName?: string; approvedAt?: string
 }
-
 interface Kegiatan {
-  id: string
-  namaKegiatan: string
-  tanggalKegiatan: string
-  fotoUrl?: string
-  fotoName?: string
+  id: string; namaKegiatan: string; tanggalKegiatan: string
+  fotoUrl?: string; fotoName?: string
 }
-
 interface TransaksiForm {
-  namaProgram: string
-  kegiatan: string
-  staffCA: string
-  tanggalPengajuan: string
-  tanggalPertanggungjawaban: string
-  kelengkapanDokumen: string
-  jumlah: string
-  statusTransaksi: string
-  keterangan: string
-  jenisPembayaran: string
-  nomorRekening: string
-  bankTujuan: string
-  tanggalPembayaran: string
-  buktiBayarUrl: string
+  namaProgram: string; kegiatan: string; staffCA: string
+  tanggalPengajuan: string; tanggalPertanggungjawaban: string
+  kelengkapanDokumen: string; jumlah: string; statusTransaksi: string
+  keterangan: string; jenisPembayaran: string; nomorRekening: string
+  bankTujuan: string; tanggalPembayaran: string; buktiBayarUrl: string
 }
 
-const inputStyle = (disabled = false): React.CSSProperties => ({
-  background: disabled ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  color: disabled ? '#6b7280' : '#fff',
-  fontSize: '16px',
-  minHeight: '44px',
+// ─── Design tokens ───
+const C = {
+  bg: '#f5f7ff', white: '#ffffff', border: '#e2e8f0',
+  text: '#1e293b', textSub: '#475569', textMute: '#94a3b8',
+  blue: '#2563eb', blueDark: '#1d4ed8', blueBg: '#eff6ff', blueBd: '#bfdbfe', blueText: '#1d4ed8',
+  green: '#16a34a', greenBg: '#f0fdf4', greenBd: '#bbf7d0',
+  amber: '#d97706', amberBg: '#fffbeb', amberBd: '#fde68a',
+  red: '#dc2626', redBg: '#fef2f2', redBd: '#fecaca',
+}
+
+const card: React.CSSProperties = {
+  background: C.white, borderRadius: 14,
+  border: `1px solid ${C.border}`,
+  boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(37,99,235,0.05)',
+}
+
+// Input style — light theme
+const inp = (disabled = false): React.CSSProperties => ({
+  width: '100%', padding: '10px 14px', borderRadius: 10,
+  border: `1.5px solid ${disabled ? '#f1f5f9' : C.border}`,
+  background: disabled ? '#f8fafc' : C.white,
+  color: disabled ? C.textMute : C.text,
+  fontSize: 14, outline: 'none',
   cursor: disabled ? 'not-allowed' : 'text',
   WebkitAppearance: 'none',
+  minHeight: 44,
 })
 
+// Modal components — white theme
 const ModalWrapper = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => (
-  <div
-    className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-    style={{ background: 'rgba(0,0,0,0.75)', WebkitBackdropFilter: 'blur(6px)', backdropFilter: 'blur(6px)' }}
-    onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-  >
+  <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+    style={{ background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(4px)' }}
+    onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
     {children}
   </div>
 )
 
 const ModalContent = ({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) => (
-  <div
-    className={`w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'} rounded-t-3xl sm:rounded-2xl overflow-y-auto`}
+  <div className={`w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'} rounded-t-3xl sm:rounded-2xl overflow-y-auto`}
     style={{
-      background: '#0f172a',
-      border: '1px solid rgba(255,255,255,0.08)',
-      maxHeight: '92dvh',
+      ...card, maxHeight: '92dvh',
       paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))',
       WebkitOverflowScrolling: 'touch',
-    } as React.CSSProperties}
-  >
+    } as React.CSSProperties}>
     {children}
   </div>
 )
@@ -142,7 +106,6 @@ export default function DetailProyekPage() {
   const [dokumen, setDokumen] = useState<Dokumen[]>([])
   const [transaksi, setTransaksi] = useState<Transaksi[]>([])
   const [kegiatan, setKegiatan] = useState<Kegiatan[]>([])
-  const [isProjectLocked, setIsProjectLocked] = useState(false)
 
   const [loading, setLoading] = useState(true)
   const [isOwner, setIsOwner] = useState(false)
@@ -152,11 +115,9 @@ export default function DetailProyekPage() {
   const [showRequestEditModal, setShowRequestEditModal] = useState(false)
   const [requestEditNote, setRequestEditNote] = useState('')
   const [requestLoading, setRequestLoading] = useState(false)
-
   const [showRequestApprovalModal, setShowRequestApprovalModal] = useState(false)
   const [requestApprovalNote, setRequestApprovalNote] = useState('')
   const [requestApprovalLoading, setRequestApprovalLoading] = useState(false)
-
   const [showProjectApprovalModal, setShowProjectApprovalModal] = useState(false)
   const [projectApprovalLoading, setProjectApprovalLoading] = useState(false)
   const [catatanApprovalProyek, setCatatanApprovalProyek] = useState('')
@@ -175,28 +136,18 @@ export default function DetailProyekPage() {
   const [selectedDokumen, setSelectedDokumen] = useState<Dokumen | null>(null)
   const [catatanAdmin, setCatatanAdmin] = useState('')
   const [approvalLoading, setApprovalLoading] = useState(false)
-
   const [showTransaksiApprovalModal, setShowTransaksiApprovalModal] = useState(false)
   const [selectedTransaksi, setSelectedTransaksi] = useState<Transaksi | null>(null)
   const [catatanAdminTransaksi, setCatatanAdminTransaksi] = useState('')
   const [transaksiApprovalLoading, setTransaksiApprovalLoading] = useState(false)
 
-  const [donorForm, setDonorForm] = useState({
-    nama: '', jenis: '', penanggungjawab: '', wilayah: '', alamat: '', tahunPendirian: '', lamaUsaha: ''
-  })
-  const [kegiatanForm, setKegiatanForm] = useState({
-    namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: ''
-  })
-  const [editProyekForm, setEditProyekForm] = useState({
-    nama: '', jenis: '', nilai: '', penanggungjawab: '', wilayah: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: ''
-  })
+  const [donorForm, setDonorForm] = useState({ nama: '', jenis: '', penanggungjawab: '', wilayah: '', alamat: '', tahunPendirian: '', lamaUsaha: '' })
+  const [kegiatanForm, setKegiatanForm] = useState({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' })
+  const [editProyekForm, setEditProyekForm] = useState({ nama: '', jenis: '', nilai: '', penanggungjawab: '', wilayah: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: '' })
   const [transaksiForm, setTransaksiForm] = useState<TransaksiForm>({
-    namaProgram: '', kegiatan: '', staffCA: '',
-    tanggalPengajuan: '', tanggalPertanggungjawaban: '',
-    kelengkapanDokumen: 'Lengkap', jumlah: '0',
-    statusTransaksi: 'Transfer successful', keterangan: '',
-    jenisPembayaran: 'TUNAI', nomorRekening: '', bankTujuan: '',
-    tanggalPembayaran: '', buktiBayarUrl: ''
+    namaProgram: '', kegiatan: '', staffCA: '', tanggalPengajuan: '', tanggalPertanggungjawaban: '',
+    kelengkapanDokumen: 'Lengkap', jumlah: '0', statusTransaksi: 'Transfer successful',
+    keterangan: '', jenisPembayaran: 'TUNAI', nomorRekening: '', bankTujuan: '', tanggalPembayaran: '', buktiBayarUrl: ''
   })
 
   useEffect(() => {
@@ -206,38 +157,23 @@ export default function DetailProyekPage() {
 
   const fetchAll = async () => {
     try {
-      const res = await fetch(`/api/proyek/${id}`, {
-        cache: 'no-cache',
-        next: { revalidate: 0 }
-      })
-      if (!res.ok) throw new Error('Gagal memuat data proyek')
-
+      const res = await fetch(`/api/proyek/${id}`, { cache: 'no-cache' })
+      if (!res.ok) throw new Error('Gagal')
       const data = await res.json()
       const p = Array.isArray(data) ? data[0] : data
-
       setProyek(p)
       setIsLocked(p.isApproved === true)
       setIsOwner((session?.user as any)?.role === 'ADMIN' || p.userId === (session?.user as any)?.id)
-
       setEditProyekForm({
-        nama: p.nama || '',
-        jenis: p.jenis || '',
-        nilai: p.nilai?.toString() || '',
-        penanggungjawab: p.penanggungjawab || '',
-        wilayah: p.wilayah || '',
-        sektor: p.sektor || '',
+        nama: p.nama || '', jenis: p.jenis || '', nilai: p.nilai?.toString() || '',
+        penanggungjawab: p.penanggungjawab || '', wilayah: p.wilayah || '', sektor: p.sektor || '',
         tanggalMulai: p.tanggalMulai?.split('T')[0] || '',
         tanggalSelesai: p.tanggalSelesai?.split('T')[0] || '',
         status: p.status || 'PERENCANAAN'
       })
-
       await reloadAll()
       setLoading(false)
-    } catch (error) {
-      console.error('Fetch project error:', error)
-      alert('Gagal memuat data proyek')
-      setLoading(false)
-    }
+    } catch { alert('Gagal memuat data proyek'); setLoading(false) }
   }
 
   const reloadAll = async () => {
@@ -248,31 +184,20 @@ export default function DetailProyekPage() {
         fetch(`/api/transaksi?projectId=${id}`, { cache: 'no-cache' }).then(r => r.json()),
         fetch(`/api/kegiatan?projectId=${id}`, { cache: 'no-cache' }).then(r => r.json()),
       ])
-
       setDonors(Array.isArray(d) ? d : [])
       setDokumen(Array.isArray(dok) ? dok : [])
       setTransaksi(Array.isArray(t) ? t : [])
       setKegiatan(Array.isArray(k) ? k : [])
-    } catch (error) {
-      console.error('Reload data error:', error)
-    }
+    } catch { }
   }
 
   const handleApproveProject = async () => {
     setProjectApprovalLoading(true)
     try {
-      const res = await fetch(`/api/proyek/${id}/approve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ catatan: catatanApprovalProyek }),
-        cache: 'no-cache'
-      })
-
+      const res = await fetch(`/api/proyek/${id}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ catatan: catatanApprovalProyek }) })
       if (!res.ok) throw new Error('Gagal')
       alert('✓ Proyek disetujui dan dikunci!')
-      setShowProjectApprovalModal(false)
-      setCatatanApprovalProyek('')
-      fetchAll()
+      setShowProjectApprovalModal(false); setCatatanApprovalProyek(''); fetchAll()
     } catch { alert('Gagal menyetujui proyek') }
     finally { setProjectApprovalLoading(false) }
   }
@@ -282,9 +207,7 @@ export default function DetailProyekPage() {
     setProjectApprovalLoading(true)
     try {
       await fetch(`/api/proyek/${id}/reject`, { method: 'POST' })
-      alert('Persetujuan proyek dibatalkan')
-      setShowProjectApprovalModal(false)
-      fetchAll()
+      alert('Persetujuan proyek dibatalkan'); setShowProjectApprovalModal(false); fetchAll()
     } catch { alert('Gagal') }
     finally { setProjectApprovalLoading(false) }
   }
@@ -293,26 +216,16 @@ export default function DetailProyekPage() {
     if (!confirm('Buka kunci proyek ini untuk diedit?')) return
     try {
       await fetch(`/api/proyek/${id}/unlock`, { method: 'POST' })
-      alert('✓ Proyek dibuka kuncinya')
-      setShowProjectApprovalModal(false)
-      fetchAll()
+      alert('✓ Proyek dibuka kuncinya'); setShowProjectApprovalModal(false); fetchAll()
     } catch { alert('Gagal membuka kunci') }
   }
+
   const handleRequestApproval = async () => {
     setRequestApprovalLoading(true)
     try {
-      // Kirim notif ke admin bahwa user minta project di-approve
-      await fetch(`/api/proyek/${id}/request-edit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          note: requestApprovalNote || 'Mohon persetujuan proyek ini',
-          type: 'REQUEST_APPROVAL'
-        })
-      })
+      await fetch(`/api/proyek/${id}/request-edit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note: requestApprovalNote || 'Mohon persetujuan proyek ini', type: 'REQUEST_APPROVAL' }) })
       alert('✓ Permintaan persetujuan telah dikirim ke Admin!')
-      setShowRequestApprovalModal(false)
-      setRequestApprovalNote('')
+      setShowRequestApprovalModal(false); setRequestApprovalNote('')
     } catch { alert('Gagal mengirim permintaan') }
     finally { setRequestApprovalLoading(false) }
   }
@@ -320,14 +233,9 @@ export default function DetailProyekPage() {
   const handleRequestEdit = async () => {
     setRequestLoading(true)
     try {
-      await fetch(`/api/proyek/${id}/request-edit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ note: requestEditNote })
-      })
+      await fetch(`/api/proyek/${id}/request-edit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note: requestEditNote }) })
       alert('✓ Permintaan edit telah dikirim ke Admin!')
-      setShowRequestEditModal(false)
-      setRequestEditNote('')
+      setShowRequestEditModal(false); setRequestEditNote('')
     } catch { alert('Gagal mengirim permintaan') }
     finally { setRequestLoading(false) }
   }
@@ -337,19 +245,13 @@ export default function DetailProyekPage() {
     if (!editProyekForm.jenis.trim()) { alert('Deskripsi Program wajib diisi!'); return }
     if (!editProyekForm.sektor.trim()) { alert('Sektor wajib diisi!'); return }
     if (!editProyekForm.tanggalMulai) { alert('Tanggal Mulai wajib diisi!'); return }
-    await fetch(`/api/proyek/${id}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editProyekForm)
-    })
+    await fetch(`/api/proyek/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editProyekForm) })
     alert('Data proyek berhasil diupdate!')
   }
 
   const handleSaveDonor = async () => {
-    if (editDonor) {
-      await fetch(`/api/donor/${editDonor.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(donorForm) })
-    } else {
-      await fetch('/api/donor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...donorForm, projectId: id }) })
-    }
+    if (editDonor) await fetch(`/api/donor/${editDonor.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(donorForm) })
+    else await fetch('/api/donor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...donorForm, projectId: id }) })
     setShowDonorForm(false); setEditDonor(null)
     setDonorForm({ nama: '', jenis: '', penanggungjawab: '', wilayah: '', alamat: '', tahunPendirian: '', lamaUsaha: '' })
     reloadAll()
@@ -357,39 +259,28 @@ export default function DetailProyekPage() {
 
   const handleDeleteDonor = async (donorId: string) => {
     if (!confirm('Yakin hapus donor ini?')) return
-    await fetch(`/api/donor/${donorId}`, { method: 'DELETE' })
-    reloadAll()
+    await fetch(`/api/donor/${donorId}`, { method: 'DELETE' }); reloadAll()
   }
 
   const handleUploadDokumen = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return
-
-    if (isProjectLocked) {
-      alert('Proyek sudah disetujui dan dikunci. Ajukan permintaan edit ke Admin untuk bisa upload dokumen.')
-      return;
-    }
+    if (isLocked && !isAdmin) { alert('Proyek terkunci. Ajukan permintaan edit ke Admin.'); return }
     if (!['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) { alert('Format file harus PDF, JPG, atau PNG!'); return }
     if (file.size > 10 * 1024 * 1024) { alert('Ukuran file maksimal 10MB!'); return }
     setUploading(true)
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        const formData = new FormData()
-        formData.append('file', file); formData.append('projectId', id); formData.append('bucket', 'dokumen')
-        const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
-        const uploadData = await uploadRes.json()
-        if (!uploadRes.ok) throw new Error(uploadData.error || 'Upload gagal')
-        await fetch('/api/dokumen', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jenisDokumen: selectedJenisDokumen, fileUrl: uploadData.fileUrl, fileName: uploadData.fileName, projectId: id })
-        })
+        const fd = new FormData(); fd.append('file', file); fd.append('projectId', id); fd.append('bucket', 'dokumen')
+        const r = await fetch('/api/upload', { method: 'POST', body: fd }); const u = await r.json()
+        if (!r.ok) throw new Error(u.error || 'Upload gagal')
+        await fetch('/api/dokumen', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jenisDokumen: selectedJenisDokumen, fileUrl: u.fileUrl, fileName: u.fileName, projectId: id }) })
         reloadAll(); alert('Dokumen berhasil diupload!'); break
-      } catch (error: any) {
-        if (attempt >= 3) alert(`Gagal upload: ${error.message}`)
+      } catch (err: any) {
+        if (attempt >= 3) alert(`Gagal upload: ${err.message}`)
         else await new Promise(r => setTimeout(r, 1500))
       }
     }
-    setUploading(false)
-    if (fileInputRef.current) fileInputRef.current.value = ''
+    setUploading(false); if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const handleUploadBuktiBayar = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -397,17 +288,11 @@ export default function DetailProyekPage() {
     setUploadingBukti(true)
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        const formData = new FormData()
-        formData.append('file', file); formData.append('projectId', id); formData.append('bucket', 'bukti-bayar')
-        const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
-        const uploadData = await uploadRes.json()
-        if (!uploadRes.ok) throw new Error(uploadData.error)
-        setTransaksiForm(prev => ({ ...prev, buktiBayarUrl: uploadData.fileUrl }))
-        alert('Bukti bayar berhasil diupload!'); break
-      } catch (error: any) {
-        if (attempt >= 3) alert(`Gagal: ${error.message}`)
-        else await new Promise(r => setTimeout(r, 1500))
-      }
+        const fd = new FormData(); fd.append('file', file); fd.append('projectId', id); fd.append('bucket', 'bukti-bayar')
+        const r = await fetch('/api/upload', { method: 'POST', body: fd }); const u = await r.json()
+        if (!r.ok) throw new Error(u.error)
+        setTransaksiForm(prev => ({ ...prev, buktiBayarUrl: u.fileUrl })); alert('Bukti bayar berhasil diupload!'); break
+      } catch (err: any) { if (attempt >= 3) alert(`Gagal: ${err.message}`); else await new Promise(r => setTimeout(r, 1500)) }
     }
     setUploadingBukti(false)
   }
@@ -417,17 +302,11 @@ export default function DetailProyekPage() {
     setUploadingFoto(true)
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        const formData = new FormData()
-        formData.append('file', file); formData.append('projectId', id); formData.append('bucket', 'kegiatan')
-        const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
-        const uploadData = await uploadRes.json()
-        if (!uploadRes.ok) throw new Error(uploadData.error)
-        setKegiatanForm(prev => ({ ...prev, fotoUrl: uploadData.fileUrl, fotoName: uploadData.fileName }))
-        alert('Foto berhasil diupload!'); break
-      } catch (error: any) {
-        if (attempt >= 3) alert(`Gagal: ${error.message}`)
-        else await new Promise(r => setTimeout(r, 1500))
-      }
+        const fd = new FormData(); fd.append('file', file); fd.append('projectId', id); fd.append('bucket', 'kegiatan')
+        const r = await fetch('/api/upload', { method: 'POST', body: fd }); const u = await r.json()
+        if (!r.ok) throw new Error(u.error)
+        setKegiatanForm(prev => ({ ...prev, fotoUrl: u.fileUrl, fotoName: u.fileName })); alert('Foto berhasil diupload!'); break
+      } catch (err: any) { if (attempt >= 3) alert(`Gagal: ${err.message}`); else await new Promise(r => setTimeout(r, 1500)) }
     }
     setUploadingFoto(false)
   }
@@ -436,35 +315,23 @@ export default function DetailProyekPage() {
     if (!confirm('Yakin hapus dokumen ini?')) return
     const fileName = fileUrl.split('/dokumen/')[1]
     if (fileName) await supabase.storage.from('dokumen').remove([fileName])
-    await fetch(`/api/dokumen/${dokumenId}`, { method: 'DELETE' })
-    reloadAll()
+    await fetch(`/api/dokumen/${dokumenId}`, { method: 'DELETE' }); reloadAll()
   }
 
-  const handleApprovalDokumen = async (approvalStatus: 'APPROVED' | 'REJECTED') => {
+  const handleApprovalDokumen = async (s: 'APPROVED' | 'REJECTED') => {
     if (!selectedDokumen) return
     setApprovalLoading(true)
     try {
-      const res = await fetch(`/api/dokumen/${selectedDokumen.id}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: approvalStatus, catatanAdmin })
-      })
+      const res = await fetch(`/api/dokumen/${selectedDokumen.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: s, catatanAdmin }) })
       if (!res.ok) throw new Error('Gagal')
-      setShowApprovalModal(false); setSelectedDokumen(null); setCatatanAdmin('')
-      reloadAll()
-      alert(approvalStatus === 'APPROVED' ? '✓ Dokumen disetujui!' : '✗ Dokumen ditolak!')
-    } catch (error) { alert('Gagal: ' + String(error)) }
+      setShowApprovalModal(false); setSelectedDokumen(null); setCatatanAdmin(''); reloadAll()
+      alert(s === 'APPROVED' ? '✓ Dokumen disetujui!' : '✗ Dokumen ditolak!')
+    } catch (e) { alert('Gagal: ' + String(e)) }
     finally { setApprovalLoading(false) }
   }
 
   const resetTransaksiForm = () => {
-    setTransaksiForm({
-      namaProgram: '', kegiatan: '', staffCA: '',
-      tanggalPengajuan: '', tanggalPertanggungjawaban: '',
-      kelengkapanDokumen: 'Lengkap', jumlah: '0',
-      statusTransaksi: 'Transfer successful', keterangan: '',
-      jenisPembayaran: 'TUNAI', nomorRekening: '', bankTujuan: '',
-      tanggalPembayaran: '', buktiBayarUrl: ''
-    })
+    setTransaksiForm({ namaProgram: '', kegiatan: '', staffCA: '', tanggalPengajuan: '', tanggalPertanggungjawaban: '', kelengkapanDokumen: 'Lengkap', jumlah: '0', statusTransaksi: 'Transfer successful', keterangan: '', jenisPembayaran: 'TUNAI', nomorRekening: '', bankTujuan: '', tanggalPembayaran: '', buktiBayarUrl: '' })
     if (buktiBayarRef.current) buktiBayarRef.current.value = ''
   }
 
@@ -473,11 +340,8 @@ export default function DetailProyekPage() {
     if (!transaksiForm.staffCA.trim()) { alert('Staff CA wajib diisi!'); return }
     if (!transaksiForm.tanggalPengajuan) { alert('Tanggal Pengajuan wajib diisi!'); return }
     const payload = { ...transaksiForm, projectId: id, jumlah: parseFloat(transaksiForm.jumlah) || 0, tanggalPembayaran: transaksiForm.tanggalPengajuan }
-    if (editTransaksi) {
-      await fetch(`/api/transaksi/${editTransaksi.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-    } else {
-      await fetch('/api/transaksi', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-    }
+    if (editTransaksi) await fetch(`/api/transaksi/${editTransaksi.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    else await fetch('/api/transaksi', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     setShowTransaksiForm(false); setEditTransaksi(null); resetTransaksiForm(); reloadAll()
   }
 
@@ -486,174 +350,180 @@ export default function DetailProyekPage() {
     await fetch(`/api/transaksi/${tId}`, { method: 'DELETE' }); reloadAll()
   }
 
-  const handleTransaksiApproval = async (approvalStatus: 'CLEAR' | 'NOT_CLEAR') => {
+  const handleTransaksiApproval = async (s: 'CLEAR' | 'NOT_CLEAR') => {
     if (!selectedTransaksi) return
     setTransaksiApprovalLoading(true)
     try {
-      const res = await fetch(`/api/transaksi/${selectedTransaksi.id}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ statusApproval: approvalStatus, catatanAdmin: catatanAdminTransaksi })
-      })
+      const res = await fetch(`/api/transaksi/${selectedTransaksi.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statusApproval: s, catatanAdmin: catatanAdminTransaksi }) })
       if (!res.ok) throw new Error('Gagal')
-      setShowTransaksiApprovalModal(false); setSelectedTransaksi(null); setCatatanAdminTransaksi('')
-      reloadAll()
-      alert(approvalStatus === 'CLEAR' ? '✓ Transaksi Clear!' : '✗ Transaksi Not Clear!')
-    } catch (error) { alert('Gagal: ' + String(error)) }
+      setShowTransaksiApprovalModal(false); setSelectedTransaksi(null); setCatatanAdminTransaksi(''); reloadAll()
+      alert(s === 'CLEAR' ? '✓ Transaksi Clear!' : '✗ Transaksi Not Clear!')
+    } catch (e) { alert('Gagal: ' + String(e)) }
     finally { setTransaksiApprovalLoading(false) }
   }
 
   const handleSaveKegiatan = async () => {
     if (!kegiatanForm.namaKegiatan || !kegiatanForm.tanggalKegiatan) { alert('Nama kegiatan dan tanggal wajib diisi!'); return }
-    if (editKegiatan) {
-      await fetch(`/api/kegiatan/${editKegiatan.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(kegiatanForm) })
-    } else {
-      await fetch('/api/kegiatan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...kegiatanForm, projectId: id }) })
-    }
+    if (editKegiatan) await fetch(`/api/kegiatan/${editKegiatan.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(kegiatanForm) })
+    else await fetch('/api/kegiatan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...kegiatanForm, projectId: id }) })
     setShowKegiatanForm(false); setEditKegiatan(null)
     setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }); reloadAll()
   }
 
-  const handleDeleteKegiatan = async (kegiatanId: string) => {
+  const handleDeleteKegiatan = async (kId: string) => {
     if (!confirm('Yakin hapus kegiatan ini?')) return
-    await fetch(`/api/kegiatan/${kegiatanId}`, { method: 'DELETE' }); reloadAll()
+    await fetch(`/api/kegiatan/${kId}`, { method: 'DELETE' }); reloadAll()
   }
 
-  const formatRupiah = (num: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(num)
+  const fmtRp = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(n)
 
   const jenisDokumenLabel: Record<string, string> = {
     PROPOSAL: 'Proposal', KONTRAK_KERJA: 'Kontrak Kerja', SURAT_IZIN: 'Surat Izin',
     DOKUMENTASI_KEGIATAN: 'Dokumentasi Kegiatan', LAPORAN_AKHIR: 'Laporan Akhir',
-    SURAT_REKOMENDASI: 'Surat Rekomendasi', LAPORAN_PERIODIK: 'Laporan Periodik',
-    LAIN_LAIN: 'Lain-lain'
+    SURAT_REKOMENDASI: 'Surat Rekomendasi', LAPORAN_PERIODIK: 'Laporan Periodik', LAIN_LAIN: 'Lain-lain'
   }
-
   const statusLabel: Record<string, string> = { PERENCANAAN: 'Draft', BERJALAN: 'Sedang Diproses', SELESAI: 'Selesai' }
 
   const isAdmin = (session?.user as any)?.role === 'ADMIN'
   const canEdit = isOwner && (!isLocked || isAdmin)
 
+  // Lock banner — light theme
   const lockBanner = (() => {
     if (isAdmin) return null
     if (isLocked && isOwner) return (
-      <div className="mb-4 px-4 py-3 rounded-xl"
-        style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.2)' }}>
-        <div className="text-sm font-medium text-yellow-400 mb-1">🔒 Proyek Terkunci</div>
-        <div className="text-xs text-gray-500">Proyek telah disetujui Admin. Ajukan izin edit jika perlu perubahan.</div>
+      <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 12, background: C.amberBg, border: `1px solid ${C.amberBd}` }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: C.amber, marginBottom: 2 }}>🔒 Proyek Terkunci</div>
+        <div style={{ fontSize: 12, color: '#92400e' }}>Proyek telah disetujui Admin. Ajukan izin edit jika perlu perubahan.</div>
       </div>
     )
     if (!isOwner) return (
-      <div className="mb-4 px-4 py-3 rounded-xl text-xs"
-        style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
+      <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 12, background: C.redBg, border: `1px solid ${C.redBd}`, fontSize: 12, color: C.red, fontWeight: 600 }}>
         ⚠ Kamu hanya bisa melihat data proyek ini
       </div>
     )
     return null
   })()
 
+  // Section header
+  const SectionHeader = ({ title }: { title: string }) => (
+    <div style={{ padding: '10px 16px', borderRadius: 10, marginBottom: 16, background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, fontSize: 11, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+      {title}
+    </div>
+  )
+
+  // Small action buttons
+  const ActionBtn = ({ label, onClick, color = C.blue, bg = C.blueBg, bd = C.blueBd }: { label: string; onClick: () => void; color?: string; bg?: string; bd?: string }) => (
+    <button onClick={onClick} style={{ fontSize: 12, padding: '5px 13px', borderRadius: 8, background: bg, color, border: `1px solid ${bd}`, cursor: 'pointer', fontWeight: 600, minHeight: 'auto' }}>
+      {label}
+    </button>
+  )
+
   if (loading) return <Loading />
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#030712' }}>
+    <div style={{ minHeight: '100dvh', background: C.bg }}>
       <Header />
-      <main className="py-4 sm:py-6 max-w-5xl mx-auto"
-        style={{
-          paddingLeft: 'calc(1rem + env(safe-area-inset-left))',
-          paddingRight: 'calc(1rem + env(safe-area-inset-right))',
-          paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))',
-        }}>
+      <main style={{
+        maxWidth: 900, margin: '0 auto',
+        padding: '1rem calc(1rem + env(safe-area-inset-left,0px)) calc(2rem + env(safe-area-inset-bottom,0px)) calc(1rem + env(safe-area-inset-right,0px))',
+      }}>
+
+        {/* Back */}
         <button onClick={() => router.push('/dashboard')}
-          className="text-blue-400 text-sm mb-4 hover:text-blue-300 transition flex items-center gap-1"
-          style={{ minHeight: '44px' }}>
+          style={{ fontSize: 13, color: C.blue, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 4, minHeight: 'auto', padding: 0 }}>
           ← Dashboard
         </button>
 
-        {/* Info Proyek */}
-        <div className="rounded-xl p-4 mb-4"
-          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-white text-base truncate">{proyek?.nama}</div>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <span className="text-gray-500 text-xs">{proyek?.jenis}</span>
-                {proyek?.wilayah && (
-                  <><span className="text-gray-700">•</span>
-                    <span className="text-gray-500 text-xs">{proyek.wilayah}</span></>
-                )}
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${proyek?.status === 'BERJALAN' ? 'bg-blue-500/10 text-blue-400' :
-                  proyek?.status === 'SELESAI' ? 'bg-emerald-500/10 text-emerald-400' :
-                    'bg-gray-500/10 text-gray-400'}`}>
+        {/* ─── Info Proyek ─── */}
+        <div style={{ ...card, padding: 16, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 800, fontSize: 16, color: C.text, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {proyek?.nama}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                {proyek?.jenis && <span style={{ fontSize: 12, color: C.textMute }}>{proyek.jenis}</span>}
+                {proyek?.wilayah && <>
+                  <span style={{ color: C.border }}>•</span>
+                  <span style={{ fontSize: 12, color: C.textMute }}>{proyek.wilayah}</span>
+                </>}
+                <span style={{
+                  fontSize: 11, padding: '2px 10px', borderRadius: 99, fontWeight: 700,
+                  background: proyek?.status === 'BERJALAN' ? C.blueBg : proyek?.status === 'SELESAI' ? C.greenBg : '#f1f5f9',
+                  color: proyek?.status === 'BERJALAN' ? C.blueText : proyek?.status === 'SELESAI' ? C.green : '#64748b',
+                  border: proyek?.status === 'BERJALAN' ? `1px solid ${C.blueBd}` : proyek?.status === 'SELESAI' ? `1px solid ${C.greenBd}` : '1px solid #cbd5e1',
+                }}>
                   {statusLabel[proyek?.status || '']}
                 </span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isLocked ? 'bg-emerald-500/10 text-emerald-400' : 'bg-gray-500/10 text-gray-500'}`}>
-                  {isLocked ? '✓ Disetujui' : '⏳ Menunggu Persetujuan'}
+                <span style={{
+                  fontSize: 11, padding: '2px 10px', borderRadius: 99, fontWeight: 700,
+                  background: isLocked ? C.greenBg : '#f1f5f9',
+                  color: isLocked ? C.green : C.textMute,
+                  border: isLocked ? `1px solid ${C.greenBd}` : '1px solid #cbd5e1',
+                }}>
+                  {isLocked ? '✓ Disetujui' : '⏳ Menunggu'}
                 </span>
               </div>
             </div>
 
-            {/* Tombol Admin: Setujui / Kelola */}
+            {/* Admin button */}
             {isAdmin && (
               <button onClick={() => setShowProjectApprovalModal(true)}
-                className="px-3 rounded-xl text-xs font-medium whitespace-nowrap flex-shrink-0"
                 style={{
-                  background: isLocked ? 'rgba(52,211,153,0.15)' : 'rgba(234,179,8,0.15)',
-                  border: isLocked ? '1px solid rgba(52,211,153,0.3)' : '1px solid rgba(234,179,8,0.3)',
-                  color: isLocked ? '#34d399' : '#facc15', minHeight: '44px',
+                  fontSize: 12, padding: '8px 14px', borderRadius: 10, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, minHeight: 40,
+                  background: isLocked ? C.greenBg : C.amberBg,
+                  border: isLocked ? `1px solid ${C.greenBd}` : `1px solid ${C.amberBd}`,
+                  color: isLocked ? C.green : C.amber,
                 }}>
                 {isLocked ? 'Kelola' : 'Setujui'}
               </button>
             )}
 
-            {/* Tombol User */}
+            {/* User buttons */}
             {!isAdmin && isOwner && (
-              <>
-                {!isLocked ? (
-                  <button onClick={() => setShowRequestApprovalModal(true)}
-                    className="px-3 rounded-xl text-xs font-medium whitespace-nowrap flex-shrink-0"
-                    style={{
-                      background: 'rgba(37,99,235,0.15)',
-                      border: '1px solid rgba(37,99,235,0.3)',
-                      color: '#60a5fa', minHeight: '44px',
-                    }}>
-                    Ajukan Persetujuan
-                  </button>
-                ) : (
-
-                  <button onClick={() => setShowRequestEditModal(true)}
-                    className="px-3 rounded-xl text-xs font-medium whitespace-nowrap flex-shrink-0"
-                    style={{
-                      background: 'rgba(234,179,8,0.15)',
-                      border: '1px solid rgba(234,179,8,0.3)',
-                      color: '#facc15', minHeight: '44px',
-                    }}>
-                    Ajukan Edit
-                  </button>
-                )}
-              </>
+              !isLocked ? (
+                <button onClick={() => setShowRequestApprovalModal(true)}
+                  style={{ fontSize: 12, padding: '8px 14px', borderRadius: 10, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, minHeight: 40, background: C.blueBg, border: `1px solid ${C.blueBd}`, color: C.blueText }}>
+                  📤 Ajukan Persetujuan
+                </button>
+              ) : (
+                <button onClick={() => setShowRequestEditModal(true)}
+                  style={{ fontSize: 12, padding: '8px 14px', borderRadius: 10, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, minHeight: 40, background: C.amberBg, border: `1px solid ${C.amberBd}`, color: C.amber }}>
+                  ✏️ Ajukan Edit
+                </button>
+              )
             )}
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 mb-6 pb-1"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' } as React.CSSProperties}>
+        {/* ─── Tabs ─── */}
+        <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: `1px solid ${C.border}`, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {[
             { key: 'proyek', label: 'Data Proyek' }, { key: 'donor', label: 'Pendonor' },
             { key: 'dokumen', label: 'Dokumen' }, { key: 'keuangan', label: 'Keuangan' },
             { key: 'lainlain', label: 'Lain-Lain' },
-          ].map((s) => (
+          ].map(s => (
             <button key={s.key} onClick={() => setActiveSection(s.key)}
-              className="px-4 text-xs font-medium transition whitespace-nowrap rounded-t-lg"
-              style={{ color: activeSection === s.key ? '#60a5fa' : '#6b7280', borderBottom: activeSection === s.key ? '2px solid #2563eb' : '2px solid transparent', background: activeSection === s.key ? 'rgba(37,99,235,0.05)' : 'transparent', minHeight: '44px' }}>
+              style={{
+                padding: '10px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                color: activeSection === s.key ? C.blue : C.textMute,
+                background: activeSection === s.key ? C.blueBg : 'transparent',
+                borderRadius: '8px 8px 0 0', minHeight: 'auto', border: 'none',
+                borderBottomStyle: 'solid',
+                borderBottomWidth: activeSection === s.key ? 2:2,
+                borderBottomColor: activeSection === s.key ? C.blue : 'transparent',
+                userSelect: 'none',
+                transition: 'all 0.2s ease',
+              }}>
               {s.label}
             </button>
           ))}
         </div>
 
-        {/* TAB: DATA PROYEK */}
+        {/* ─── TAB: DATA PROYEK ─── */}
         {activeSection === 'proyek' && (
           <div>
-            <div className="px-4 py-2.5 rounded-xl font-bold text-xs mb-4 text-white uppercase tracking-wider"
-              style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>DATA PROJEK</div>
+            <SectionHeader title="Data Program" />
             {lockBanner}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
@@ -662,82 +532,72 @@ export default function DetailProyekPage() {
                 { label: 'Wilayah Pengerjaan', key: 'wilayah' }, { label: 'Sektor', key: 'sektor' },
               ].map(({ label, key }) => (
                 <div key={key}>
-                  <label className="block text-xs text-gray-600 mb-1.5">{label}</label>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>{label}</label>
                   <input type={key === 'nilai' ? 'number' : 'text'}
                     value={editProyekForm[key as keyof typeof editProyekForm]}
-                    onChange={(e) => setEditProyekForm({ ...editProyekForm, [key]: e.target.value })}
-                    disabled={!canEdit}
-                    className="w-full px-3.5 rounded-xl outline-none transition"
-                    style={inputStyle(!canEdit)} />
+                    onChange={e => setEditProyekForm({ ...editProyekForm, [key]: e.target.value })}
+                    disabled={!canEdit} style={inp(!canEdit)}
+                    onFocus={e => { if (canEdit) { e.target.style.borderColor = C.blue; e.target.style.boxShadow = `0 0 0 3px rgba(37,99,235,0.1)` } }}
+                    onBlur={e => { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'none' }} />
                 </div>
               ))}
               {[{ label: 'Tanggal Mulai', key: 'tanggalMulai' }, { label: 'Tanggal Selesai', key: 'tanggalSelesai' }].map(({ label, key }) => (
                 <div key={key}>
-                  <label className="block text-xs text-gray-600 mb-1.5">{label}</label>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>{label}</label>
                   <input type="date" value={editProyekForm[key as keyof typeof editProyekForm]}
-                    onChange={(e) => setEditProyekForm({ ...editProyekForm, [key]: e.target.value })}
-                    disabled={!canEdit} className="w-full px-3.5 rounded-xl outline-none"
-                    style={{ ...inputStyle(!canEdit), colorScheme: 'dark' } as React.CSSProperties} />
+                    onChange={e => setEditProyekForm({ ...editProyekForm, [key]: e.target.value })}
+                    disabled={!canEdit} style={{ ...inp(!canEdit), colorScheme: 'light' } as React.CSSProperties}
+                    onFocus={e => { if (canEdit) { e.target.style.borderColor = C.blue } }}
+                    onBlur={e => { e.target.style.borderColor = C.border }} />
                 </div>
               ))}
               <div>
-                <label className="block text-xs text-gray-600 mb-1.5">Status</label>
-                <select value={editProyekForm.status}
-                  onChange={(e) => setEditProyekForm({ ...editProyekForm, status: e.target.value })}
-                  disabled={!canEdit} className="w-full px-3.5 rounded-xl outline-none"
-                  style={{ ...inputStyle(!canEdit), colorScheme: 'dark' } as React.CSSProperties}>
-                  <option value="PERENCANAAN" className="bg-gray-900">Draft</option>
-                  <option value="BERJALAN" className="bg-gray-900">Sedang Diproses</option>
-                  <option value="SELESAI" className="bg-gray-900">Selesai</option>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Status</label>
+                <select value={editProyekForm.status} onChange={e => setEditProyekForm({ ...editProyekForm, status: e.target.value })}
+                  disabled={!canEdit} style={{ ...inp(!canEdit), colorScheme: 'light' } as React.CSSProperties}>
+                  <option value="PERENCANAAN">Draft</option>
+                  <option value="BERJALAN">Sedang Diproses</option>
+                  <option value="SELESAI">Selesai</option>
                 </select>
               </div>
             </div>
             {canEdit && (
               <button onClick={handleUpdateProyek}
-                className="mt-5 px-6 rounded-xl text-white text-sm font-medium transition"
-                style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', minHeight: '44px' }}>
+                style={{ marginTop: 20, padding: '10px 24px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', boxShadow: '0 2px 8px rgba(37,99,235,0.25)', minHeight: 'auto' }}>
                 Simpan Perubahan
               </button>
             )}
           </div>
         )}
 
-        {/* TAB: PENDONOR */}
+        {/* ─── TAB: PENDONOR ─── */}
         {activeSection === 'donor' && (
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <div className="px-4 py-2.5 rounded-xl font-bold text-xs text-white uppercase tracking-wider flex-1 mr-3"
-                style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>DATA PENDONOR</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
+              <SectionHeader title="Data Pendonor" />
               {canEdit && (
                 <button onClick={() => { setShowDonorForm(true); setEditDonor(null); setDonorForm({ nama: '', jenis: '', penanggungjawab: '', wilayah: '', alamat: '', tahunPendirian: '', lamaUsaha: '' }) }}
-                  className="px-3 rounded-xl text-white text-xs font-medium whitespace-nowrap"
-                  style={{ background: 'rgba(37,99,235,0.2)', border: '1px solid rgba(37,99,235,0.3)', minHeight: '44px' }}>
+                  style={{ fontSize: 12, padding: '8px 14px', borderRadius: 9, background: C.blueBg, border: `1px solid ${C.blueBd}`, color: C.blueText, cursor: 'pointer', fontWeight: 700, flexShrink: 0, minHeight: 'auto' }}>
                   + Tambah
                 </button>
               )}
             </div>
             {lockBanner}
-            {donors.length === 0 ? <p className="text-gray-600 text-sm text-center py-10">Belum ada data pendonor</p>
-              : donors.map((d) => (
-                <div key={d.id} className="rounded-xl mb-3 overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div className="px-4 py-2.5 font-semibold text-sm text-white"
-                    style={{ background: 'rgba(20,184,166,0.15)', borderBottom: '1px solid rgba(20,184,166,0.2)' }}>{d.nama}</div>
-                  <div className="p-4" style={{ background: 'rgba(255,255,255,0.02)' }}>
-                    <div className="text-sm text-gray-400 mb-2">{d.alamat}</div>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
-                      <div>Tahun Pendirian: <span className="text-gray-400">{d.tahunPendirian}</span></div>
-                      <div>Lama Usaha: <span className="text-gray-400">{d.lamaUsaha} tahun</span></div>
+            {donors.length === 0 ? <p style={{ color: C.textMute, fontSize: 13, textAlign: 'center', padding: '40px 0' }}>Belum ada data pendonor</p>
+              : donors.map(d => (
+                <div key={d.id} style={{ ...card, marginBottom: 12, overflow: 'hidden' }}>
+                  <div style={{ padding: '10px 16px', fontWeight: 700, fontSize: 13, color: C.text, background: C.blueBg, borderBottom: `1px solid ${C.blueBd}` }}>{d.nama}</div>
+                  <div style={{ padding: 16 }}>
+                    <div style={{ fontSize: 13, color: C.textSub, marginBottom: 8 }}>{d.alamat}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontSize: 12, marginBottom: 8 }}>
+                      <div><span style={{ color: C.textMute }}>Tahun Pendirian: </span><span style={{ color: C.text, fontWeight: 600 }}>{d.tahunPendirian}</span></div>
+                      <div><span style={{ color: C.textMute }}>Lama Usaha: </span><span style={{ color: C.text, fontWeight: 600 }}>{d.lamaUsaha} tahun</span></div>
                     </div>
-                    <div className="mt-2 text-xs">
-                      <div className="text-gray-600 mt-2 mb-1 uppercase tracking-wider">Pengurus</div>
-                      <div className="text-gray-400">PJ: <span className="text-gray-300 font-medium">{d.penanggungjawab}</span></div>
-                    </div>
+                    <div style={{ fontSize: 12, color: C.textMute }}>PJ: <span style={{ color: C.text, fontWeight: 700 }}>{d.penanggungjawab}</span></div>
                     {canEdit && (
-                      <div className="flex gap-3 mt-3">
-                        <button onClick={() => { setEditDonor(d); setDonorForm({ nama: d.nama, jenis: d.jenis, penanggungjawab: d.penanggungjawab, wilayah: d.wilayah, alamat: d.alamat, tahunPendirian: d.tahunPendirian?.toString(), lamaUsaha: d.lamaUsaha?.toString() }); setShowDonorForm(true) }}
-                          className="text-blue-400 text-xs hover:text-blue-300 transition" style={{ minHeight: '44px' }}>Edit</button>
-                        <button onClick={() => handleDeleteDonor(d.id)}
-                          className="text-red-400 text-xs hover:text-red-300 transition" style={{ minHeight: '44px' }}>Hapus</button>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                        <ActionBtn label="Edit" onClick={() => { setEditDonor(d); setDonorForm({ nama: d.nama, jenis: d.jenis, penanggungjawab: d.penanggungjawab, wilayah: d.wilayah, alamat: d.alamat, tahunPendirian: d.tahunPendirian?.toString(), lamaUsaha: d.lamaUsaha?.toString() }); setShowDonorForm(true) }} />
+                        <ActionBtn label="Hapus" onClick={() => handleDeleteDonor(d.id)} color={C.red} bg={C.redBg} bd={C.redBd} />
                       </div>
                     )}
                   </div>
@@ -746,96 +606,93 @@ export default function DetailProyekPage() {
           </div>
         )}
 
-        {/* TAB: DOKUMEN */}
+        {/* ─── TAB: DOKUMEN ─── */}
         {activeSection === 'dokumen' && (
           <div>
-            <div className="px-4 py-2.5 rounded-xl font-bold text-xs mb-4 text-white uppercase tracking-wider"
-              style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>UPLOAD DOKUMEN</div>
+            <SectionHeader title="Upload Dokumen" />
             {lockBanner}
 
+            {/* Form upload */}
             {isOwner && (!isLocked || isAdmin) && (
-              <div className="rounded-xl p-4 mb-5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ ...card, padding: 16, marginBottom: 16 }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs text-gray-600 mb-1.5">Jenis Dokumen</label>
-                    <select value={selectedJenisDokumen} onChange={(e) => setSelectedJenisDokumen(e.target.value)}
-                      className="w-full px-3.5 rounded-xl text-white outline-none"
-                      style={{ ...inputStyle(), colorScheme: 'dark' } as React.CSSProperties}>
-                      <option value="KONTRAK_KERJA" className="bg-gray-900">Kontrak Kerja</option>
-                      <option value="PROPOSAL" className="bg-gray-900">Proposal</option>
-                      <option value="SURAT_IZIN" className="bg-gray-900">Surat Izin</option>
-                      <option value="DOKUMENTASI_KEGIATAN" className="bg-gray-900">Dokumentasi Kegiatan</option>
-                      <option value="LAPORAN_AKHIR" className="bg-gray-900">Laporan Akhir</option>
-                      <option value="SURAT_REKOMENDASI" className="bg-gray-900">Surat Rekomendasi</option>
-                      <option value="LAPORAN_PERIODIK" className="bg-gray-900">Laporan Periodik</option>
-                      <option value="LAIN_LAIN" className="bg-gray-900">Lain-lain</option>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Jenis Dokumen</label>
+                    <select value={selectedJenisDokumen} onChange={e => setSelectedJenisDokumen(e.target.value)} style={{ ...inp(), colorScheme: 'light' } as React.CSSProperties}>
+                      {[['KONTRAK_KERJA','Kontrak Kerja'],['PROPOSAL','Proposal'],['SURAT_IZIN','Surat Izin'],['DOKUMENTASI_KEGIATAN','Dokumentasi Kegiatan'],['LAPORAN_AKHIR','Laporan Akhir'],['SURAT_REKOMENDASI','Surat Rekomendasi'],['LAPORAN_PERIODIK','Laporan Periodik'],['LAIN_LAIN','Lain-lain']].map(([v,l]) => (
+                        <option key={v} value={v}>{l}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-600 mb-1.5">File</label>
-                    <div className="rounded-xl p-4 text-center transition"
-                      style={{ border: uploading ? '2px dashed rgba(37,99,235,0.4)' : '2px dashed rgba(255,255,255,0.1)', background: uploading ? 'rgba(37,99,235,0.05)' : 'rgba(255,255,255,0.02)' }}>
-                      <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={handleUploadDokumen} className="hidden" id="fileUpload" />
-                      <label htmlFor="fileUpload" className="cursor-pointer block py-1">
-                        <div className="text-2xl mb-1">{uploading ? '⏳' : '📎'}</div>
-                        <div className="text-xs text-gray-500">{uploading ? 'Mengupload...' : isProjectLocked ? '🔒 Upload dinonaktifkan' : 'Klik untuk upload'} </div>
-                        <div className="text-xs text-gray-700 mt-1">PDF, JPG, PNG (maks 10MB)</div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>File</label>
+                    <div style={{
+                      borderRadius: 10, padding: '16px 12px', textAlign: 'center',
+                      border: uploading ? `2px dashed ${C.blue}` : `2px dashed ${C.border}`,
+                      background: uploading ? C.blueBg : '#fafbff',
+                    }}>
+                      <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleUploadDokumen} className="hidden" id="fileUpload" />
+                      <label htmlFor="fileUpload" style={{ cursor: 'pointer', display: 'block' }}>
+                        <div style={{ fontSize: 22, marginBottom: 4 }}>{uploading ? '⏳' : '📎'}</div>
+                        <div style={{ fontSize: 12, color: C.textMute }}>{uploading ? 'Mengupload...' : 'Klik untuk upload'}</div>
+                        <div style={{ fontSize: 11, color: '#cbd5e1', marginTop: 2 }}>PDF, JPG, PNG (maks 10MB)</div>
                       </label>
                     </div>
                   </div>
                 </div>
               </div>
             )}
+
+            {/* Locked warning */}
             {isLocked && !isAdmin && isOwner && (
-              <div className="mb-4 px-4 py-3 rounded-xl"
-                style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.15)' }}>
-                <div className="text-xs text-yellow-600">
-                  🔒 Upload dokumen tidak tersedia selama proyek terkunci. Ajukan pengeditan terlebih dahulu.
-                </div>
+              <div style={{ marginBottom: 16, padding: '10px 14px', borderRadius: 10, background: C.amberBg, border: `1px solid ${C.amberBd}`, fontSize: 12, color: '#92400e' }}>
+                🔒 Upload dokumen tidak tersedia selama proyek terkunci. Ajukan pengeditan terlebih dahulu.
               </div>
             )}
-            <div className="flex gap-3 mb-4 flex-wrap">
-              <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-400">⏳ Menunggu</span>
-              <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400">✓ Disetujui</span>
-              <span className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-400">✗ Ditolak</span>
+
+            {/* Legend */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+              {[['⏳ Menunggu', C.amberBg, C.amber, C.amberBd], ['✓ Disetujui', C.greenBg, C.green, C.greenBd], ['✗ Ditolak', C.redBg, C.red, C.redBd]].map(([lbl, bg, tc, bd]) => (
+                <span key={lbl as string} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 99, background: bg as string, color: tc as string, border: `1px solid ${bd}`, fontWeight: 600 }}>{lbl as string}</span>
+              ))}
             </div>
-            
-            {dokumen.length === 0 ? <p className="text-gray-600 text-sm text-center py-10">Belum ada dokumen</p>
+
+            {dokumen.length === 0 ? <p style={{ color: C.textMute, fontSize: 13, textAlign: 'center', padding: '40px 0' }}>Belum ada dokumen</p>
               : (
-                <div className="space-y-3">
-                  {dokumen.map((d) => (
-                    <div key={d.id} className="rounded-xl p-4"
-                      style={{ background: 'rgba(255,255,255,0.02)', border: d.status === 'APPROVED' ? '1px solid rgba(52,211,153,0.2)' : d.status === 'REJECTED' ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(255,255,255,0.06)' }}>
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm text-gray-200 font-medium truncate">{d.fileName}</div>
-                          <div className="text-xs text-gray-600 mt-0.5">{jenisDokumenLabel[d.jenisDokumen]} • {new Date(d.tanggalUpload).toLocaleDateString('id-ID')}</div>
-                          <div className="mt-2">
-                            <span className={`text-xs px-2.5 py-1 rounded-full font-medium inline-block ${d.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400' : d.status === 'REJECTED' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
-                              {d.status === 'APPROVED' ? '✓ Disetujui' : d.status === 'REJECTED' ? '✗ Ditolak' : '⏳ Menunggu'}
-                            </span>
-                          </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {dokumen.map(d => (
+                    <div key={d.id} style={{ ...card, padding: 14, border: d.status === 'APPROVED' ? `1px solid ${C.greenBd}` : d.status === 'REJECTED' ? `1px solid ${C.redBd}` : `1px solid ${C.border}` }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.fileName}</div>
+                          <div style={{ fontSize: 11, color: C.textMute, marginBottom: 6 }}>{jenisDokumenLabel[d.jenisDokumen]} • {new Date(d.tanggalUpload).toLocaleDateString('id-ID')}</div>
+                          <span style={{
+                            fontSize: 11, padding: '3px 10px', borderRadius: 99, fontWeight: 700,
+                            background: d.status === 'APPROVED' ? C.greenBg : d.status === 'REJECTED' ? C.redBg : C.amberBg,
+                            color: d.status === 'APPROVED' ? C.green : d.status === 'REJECTED' ? C.red : C.amber,
+                            border: `1px solid ${d.status === 'APPROVED' ? C.greenBd : d.status === 'REJECTED' ? C.redBd : C.amberBd}`,
+                            display: 'inline-block',
+                          }}>
+                            {d.status === 'APPROVED' ? '✓ Disetujui' : d.status === 'REJECTED' ? '✗ Ditolak' : '⏳ Menunggu'}
+                          </span>
                           {d.catatanAdmin && (
-                            <div className="mt-2 px-3 py-2 rounded-lg text-xs" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                              <span className="text-gray-500">Catatan: </span><span className="text-gray-300 italic">"{d.catatanAdmin}"</span>
+                            <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: '#f8fafc', border: `1px solid ${C.border}`, fontSize: 12 }}>
+                              <span style={{ color: C.textMute }}>Catatan: </span>
+                              <span style={{ color: C.textSub, fontStyle: 'italic' }}>"{d.catatanAdmin}"</span>
                             </div>
                           )}
                         </div>
-                        <div className="flex flex-col gap-2 items-end flex-shrink-0">
-                          <a href={d.fileUrl} target="_blank" rel="noopener noreferrer"
-                            className="text-blue-400 text-xs hover:text-blue-300 transition" style={{ minHeight: '44px', display: 'flex', alignItems: 'center' }}>Download</a>
-
-                          {isLocked && !isAdmin && isOwner && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end', flexShrink: 0 }}>
+                          <a href={d.fileUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: C.blue, fontWeight: 600, textDecoration: 'none' }}>Download</a>
+                          {isAdmin && (
                             <button onClick={() => { setSelectedDokumen(d); setCatatanAdmin(d.catatanAdmin || ''); setShowApprovalModal(true) }}
-                              className="text-xs px-3 rounded-lg transition whitespace-nowrap"
-                              style={{ background: 'rgba(234,179,8,0.15)', border: '1px solid rgba(234,179,8,0.3)', color: '#facc15', minHeight: '44px' }}>
+                              style={{ fontSize: 12, padding: '5px 12px', borderRadius: 8, background: C.amberBg, border: `1px solid ${C.amberBd}`, color: C.amber, cursor: 'pointer', fontWeight: 600, minHeight: 'auto' }}>
                               Review
                             </button>
                           )}
                           {isOwner && d.status !== 'APPROVED' && (
                             <button onClick={() => handleDeleteDokumen(d.id, d.fileUrl)}
-                              className="text-red-400 text-xs hover:text-red-300 transition" style={{ minHeight: '44px' }}>Hapus</button>
+                              style={{ fontSize: 12, color: C.red, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, minHeight: 'auto', padding: 0 }}>Hapus</button>
                           )}
                         </div>
                       </div>
@@ -846,70 +703,77 @@ export default function DetailProyekPage() {
           </div>
         )}
 
-        {/* TAB: KEUANGAN */}
+        {/* ─── TAB: KEUANGAN ─── */}
         {activeSection === 'keuangan' && (
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <div className="px-4 py-2.5 rounded-xl font-bold text-xs text-white uppercase tracking-wider flex-1 mr-3"
-                style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>KEUANGAN</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
+              <SectionHeader title="Keuangan" />
               {canEdit && (
                 <button onClick={() => { setShowTransaksiForm(true); setEditTransaksi(null); resetTransaksiForm() }}
-                  className="px-3 rounded-xl text-white text-xs font-medium whitespace-nowrap"
-                  style={{ background: 'rgba(37,99,235,0.2)', border: '1px solid rgba(37,99,235,0.3)', minHeight: '44px' }}>
+                  style={{ fontSize: 12, padding: '8px 14px', borderRadius: 9, background: C.blueBg, border: `1px solid ${C.blueBd}`, color: C.blueText, cursor: 'pointer', fontWeight: 700, flexShrink: 0, minHeight: 'auto' }}>
                   + Pembayaran
                 </button>
               )}
             </div>
             {lockBanner}
-            <div className="flex gap-2 mb-4 flex-wrap">
-              <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">✓ Clear</span>
-              <span className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">✗ Not Clear</span>
-              <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">⏳ Pending</span>
+
+            {/* Legend */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+              {[['✓ Clear', C.greenBg, C.green, C.greenBd], ['✗ Not Clear', C.redBg, C.red, C.redBd], ['⏳ Pending', C.amberBg, C.amber, C.amberBd]].map(([l, bg, tc, bd]) => (
+                <span key={l as string} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 99, background: bg as string, color: tc as string, border: `1px solid ${bd}`, fontWeight: 600 }}>{l as string}</span>
+              ))}
             </div>
-            <div className="rounded-xl p-4 mb-4" style={{ background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.15)' }}>
-              <div className="text-xs text-gray-600">Total Pembayaran</div>
-              <div className="text-xl font-bold text-emerald-400 mt-1">{formatRupiah(transaksi.reduce((acc, t) => acc + t.jumlah, 0))}</div>
+
+            {/* Total */}
+            <div style={{ ...card, padding: '14px 16px', marginBottom: 16, background: C.greenBg, border: `1px solid ${C.greenBd}` }}>
+              <div style={{ fontSize: 11, color: C.textMute, fontWeight: 600, marginBottom: 4 }}>Total Pembayaran</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: C.green }}>{fmtRp(transaksi.reduce((a, t) => a + t.jumlah, 0))}</div>
             </div>
-            {transaksi.length === 0 ? <p className="text-gray-600 text-sm text-center py-10">Belum ada data keuangan</p>
-              : transaksi.map((t) => {
+
+            {transaksi.length === 0 ? <p style={{ color: C.textMute, fontSize: 13, textAlign: 'center', padding: '40px 0' }}>Belum ada data keuangan</p>
+              : transaksi.map(t => {
                 const approvalSt = (t.statusApproval || 'PENDING').toUpperCase()
                 const isClear = approvalSt === 'CLEAR'
                 const isNotClear = approvalSt === 'NOT_CLEAR'
                 return (
-                  <div key={t.id} className="rounded-xl p-4 mb-3"
-                    style={{ background: 'rgba(255,255,255,0.02)', border: isClear ? '1px solid rgba(52,211,153,0.2)' : isNotClear ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(255,255,255,0.06)' }}>
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <span className="text-sm font-medium text-gray-200 truncate">{t.namaProgram || t.keterangan || '-'}</span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${t.statusTransaksi === 'Transfer successful' ? 'bg-emerald-500/10 text-emerald-400' : t.statusTransaksi === 'Settlement' ? 'bg-blue-500/10 text-blue-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
-                            {t.statusTransaksi || t.jenisPembayaran}
-                          </span>
+                  <div key={t.id} style={{ ...card, padding: 14, marginBottom: 10, border: isClear ? `1px solid ${C.greenBd}` : isNotClear ? `1px solid ${C.redBd}` : `1px solid ${C.border}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.namaProgram || t.keterangan || '-'}</span>
+                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: C.blueBg, color: C.blueText, border: `1px solid ${C.blueBd}`, fontWeight: 600 }}>{t.statusTransaksi || t.jenisPembayaran}</span>
                         </div>
-                        <div className="mb-2">
-                          <span className={`text-xs px-2.5 py-1 rounded-full font-medium inline-block ${isClear ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : isNotClear ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'}`}>
-                            {isClear ? '✓ Clear' : isNotClear ? '✗ Not Clear' : '⏳ Pending Review'}
-                          </span>
+                        <span style={{
+                          fontSize: 11, padding: '3px 10px', borderRadius: 99, fontWeight: 700, display: 'inline-block', marginBottom: 8,
+                          background: isClear ? C.greenBg : isNotClear ? C.redBg : C.amberBg,
+                          color: isClear ? C.green : isNotClear ? C.red : C.amber,
+                          border: `1px solid ${isClear ? C.greenBd : isNotClear ? C.redBd : C.amberBd}`,
+                        }}>
+                          {isClear ? '✓ Clear' : isNotClear ? '✗ Not Clear' : '⏳ Pending Review'}
+                        </span>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px,1fr))', gap: '2px 16px', fontSize: 12 }}>
+                          {t.kegiatan && <div><span style={{ color: C.textMute }}>Kegiatan: </span><span style={{ color: C.text }}>{t.kegiatan}</span></div>}
+                          {t.staffCA && <div><span style={{ color: C.textMute }}>Staff CA: </span><span style={{ color: C.text }}>{t.staffCA}</span></div>}
+                          {t.tanggalPengajuan && <div><span style={{ color: C.textMute }}>Tgl: </span><span style={{ color: C.text }}>{new Date(t.tanggalPengajuan).toLocaleDateString('id-ID')}</span></div>}
+                          {t.kelengkapanDokumen && <div><span style={{ color: C.textMute }}>Dok: </span><span style={{ color: t.kelengkapanDokumen === 'Lengkap' ? C.green : C.amber, fontWeight: 600 }}>{t.kelengkapanDokumen}</span></div>}
+                          <div><span style={{ color: C.textMute }}>Nominal: </span><span style={{ color: C.green, fontWeight: 700 }}>{fmtRp(t.jumlah)}</span></div>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1 text-xs">
-                          {t.kegiatan && <div><span className="text-gray-600">Kegiatan: </span><span className="text-gray-300">{t.kegiatan}</span></div>}
-                          {t.staffCA && <div><span className="text-gray-600">Staff CA: </span><span className="text-gray-300">{t.staffCA}</span></div>}
-                          {t.tanggalPengajuan && <div><span className="text-gray-600">Tgl: </span><span className="text-gray-300">{new Date(t.tanggalPengajuan).toLocaleDateString('id-ID')}</span></div>}
-                          {t.kelengkapanDokumen && <div><span className="text-gray-600">Dok: </span><span className={t.kelengkapanDokumen === 'Lengkap' ? 'text-emerald-400' : 'text-orange-400'}>{t.kelengkapanDokumen}</span></div>}
-                          <div><span className="text-gray-600">Nominal: </span><span className="text-emerald-400 font-medium">{formatRupiah(t.jumlah)}</span></div>
-                        </div>
-                        {t.buktiBayarUrl && <a href={t.buktiBayarUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 text-xs hover:text-blue-300 transition mt-2 inline-block">Lihat Bukti →</a>}
+                        {t.buktiBayarUrl && <a href={t.buktiBayarUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: C.blue, fontWeight: 600, display: 'inline-block', marginTop: 6 }}>Lihat Bukti →</a>}
                         {t.catatanAdmin && (
-                          <div className="mt-2 px-3 py-2 rounded-lg text-xs" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                            <span className="text-gray-500">Catatan Admin: </span><span className="text-gray-300 italic">"{t.catatanAdmin}"</span>
+                          <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: '#f8fafc', border: `1px solid ${C.border}`, fontSize: 12 }}>
+                            <span style={{ color: C.textMute }}>Catatan Admin: </span>
+                            <span style={{ color: C.textSub, fontStyle: 'italic' }}>"{t.catatanAdmin}"</span>
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col gap-1 flex-shrink-0">
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
                         {isAdmin && (
                           <button onClick={() => { setSelectedTransaksi(t); setCatatanAdminTransaksi(t.catatanAdmin || ''); setShowTransaksiApprovalModal(true) }}
-                            className="text-xs px-3 rounded-lg transition whitespace-nowrap"
-                            style={{ background: isClear ? 'rgba(52,211,153,0.15)' : isNotClear ? 'rgba(239,68,68,0.15)' : 'rgba(234,179,8,0.15)', border: isClear ? '1px solid rgba(52,211,153,0.3)' : isNotClear ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(234,179,8,0.3)', color: isClear ? '#34d399' : isNotClear ? '#f87171' : '#facc15', minHeight: '44px' }}>
+                            style={{ fontSize: 12, padding: '5px 12px', borderRadius: 8, cursor: 'pointer', fontWeight: 600, minHeight: 'auto',
+                              background: isClear ? C.greenBg : isNotClear ? C.redBg : C.amberBg,
+                              border: `1px solid ${isClear ? C.greenBd : isNotClear ? C.redBd : C.amberBd}`,
+                              color: isClear ? C.green : isNotClear ? C.red : C.amber,
+                            }}>
                             {isClear || isNotClear ? 'Ubah' : 'Review'}
                           </button>
                         )}
@@ -917,10 +781,10 @@ export default function DetailProyekPage() {
                           <>
                             <button onClick={() => {
                               setEditTransaksi(t)
-                              setTransaksiForm({ namaProgram: t.namaProgram || '', kegiatan: t.kegiatan || '', staffCA: t.staffCA || '', tanggalPengajuan: t.tanggalPengajuan?.split('T')[0] || '', tanggalPertanggungjawaban: t.tanggalPertanggungjawaban?.split('T')[0] || '', kelengkapanDokumen: t.kelengkapanDokumen || 'Lengkap', jumlah: t.jumlah.toString(), statusTransaksi: t.statusTransaksi || 'Transfer successful', keterangan: t.keterangan || '', jenisPembayaran: t.jenisPembayaran || 'TUNAI', nomorRekening: t.nomorRekening || '', bankTujuan: t.bankTujuan || '', tanggalPembayaran: t.tanggalPembayaran?.split('T')[0] || '', buktiBayarUrl: t.buktiBayarUrl || '' })
+                              setTransaksiForm({ namaProgram: t.namaProgram||'', kegiatan: t.kegiatan||'', staffCA: t.staffCA||'', tanggalPengajuan: t.tanggalPengajuan?.split('T')[0]||'', tanggalPertanggungjawaban: t.tanggalPertanggungjawaban?.split('T')[0]||'', kelengkapanDokumen: t.kelengkapanDokumen||'Lengkap', jumlah: t.jumlah.toString(), statusTransaksi: t.statusTransaksi||'Transfer successful', keterangan: t.keterangan||'', jenisPembayaran: t.jenisPembayaran||'TUNAI', nomorRekening: t.nomorRekening||'', bankTujuan: t.bankTujuan||'', tanggalPembayaran: t.tanggalPembayaran?.split('T')[0]||'', buktiBayarUrl: t.buktiBayarUrl||'' })
                               setShowTransaksiForm(true)
-                            }} className="text-blue-400 text-xs hover:text-blue-300 transition" style={{ minHeight: '44px' }}>Edit</button>
-                            <button onClick={() => handleDeleteTransaksi(t.id)} className="text-red-400 text-xs hover:text-red-300 transition" style={{ minHeight: '44px' }}>Hapus</button>
+                            }} style={{ fontSize: 12, color: C.blue, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, minHeight: 'auto', padding: 0 }}>Edit</button>
+                            <button onClick={() => handleDeleteTransaksi(t.id)} style={{ fontSize: 12, color: C.red, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, minHeight: 'auto', padding: 0 }}>Hapus</button>
                           </>
                         )}
                       </div>
@@ -931,42 +795,39 @@ export default function DetailProyekPage() {
           </div>
         )}
 
-        {/* TAB: LAIN-LAIN */}
+        {/* ─── TAB: LAIN-LAIN ─── */}
         {activeSection === 'lainlain' && (
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <div className="px-4 py-2.5 rounded-xl font-bold text-xs text-white uppercase tracking-wider flex-1 mr-3"
-                style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)' }}>LAIN-LAIN</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
+              <SectionHeader title="Lain-Lain" />
               {canEdit && (
                 <button onClick={() => { setShowKegiatanForm(true); setEditKegiatan(null); setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }) }}
-                  className="px-3 rounded-xl text-white text-xs font-medium whitespace-nowrap"
-                  style={{ background: 'rgba(37,99,235,0.2)', border: '1px solid rgba(37,99,235,0.3)', minHeight: '44px' }}>
+                  style={{ fontSize: 12, padding: '8px 14px', borderRadius: 9, background: C.blueBg, border: `1px solid ${C.blueBd}`, color: C.blueText, cursor: 'pointer', fontWeight: 700, flexShrink: 0, minHeight: 'auto' }}>
                   + Kegiatan
                 </button>
               )}
             </div>
             {lockBanner}
-            {kegiatan.length === 0 ? <p className="text-gray-600 text-sm text-center py-10">Belum ada kegiatan</p>
+            {kegiatan.length === 0 ? <p style={{ color: C.textMute, fontSize: 13, textAlign: 'center', padding: '40px 0' }}>Belum ada kegiatan</p>
               : (
-                <div className="space-y-3">
-                  {kegiatan.map((k) => (
-                    <div key={k.id} className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-200 text-sm">{k.namaKegiatan}</div>
-                          <div className="text-xs text-gray-600 mt-1">{new Date(k.tanggalKegiatan).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {kegiatan.map(k => (
+                    <div key={k.id} style={{ ...card, padding: 14 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 700, fontSize: 13, color: C.text }}>{k.namaKegiatan}</div>
+                          <div style={{ fontSize: 12, color: C.textMute, marginTop: 2 }}>{new Date(k.tanggalKegiatan).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
                           {k.fotoUrl && (
-                            <div className="mt-3">
-                              <img src={k.fotoUrl} alt={k.namaKegiatan} className="w-40 h-28 object-cover rounded-lg" style={{ border: '1px solid rgba(255,255,255,0.08)' }} />
-                              <a href={k.fotoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 text-xs hover:text-blue-300 transition mt-1 block">Lihat lengkap →</a>
+                            <div style={{ marginTop: 10 }}>
+                              <img src={k.fotoUrl} alt={k.namaKegiatan} style={{ width: 160, height: 112, objectFit: 'cover', borderRadius: 8, border: `1px solid ${C.border}`, display: 'block' }} />
+                              <a href={k.fotoUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: C.blue, fontWeight: 600, marginTop: 4, display: 'block' }}>Lihat lengkap →</a>
                             </div>
                           )}
                         </div>
                         {canEdit && (
-                          <div className="flex gap-3 ml-4">
-                            <button onClick={() => { setEditKegiatan(k); setKegiatanForm({ namaKegiatan: k.namaKegiatan, tanggalKegiatan: k.tanggalKegiatan.split('T')[0], fotoUrl: k.fotoUrl || '', fotoName: k.fotoName || '' }); setShowKegiatanForm(true) }}
-                              className="text-blue-400 text-xs hover:text-blue-300 transition" style={{ minHeight: '44px' }}>Edit</button>
-                            <button onClick={() => handleDeleteKegiatan(k.id)} className="text-red-400 text-xs hover:text-red-300 transition" style={{ minHeight: '44px' }}>Hapus</button>
+                          <div style={{ display: 'flex', gap: 8, marginLeft: 12 }}>
+                            <ActionBtn label="Edit" onClick={() => { setEditKegiatan(k); setKegiatanForm({ namaKegiatan: k.namaKegiatan, tanggalKegiatan: k.tanggalKegiatan.split('T')[0], fotoUrl: k.fotoUrl||'', fotoName: k.fotoName||'' }); setShowKegiatanForm(true) }} />
+                            <ActionBtn label="Hapus" onClick={() => handleDeleteKegiatan(k.id)} color={C.red} bg={C.redBg} bd={C.redBd} />
                           </div>
                         )}
                       </div>
@@ -978,60 +839,56 @@ export default function DetailProyekPage() {
         )}
       </main>
 
-      {/* ══ SEMUA MODAL ══ */}
+      {/* ════════════════════════════
+          SEMUA MODAL — WHITE THEME
+          ════════════════════════════ */}
 
       {/* Modal Project Approval */}
       {showProjectApprovalModal && (
         <ModalWrapper onClose={() => { setShowProjectApprovalModal(false); setCatatanApprovalProyek('') }}>
           <ModalContent>
-            <div className="p-6">
-              <h3 className="text-base font-semibold text-white mb-1">Persetujuan Proyek</h3>
-              <p className="text-sm text-gray-500 mb-3 truncate">{proyek?.nama}</p>
-              <div className="mb-4 px-3 py-2 rounded-lg" style={{ background: isLocked ? 'rgba(52,211,153,0.06)' : 'rgba(234,179,8,0.06)', border: isLocked ? '1px solid rgba(52,211,153,0.15)' : '1px solid rgba(234,179,8,0.15)' }}>
-                <span className="text-xs text-gray-500">Status: </span>
-                <span className={`text-xs font-medium ${isLocked ? 'text-emerald-400' : 'text-yellow-400'}`}>
-                  {isLocked ? '✓ Sudah Disetujui & Terkunci' : '⏳ Belum Disetujui'}
-                </span>
+            <div style={{ padding: '20px 24px', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, borderRadius: '14px 14px 0 0' }}>
+              <h3 style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>Persetujuan Proyek</h3>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{proyek?.nama}</p>
+            </div>
+            <div style={{ padding: 24 }}>
+              <div style={{ padding: '10px 14px', borderRadius: 10, marginBottom: 16, background: isLocked ? C.greenBg : C.amberBg, border: `1px solid ${isLocked ? C.greenBd : C.amberBd}` }}>
+                <span style={{ fontSize: 12, color: C.textMute }}>Status: </span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: isLocked ? C.green : C.amber }}>{isLocked ? '✓ Sudah Disetujui & Terkunci' : '⏳ Belum Disetujui'}</span>
               </div>
               {!isLocked ? (
                 <>
-                  <div className="mb-5">
-                    <label className="block text-xs text-gray-500 mb-1.5">Catatan (opsional)</label>
-                    <textarea value={catatanApprovalProyek} onChange={(e) => setCatatanApprovalProyek(e.target.value)}
-                      placeholder="Contoh: Proyek sudah memenuhi syarat..."
-                      rows={3} className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none resize-none"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', fontSize: '16px' }} />
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 6 }}>Catatan (opsional)</label>
+                    <textarea value={catatanApprovalProyek} onChange={e => setCatatanApprovalProyek(e.target.value)}
+                      placeholder="Contoh: Proyek sudah memenuhi syarat..." rows={3}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.text, fontSize: 14, outline: 'none', resize: 'none' }} />
                   </div>
-                  <div className="flex gap-3">
+                  <div style={{ display: 'flex', gap: 10 }}>
                     <button onClick={handleApproveProject} disabled={projectApprovalLoading}
-                      className="flex-1 rounded-xl text-sm font-semibold transition disabled:opacity-50"
-                      style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.35)', color: '#34d399', minHeight: '48px' }}>
+                      style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.green},#15803d)`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: projectApprovalLoading ? 0.6 : 1 }}>
                       {projectApprovalLoading ? '...' : '✓ Setujui & Kunci'}
                     </button>
                     <button onClick={() => { setShowProjectApprovalModal(false); setCatatanApprovalProyek('') }}
-                      className="px-4 rounded-xl text-sm text-gray-500"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', minHeight: '48px' }}>
+                      style={{ padding: '12px 16px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
                       Batal
                     </button>
                   </div>
                 </>
               ) : (
                 <>
-                  <p className="text-xs text-gray-500 mb-5">Proyek terkunci. Buka kunci agar user bisa edit, atau batalkan persetujuan.</p>
-                  <div className="flex gap-3">
+                  <p style={{ fontSize: 13, color: C.textSub, marginBottom: 20 }}>Proyek terkunci. Buka kunci agar user bisa edit, atau batalkan persetujuan.</p>
+                  <div style={{ display: 'flex', gap: 10 }}>
                     <button onClick={handleUnlockProject} disabled={projectApprovalLoading}
-                      className="flex-1 rounded-xl text-sm font-semibold transition disabled:opacity-50"
-                      style={{ background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.35)', color: '#60a5fa', minHeight: '48px' }}>
+                      style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                       🔓 Buka Kunci
                     </button>
                     <button onClick={handleRejectProject} disabled={projectApprovalLoading}
-                      className="flex-1 rounded-xl text-sm font-semibold transition disabled:opacity-50"
-                      style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', minHeight: '48px' }}>
+                      style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.red},#b91c1c)`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                       ✗ Batalkan
                     </button>
                     <button onClick={() => setShowProjectApprovalModal(false)}
-                      className="px-4 rounded-xl text-sm text-gray-500"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', minHeight: '48px' }}>
+                      style={{ padding: '12px 14px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
                       Tutup
                     </button>
                   </div>
@@ -1046,37 +903,38 @@ export default function DetailProyekPage() {
       {showTransaksiApprovalModal && selectedTransaksi && (
         <ModalWrapper onClose={() => { setShowTransaksiApprovalModal(false); setSelectedTransaksi(null); setCatatanAdminTransaksi('') }}>
           <ModalContent>
-            <div className="p-6">
-              <h3 className="text-base font-semibold text-white mb-1">Review Keuangan</h3>
-              <p className="text-sm text-gray-500 mb-1 truncate">{selectedTransaksi.namaProgram || selectedTransaksi.keterangan || '-'}</p>
-              <p className="text-xs text-gray-600 mb-4">Nominal: <span className="font-medium text-emerald-400">{formatRupiah(selectedTransaksi.jumlah)}</span></p>
-              <div className="mb-4">
-                <span className="text-xs text-gray-600">Status saat ini: </span>
-                <span className={`text-xs font-medium ${selectedTransaksi.statusApproval === 'CLEAR' ? 'text-emerald-400' : selectedTransaksi.statusApproval === 'NOT_CLEAR' ? 'text-red-400' : 'text-yellow-400'}`}>
+            <div style={{ padding: '20px 24px', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, borderRadius: '14px 14px 0 0' }}>
+              <h3 style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>Review Keuangan</h3>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 2 }}>{selectedTransaksi.namaProgram || selectedTransaksi.keterangan || '-'}</p>
+            </div>
+            <div style={{ padding: 24 }}>
+              <div style={{ marginBottom: 12 }}>
+                <span style={{ fontSize: 12, color: C.textMute }}>Nominal: </span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: C.green }}>{fmtRp(selectedTransaksi.jumlah)}</span>
+              </div>
+              <div style={{ marginBottom: 16, padding: '8px 12px', borderRadius: 8, background: C.blueBg, border: `1px solid ${C.blueBd}`, fontSize: 12 }}>
+                <span style={{ color: C.textMute }}>Status saat ini: </span>
+                <span style={{ fontWeight: 700, color: selectedTransaksi.statusApproval === 'CLEAR' ? C.green : selectedTransaksi.statusApproval === 'NOT_CLEAR' ? C.red : C.amber }}>
                   {selectedTransaksi.statusApproval === 'CLEAR' ? '✓ Clear' : selectedTransaksi.statusApproval === 'NOT_CLEAR' ? '✗ Not Clear' : '⏳ Pending'}
                 </span>
               </div>
-              <div className="mb-5">
-                <label className="block text-xs text-gray-500 mb-1.5">Catatan (opsional)</label>
-                <textarea value={catatanAdminTransaksi} onChange={(e) => setCatatanAdminTransaksi(e.target.value)}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 6 }}>Catatan (opsional)</label>
+                <textarea value={catatanAdminTransaksi} onChange={e => setCatatanAdminTransaksi(e.target.value)}
                   placeholder="Contoh: Bukti pembayaran sudah sesuai..." rows={3}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none resize-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', fontSize: '16px' }} />
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.text, fontSize: 14, outline: 'none', resize: 'none' }} />
               </div>
-              <div className="flex gap-3">
+              <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => handleTransaksiApproval('CLEAR')} disabled={transaksiApprovalLoading}
-                  className="flex-1 rounded-xl text-sm font-semibold transition disabled:opacity-50"
-                  style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.35)', color: '#34d399', minHeight: '48px' }}>
+                  style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.green},#15803d)`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: transaksiApprovalLoading ? 0.6 : 1 }}>
                   {transaksiApprovalLoading ? '...' : '✓ Clear'}
                 </button>
                 <button onClick={() => handleTransaksiApproval('NOT_CLEAR')} disabled={transaksiApprovalLoading}
-                  className="flex-1 rounded-xl text-sm font-semibold transition disabled:opacity-50"
-                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', minHeight: '48px' }}>
+                  style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.red},#b91c1c)`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: transaksiApprovalLoading ? 0.6 : 1 }}>
                   {transaksiApprovalLoading ? '...' : '✗ Not Clear'}
                 </button>
-                <button onClick={() => { setShowTransaksiApprovalModal(false); setSelectedTransaksi(null); setCatatanAdminTransaksi('') }} disabled={transaksiApprovalLoading}
-                  className="px-4 rounded-xl text-sm text-gray-500 transition disabled:opacity-50"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', minHeight: '48px' }}>
+                <button onClick={() => { setShowTransaksiApprovalModal(false); setSelectedTransaksi(null); setCatatanAdminTransaksi('') }}
+                  style={{ padding: '12px 14px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
                   Batal
                 </button>
               </div>
@@ -1089,22 +947,24 @@ export default function DetailProyekPage() {
       {showDonorForm && (
         <ModalWrapper onClose={() => { setShowDonorForm(false); setEditDonor(null) }}>
           <ModalContent>
-            <div className="p-6">
-              <h3 className="text-base font-semibold text-white mb-5">{editDonor ? 'Edit Donor' : 'Tambah Donor'}</h3>
-              <div className="space-y-3">
-                {[{ label: 'Nama Yayasan/Lembaga', key: 'nama' }, { label: 'Alamat Lengkap', key: 'alamat' }, { label: 'Tahun Pendirian', key: 'tahunPendirian' }, { label: 'Lama Usaha (tahun)', key: 'lamaUsaha' }, { label: 'Penanggung Jawab', key: 'penanggungjawab' }].map(({ label, key }) => (
-                  <div key={key}>
-                    <label className="block text-xs text-gray-500 mb-1.5">{label}</label>
-                    <input type={['tahunPendirian', 'lamaUsaha'].includes(key) ? 'number' : 'text'}
-                      value={donorForm[key as keyof typeof donorForm]}
-                      onChange={(e) => setDonorForm({ ...donorForm, [key]: e.target.value })}
-                      className="w-full px-3.5 rounded-xl text-white outline-none" style={inputStyle()} />
+            <div style={{ padding: '20px 24px', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, borderRadius: '14px 14px 0 0' }}>
+              <h3 style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>{editDonor ? 'Edit Donor' : 'Tambah Donor'}</h3>
+            </div>
+            <div style={{ padding: 24 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[{ l: 'Nama Yayasan/Lembaga', k: 'nama' }, { l: 'Alamat Lengkap', k: 'alamat' }, { l: 'Tahun Pendirian', k: 'tahunPendirian' }, { l: 'Lama Usaha (tahun)', k: 'lamaUsaha' }, { l: 'Penanggung Jawab', k: 'penanggungjawab' }].map(({ l, k }) => (
+                  <div key={k}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>{l}</label>
+                    <input type={['tahunPendirian','lamaUsaha'].includes(k) ? 'number' : 'text'}
+                      value={donorForm[k as keyof typeof donorForm]}
+                      onChange={e => setDonorForm({ ...donorForm, [k]: e.target.value })}
+                      style={inp()} onFocus={e => { e.target.style.borderColor = C.blue }} onBlur={e => { e.target.style.borderColor = C.border }} />
                   </div>
                 ))}
               </div>
-              <div className="flex gap-3 mt-6">
-                <button onClick={handleSaveDonor} className="flex-1 rounded-xl text-white text-sm font-medium" style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', minHeight: '48px' }}>Simpan</button>
-                <button onClick={() => { setShowDonorForm(false); setEditDonor(null) }} className="flex-1 rounded-xl text-sm text-gray-400" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', minHeight: '48px' }}>Batal</button>
+              <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                <button onClick={handleSaveDonor} style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>Simpan</button>
+                <button onClick={() => { setShowDonorForm(false); setEditDonor(null) }} style={{ flex: 1, padding: 12, borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Batal</button>
               </div>
             </div>
           </ModalContent>
@@ -1115,80 +975,79 @@ export default function DetailProyekPage() {
       {showTransaksiForm && (
         <ModalWrapper onClose={() => { setShowTransaksiForm(false); setEditTransaksi(null); resetTransaksiForm() }}>
           <ModalContent wide>
-            <div className="p-6">
-              <h3 className="text-base font-semibold text-white mb-5">{editTransaksi ? 'Edit Pembayaran' : 'Tambah Pembayaran'}</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                {[{ label: 'Nama Program *', key: 'namaProgram' }, { label: 'Kegiatan', key: 'kegiatan' }, { label: 'Staff CA *', key: 'staffCA' }].map(({ label, key }) => (
-                  <div key={key}>
-                    <label className="block text-xs text-gray-500 mb-1.5">{label}</label>
-                    <input type="text" placeholder="ketik..." value={transaksiForm[key as keyof TransaksiForm]}
-                      onChange={(e) => setTransaksiForm({ ...transaksiForm, [key]: e.target.value })}
-                      className="w-full px-3 rounded-lg text-white outline-none" style={inputStyle()} />
+            <div style={{ padding: '20px 24px', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, borderRadius: '14px 14px 0 0' }}>
+              <h3 style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>{editTransaksi ? 'Edit Pembayaran' : 'Tambah Pembayaran'}</h3>
+            </div>
+            <div style={{ padding: 24 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                {[{ l: 'Nama Program *', k: 'namaProgram' }, { l: 'Kegiatan', k: 'kegiatan' }, { l: 'Staff CA *', k: 'staffCA' }].map(({ l, k }) => (
+                  <div key={k}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>{l}</label>
+                    <input type="text" placeholder="ketik..." value={transaksiForm[k as keyof TransaksiForm]}
+                      onChange={e => setTransaksiForm({ ...transaksiForm, [k]: e.target.value })}
+                      style={inp()} onFocus={e => { e.target.style.borderColor = C.blue }} onBlur={e => { e.target.style.borderColor = C.border }} />
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                {[{ label: 'Tanggal Pengajuan *', key: 'tanggalPengajuan' }, { label: 'Tanggal Pertanggungjawaban', key: 'tanggalPertanggungjawaban' }].map(({ label, key }) => (
-                  <div key={key}>
-                    <label className="block text-xs text-gray-500 mb-1.5">{label}</label>
-                    <input type="date" value={transaksiForm[key as keyof TransaksiForm]}
-                      onChange={(e) => setTransaksiForm({ ...transaksiForm, [key]: e.target.value })}
-                      className="w-full px-3 rounded-lg text-white outline-none" style={{ ...inputStyle(), colorScheme: 'dark' } as React.CSSProperties} />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                {[{ l: 'Tanggal Pengajuan *', k: 'tanggalPengajuan' }, { l: 'Tanggal Pertanggungjawaban', k: 'tanggalPertanggungjawaban' }].map(({ l, k }) => (
+                  <div key={k}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>{l}</label>
+                    <input type="date" value={transaksiForm[k as keyof TransaksiForm]}
+                      onChange={e => setTransaksiForm({ ...transaksiForm, [k]: e.target.value })}
+                      style={{ ...inp(), colorScheme: 'light' } as React.CSSProperties} />
                   </div>
                 ))}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Kelengkapan Dokumen</label>
-                  <select value={transaksiForm.kelengkapanDokumen} onChange={(e) => setTransaksiForm({ ...transaksiForm, kelengkapanDokumen: e.target.value })}
-                    className="w-full px-3 rounded-lg text-white outline-none" style={{ ...inputStyle(), colorScheme: 'dark' } as React.CSSProperties}>
-                    <option value="Lengkap" className="bg-gray-900">Lengkap</option>
-                    <option value="Kurang" className="bg-gray-900">Kurang</option>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Kelengkapan Dokumen</label>
+                  <select value={transaksiForm.kelengkapanDokumen} onChange={e => setTransaksiForm({ ...transaksiForm, kelengkapanDokumen: e.target.value })} style={{ ...inp(), colorScheme: 'light' } as React.CSSProperties}>
+                    <option value="Lengkap">Lengkap</option>
+                    <option value="Kurang">Kurang</option>
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Nominal Transaksi</label>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Nominal Transaksi</label>
                   <input type="number" placeholder="0" value={transaksiForm.jumlah}
-                    onChange={(e) => setTransaksiForm({ ...transaksiForm, jumlah: e.target.value })}
-                    className="w-full px-3 rounded-lg text-white outline-none" style={inputStyle()} />
+                    onChange={e => setTransaksiForm({ ...transaksiForm, jumlah: e.target.value })}
+                    style={inp()} onFocus={e => { e.target.style.borderColor = C.blue }} onBlur={e => { e.target.style.borderColor = C.border }} />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Status</label>
-                  <select value={transaksiForm.statusTransaksi} onChange={(e) => setTransaksiForm({ ...transaksiForm, statusTransaksi: e.target.value })}
-                    className="w-full px-3 rounded-lg text-white outline-none" style={{ ...inputStyle(), colorScheme: 'dark' } as React.CSSProperties}>
-                    <option value="Transfer successful" className="bg-gray-900">Transfer successful</option>
-                    <option value="Settlement" className="bg-gray-900">Settlement</option>
-                    <option value="clear" className="bg-gray-900">clear</option>
-                    <option value="Pending" className="bg-gray-900">Pending</option>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Status</label>
+                  <select value={transaksiForm.statusTransaksi} onChange={e => setTransaksiForm({ ...transaksiForm, statusTransaksi: e.target.value })} style={{ ...inp(), colorScheme: 'light' } as React.CSSProperties}>
+                    <option value="Transfer successful">Transfer successful</option>
+                    <option value="Settlement">Settlement</option>
+                    <option value="clear">clear</option>
+                    <option value="Pending">Pending</option>
                   </select>
                 </div>
               </div>
-              <div className="mb-4">
-                <label className="block text-xs text-gray-500 mb-1.5">Keterangan</label>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Keterangan</label>
                 <input type="text" placeholder="Keterangan tambahan..." value={transaksiForm.keterangan}
-                  onChange={(e) => setTransaksiForm({ ...transaksiForm, keterangan: e.target.value })}
-                  className="w-full px-3 rounded-lg text-white outline-none" style={inputStyle()} />
+                  onChange={e => setTransaksiForm({ ...transaksiForm, keterangan: e.target.value })}
+                  style={inp()} onFocus={e => { e.target.style.borderColor = C.blue }} onBlur={e => { e.target.style.borderColor = C.border }} />
               </div>
-              <div className="mb-5">
-                <label className="block text-xs text-gray-500 mb-1.5">Bukti Pembayaran</label>
-                <div className="rounded-xl p-3 text-center" style={{ border: '2px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}>
-                  <input ref={buktiBayarRef} type="file" accept=".jpg,.jpeg,.png,.pdf"
-                    onChange={handleUploadBuktiBayar} className="hidden" id="buktiBayarUpload" />
-                  <label htmlFor="buktiBayarUpload" className="cursor-pointer block py-2">
-                    <div className="text-lg mb-1">📎</div>
-                    <div className="text-xs text-gray-500">{uploadingBukti ? 'Mengupload...' : 'Klik untuk upload'}</div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Bukti Pembayaran</label>
+                <div style={{ borderRadius: 10, padding: 12, textAlign: 'center', border: `2px dashed ${C.border}`, background: '#fafbff' }}>
+                  <input ref={buktiBayarRef} type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={handleUploadBuktiBayar} className="hidden" id="buktiBayarUpload" />
+                  <label htmlFor="buktiBayarUpload" style={{ cursor: 'pointer', display: 'block' }}>
+                    <div style={{ fontSize: 20, marginBottom: 4 }}>📎</div>
+                    <div style={{ fontSize: 12, color: C.textMute }}>{uploadingBukti ? 'Mengupload...' : 'Klik untuk upload'}</div>
                   </label>
                 </div>
                 {transaksiForm.buktiBayarUrl && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-emerald-400 text-xs">✓ Terupload</span>
-                    <a href={transaksiForm.buktiBayarUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 text-xs hover:text-blue-300">Lihat →</a>
+                  <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 12, color: C.green, fontWeight: 600 }}>✓ Terupload</span>
+                    <a href={transaksiForm.buktiBayarUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: C.blue, fontWeight: 600 }}>Lihat →</a>
                   </div>
                 )}
               </div>
-              <div className="flex gap-3">
-                <button onClick={handleSaveTransaksi} className="flex-1 rounded-xl text-white text-sm font-medium" style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', minHeight: '48px' }}>Simpan</button>
-                <button onClick={() => { setShowTransaksiForm(false); setEditTransaksi(null); resetTransaksiForm() }} className="flex-1 rounded-xl text-sm text-gray-400" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', minHeight: '48px' }}>Batal</button>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={handleSaveTransaksi} style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>Simpan</button>
+                <button onClick={() => { setShowTransaksiForm(false); setEditTransaksi(null); resetTransaksiForm() }} style={{ flex: 1, padding: 12, borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Batal</button>
               </div>
             </div>
           </ModalContent>
@@ -1199,45 +1058,44 @@ export default function DetailProyekPage() {
       {showKegiatanForm && (
         <ModalWrapper onClose={() => { setShowKegiatanForm(false); setEditKegiatan(null) }}>
           <ModalContent>
-            <div className="p-6">
-              <h3 className="text-base font-semibold text-white mb-5">{editKegiatan ? 'Edit Kegiatan' : 'Tambah Kegiatan'}</h3>
-              <div className="space-y-3">
+            <div style={{ padding: '20px 24px', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, borderRadius: '14px 14px 0 0' }}>
+              <h3 style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>{editKegiatan ? 'Edit Kegiatan' : 'Tambah Kegiatan'}</h3>
+            </div>
+            <div style={{ padding: 24 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Nama Kegiatan *</label>
-                  <input type="text" value={kegiatanForm.namaKegiatan}
-                    onChange={(e) => setKegiatanForm({ ...kegiatanForm, namaKegiatan: e.target.value })}
-                    placeholder="Masukkan nama kegiatan" className="w-full px-3.5 rounded-xl text-white outline-none" style={inputStyle()} />
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Nama Kegiatan *</label>
+                  <input type="text" value={kegiatanForm.namaKegiatan} onChange={e => setKegiatanForm({ ...kegiatanForm, namaKegiatan: e.target.value })}
+                    placeholder="Masukkan nama kegiatan" style={inp()} onFocus={e => { e.target.style.borderColor = C.blue }} onBlur={e => { e.target.style.borderColor = C.border }} />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Tanggal Kegiatan *</label>
-                  <input type="date" value={kegiatanForm.tanggalKegiatan}
-                    onChange={(e) => setKegiatanForm({ ...kegiatanForm, tanggalKegiatan: e.target.value })}
-                    className="w-full px-3.5 rounded-xl text-white outline-none" style={{ ...inputStyle(), colorScheme: 'dark' } as React.CSSProperties} />
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Tanggal Kegiatan *</label>
+                  <input type="date" value={kegiatanForm.tanggalKegiatan} onChange={e => setKegiatanForm({ ...kegiatanForm, tanggalKegiatan: e.target.value })}
+                    style={{ ...inp(), colorScheme: 'light' } as React.CSSProperties} />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Foto Dokumentasi</label>
-                  <div className="rounded-xl p-4 text-center" style={{ border: '2px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}>
-                    <input ref={fotoKegiatanRef} type="file" accept=".jpg,.jpeg,.png"
-                      onChange={handleUploadFotoKegiatan} className="hidden" id="fotoKegiatanUpload" />
-                    <label htmlFor="fotoKegiatanUpload" className="cursor-pointer block py-2">
-                      <div className="text-xl mb-1">📷</div>
-                      <div className="text-xs text-gray-500">{uploadingFoto ? 'Mengupload...' : 'Klik untuk upload foto'}</div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Foto Dokumentasi</label>
+                  <div style={{ borderRadius: 10, padding: 16, textAlign: 'center', border: `2px dashed ${C.border}`, background: '#fafbff' }}>
+                    <input ref={fotoKegiatanRef} type="file" accept=".jpg,.jpeg,.png" onChange={handleUploadFotoKegiatan} className="hidden" id="fotoKegiatanUpload" />
+                    <label htmlFor="fotoKegiatanUpload" style={{ cursor: 'pointer', display: 'block' }}>
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>📷</div>
+                      <div style={{ fontSize: 12, color: C.textMute }}>{uploadingFoto ? 'Mengupload...' : 'Klik untuk upload foto'}</div>
                     </label>
                   </div>
                   {kegiatanForm.fotoUrl && (
-                    <div className="mt-2">
-                      <img src={kegiatanForm.fotoUrl} alt="Preview" className="w-full h-28 object-cover rounded-xl" style={{ border: '1px solid rgba(255,255,255,0.08)' }} />
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-emerald-400 text-xs">✓ Terupload</span>
-                        <button onClick={() => setKegiatanForm({ ...kegiatanForm, fotoUrl: '', fotoName: '' })} className="text-red-400 text-xs hover:text-red-300 transition">Hapus</button>
+                    <div style={{ marginTop: 8 }}>
+                      <img src={kegiatanForm.fotoUrl} alt="Preview" style={{ width: '100%', height: 112, objectFit: 'cover', borderRadius: 10, border: `1px solid ${C.border}` }} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                        <span style={{ fontSize: 12, color: C.green, fontWeight: 600 }}>✓ Terupload</span>
+                        <button onClick={() => setKegiatanForm({ ...kegiatanForm, fotoUrl: '', fotoName: '' })} style={{ fontSize: 12, color: C.red, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, minHeight: 'auto', padding: 0 }}>Hapus</button>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
-              <div className="flex gap-3 mt-6">
-                <button onClick={handleSaveKegiatan} className="flex-1 rounded-xl text-white text-sm font-medium" style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', minHeight: '48px' }}>Simpan</button>
-                <button onClick={() => { setShowKegiatanForm(false); setEditKegiatan(null); setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }) }} className="flex-1 rounded-xl text-sm text-gray-400" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', minHeight: '48px' }}>Batal</button>
+              <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                <button onClick={handleSaveKegiatan} style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>Simpan</button>
+                <button onClick={() => { setShowKegiatanForm(false); setEditKegiatan(null); setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }) }} style={{ flex: 1, padding: 12, borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Batal</button>
               </div>
             </div>
           </ModalContent>
@@ -1248,37 +1106,34 @@ export default function DetailProyekPage() {
       {showApprovalModal && selectedDokumen && (
         <ModalWrapper onClose={() => { setShowApprovalModal(false); setSelectedDokumen(null); setCatatanAdmin('') }}>
           <ModalContent>
-            <div className="p-6">
-              <h3 className="text-base font-semibold text-white mb-1">Review Dokumen</h3>
-              <p className="text-sm text-gray-500 mb-1 truncate">{selectedDokumen.fileName}</p>
-              <p className="text-xs text-gray-600 mb-4">{jenisDokumenLabel[selectedDokumen.jenisDokumen]}</p>
-              <div className="mb-4">
-                <span className="text-xs text-gray-600">Status saat ini: </span>
-                <span className={`text-xs font-medium ${selectedDokumen.status === 'APPROVED' ? 'text-emerald-400' : selectedDokumen.status === 'REJECTED' ? 'text-red-400' : 'text-yellow-400'}`}>
+            <div style={{ padding: '20px 24px', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, borderRadius: '14px 14px 0 0' }}>
+              <h3 style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>Review Dokumen</h3>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedDokumen.fileName}</p>
+            </div>
+            <div style={{ padding: 24 }}>
+              <div style={{ marginBottom: 12, padding: '8px 12px', borderRadius: 8, background: C.blueBg, border: `1px solid ${C.blueBd}`, fontSize: 12 }}>
+                <span style={{ color: C.textMute }}>Status saat ini: </span>
+                <span style={{ fontWeight: 700, color: selectedDokumen.status === 'APPROVED' ? C.green : selectedDokumen.status === 'REJECTED' ? C.red : C.amber }}>
                   {selectedDokumen.status === 'APPROVED' ? 'Disetujui' : selectedDokumen.status === 'REJECTED' ? 'Ditolak' : 'Menunggu'}
                 </span>
               </div>
-              <div className="mb-5">
-                <label className="block text-xs text-gray-500 mb-1.5">Catatan (opsional)</label>
-                <textarea value={catatanAdmin} onChange={(e) => setCatatanAdmin(e.target.value)}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 6 }}>Catatan (opsional)</label>
+                <textarea value={catatanAdmin} onChange={e => setCatatanAdmin(e.target.value)}
                   placeholder="Contoh: Dokumen sudah sesuai..." rows={3}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none resize-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', fontSize: '16px' }} />
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.text, fontSize: 14, outline: 'none', resize: 'none' }} />
               </div>
-              <div className="flex gap-3">
+              <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => handleApprovalDokumen('APPROVED')} disabled={approvalLoading}
-                  className="flex-1 rounded-xl text-sm font-semibold transition disabled:opacity-50"
-                  style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.35)', color: '#34d399', minHeight: '48px' }}>
+                  style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.green},#15803d)`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: approvalLoading ? 0.6 : 1 }}>
                   {approvalLoading ? '...' : '✓ Setujui'}
                 </button>
                 <button onClick={() => handleApprovalDokumen('REJECTED')} disabled={approvalLoading}
-                  className="flex-1 rounded-xl text-sm font-semibold transition disabled:opacity-50"
-                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', minHeight: '48px' }}>
+                  style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.red},#b91c1c)`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: approvalLoading ? 0.6 : 1 }}>
                   {approvalLoading ? '...' : '✗ Tolak'}
                 </button>
-                <button onClick={() => { setShowApprovalModal(false); setSelectedDokumen(null); setCatatanAdmin('') }} disabled={approvalLoading}
-                  className="px-4 rounded-xl text-sm text-gray-500 transition disabled:opacity-50"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', minHeight: '48px' }}>
+                <button onClick={() => { setShowApprovalModal(false); setSelectedDokumen(null); setCatatanAdmin('') }}
+                  style={{ padding: '12px 14px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
                   Batal
                 </button>
               </div>
@@ -1291,25 +1146,24 @@ export default function DetailProyekPage() {
       {showRequestEditModal && (
         <ModalWrapper onClose={() => { setShowRequestEditModal(false); setRequestEditNote('') }}>
           <ModalContent>
-            <div className="p-6">
-              <h3 className="text-base font-semibold text-white mb-1">Ajukan Permintaan Edit</h3>
-              <p className="text-xs text-gray-500 mb-5">Permintaan akan dikirim ke Admin untuk disetujui.</p>
-              <div className="mb-5">
-                <label className="block text-xs text-gray-500 mb-1.5">Alasan perlu diedit</label>
-                <textarea value={requestEditNote} onChange={(e) => setRequestEditNote(e.target.value)}
+            <div style={{ padding: '20px 24px', background: `linear-gradient(135deg,${C.amber},#b45309)`, borderRadius: '14px 14px 0 0' }}>
+              <h3 style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>Ajukan Permintaan Edit</h3>
+              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 }}>Permintaan akan dikirim ke Admin untuk disetujui.</p>
+            </div>
+            <div style={{ padding: 24 }}>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 6 }}>Alasan perlu diedit</label>
+                <textarea value={requestEditNote} onChange={e => setRequestEditNote(e.target.value)}
                   placeholder="Contoh: Ada perubahan nilai kontrak..." rows={3}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none resize-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', fontSize: '16px' }} />
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.text, fontSize: 14, outline: 'none', resize: 'none' }} />
               </div>
-              <div className="flex gap-3">
+              <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={handleRequestEdit} disabled={requestLoading}
-                  className="flex-1 rounded-xl text-white text-sm font-medium transition disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', minHeight: '48px' }}>
+                  style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: requestLoading ? 0.6 : 1 }}>
                   {requestLoading ? 'Mengirim...' : 'Kirim Permintaan'}
                 </button>
                 <button onClick={() => { setShowRequestEditModal(false); setRequestEditNote('') }}
-                  className="px-4 rounded-xl text-sm text-gray-400 transition"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', minHeight: '48px' }}>
+                  style={{ padding: '12px 16px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
                   Batal
                 </button>
               </div>
@@ -1317,35 +1171,29 @@ export default function DetailProyekPage() {
           </ModalContent>
         </ModalWrapper>
       )}
-      {/* Modal Request Approval (User) */}
+
+      {/* Modal Request Approval */}
       {showRequestApprovalModal && (
         <ModalWrapper onClose={() => { setShowRequestApprovalModal(false); setRequestApprovalNote('') }}>
           <ModalContent>
-            <div className="p-6">
-              <h3 className="text-base font-semibold text-white mb-1">Ajukan Persetujuan Proyek</h3>
-              <p className="text-xs text-gray-500 mb-5">
-                Permintaan akan dikirim ke Admin. Admin akan meninjau dan menyetujui proyek ini.
-              </p>
-              <div className="mb-5">
-                <label className="block text-xs text-gray-500 mb-1.5">Catatan untuk Admin (opsional)</label>
-                <textarea
-                  value={requestApprovalNote}
-                  onChange={(e) => setRequestApprovalNote(e.target.value)}
-                  placeholder="Contoh: Proyek sudah siap untuk disetujui..."
-                  rows={3}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm outline-none resize-none"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', fontSize: '16px' }}
-                />
+            <div style={{ padding: '20px 24px', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, borderRadius: '14px 14px 0 0' }}>
+              <h3 style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>Ajukan Persetujuan Proyek</h3>
+              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 }}>Admin akan meninjau dan menyetujui proyek ini.</p>
+            </div>
+            <div style={{ padding: 24 }}>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 6 }}>Catatan untuk Admin (opsional)</label>
+                <textarea value={requestApprovalNote} onChange={e => setRequestApprovalNote(e.target.value)}
+                  placeholder="Contoh: Proyek sudah siap untuk disetujui..." rows={3}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.text, fontSize: 14, outline: 'none', resize: 'none' }} />
               </div>
-              <div className="flex gap-3">
+              <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={handleRequestApproval} disabled={requestApprovalLoading}
-                  className="flex-1 rounded-xl text-white text-sm font-medium transition disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', minHeight: '48px' }}>
+                  style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: requestApprovalLoading ? 0.6 : 1 }}>
                   {requestApprovalLoading ? 'Mengirim...' : '📤 Kirim Permintaan'}
                 </button>
                 <button onClick={() => { setShowRequestApprovalModal(false); setRequestApprovalNote('') }}
-                  className="px-4 rounded-xl text-sm text-gray-400 transition"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', minHeight: '48px' }}>
+                  style={{ padding: '12px 16px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
                   Batal
                 </button>
               </div>

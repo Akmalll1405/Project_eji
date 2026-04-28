@@ -53,7 +53,7 @@ export default function LoginPage() {
       `}</style>
 
       <div
-        className="flex items-center justify-center bg-gray-950 px-4"
+        className="flex items-center justify-center bg-white px-4"
         style={{ minHeight: '100dvh' }}
       >
         <div className="w-full max-w-sm">
@@ -63,7 +63,7 @@ export default function LoginPage() {
             <div className="flex justify-center mb-4">
               <div
                 className="relative w-20 h-20 rounded-2xl overflow-hidden"
-                style={{ boxShadow: '0 0 32px rgba(59,130,246,0.25)' }}
+                style={{ boxShadow: '0 4px 12px rgba(48, 117, 228, 0.47)' }}
               >
                 <Image
                   src="/logopupuk.png"
@@ -79,29 +79,31 @@ export default function LoginPage() {
 
           {/* Card */}
           <div
-            className="rounded-2xl p-6 fade-up-1"
+            className="rounded-2xl p-8 fade-up-1 shadow-2xl border border-blue-200"
             style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              backdropFilter: 'blur(12px)',
+              background: 'linear-gradient(145deg, #fafbff, #f8fafc)',
             }}
           >
 
             {/* Error */}
             {error && (
               <div
-                className="mb-4 px-3 py-2 rounded-lg text-xs text-red-400 text-center"
-                style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}
+                className="mb-6 px-4 py-3 rounded-xl text-sm text-red-600 text-center font-medium"
+                style={{ 
+                  background: 'linear-gradient(145deg, #fef2f2, #fee2e2)', 
+                  border: '1px solid rgba(239,68,68,0.15)',
+                  boxShadow: '0 1px 3px rgba(239,68,68,0.1)'
+                }}
               >
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-3">
+            <form onSubmit={handleLogin} className="space-y-4">
 
               {/* Email */}
               <div className="fade-up-2">
-                <label className="block text-xs text-gray-500 mb-1.5 ml-0.5">Email</label>
+                <label className="block text-sm text-gray-700 mb-2 ml-0.5 font-medium">Email</label>
                 <input
                   type="email"
                   placeholder="nama@email.com"
@@ -109,25 +111,28 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  className="w-full px-3.5 py-2.5 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none transition"
+                  className="w-full px-4 py-3 rounded-xl text-gray-900 text-sm placeholder-gray-500 focus:outline-none transition-all duration-200"
                   style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'linear-gradient(145deg, #ffffff, #f8fafc)',
+                    border: '1px solid #e2e8f0',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                   }}
                   onFocus={(e) => {
-                    e.target.style.border = '1px solid rgba(59,130,246,0.5)'
-                    e.target.style.background = 'rgba(59,130,246,0.05)'
+                    e.target.style.border = '1px solid #3b82f6'
+                    e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)'
+                    e.target.style.background = 'linear-gradient(145deg, #ffffff, #f0f9ff)'
                   }}
                   onBlur={(e) => {
-                    e.target.style.border = '1px solid rgba(255,255,255,0.08)'
-                    e.target.style.background = 'rgba(255,255,255,0.04)'
+                    e.target.style.border = '1px solid #e2e8f0'
+                    e.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
+                    e.target.style.background = 'linear-gradient(145deg, #ffffff, #f8fafc)'
                   }}
                 />
               </div>
 
               {/* Password */}
               <div className="fade-up-3">
-                <label className="block text-xs text-gray-500 mb-1.5 ml-0.5">Password</label>
+                <label className="block text-sm text-gray-700 mb-2 ml-0.5 font-medium">Password</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -136,47 +141,52 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     autoComplete="current-password"
-                    className="w-full px-3.5 py-2.5 pr-10 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none transition"
+                    className="w-full px-4 py-3 pr-12 rounded-xl text-gray-900 text-sm placeholder-gray-500 focus:outline-none transition-all duration-200"
                     style={{
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.08)',
+                      background: 'linear-gradient(145deg, #ffffff, #f8fafc)',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                     }}
                     onFocus={(e) => {
-                      e.target.style.border = '1px solid rgba(59,130,246,0.5)'
-                      e.target.style.background = 'rgba(59,130,246,0.05)'
+                      e.target.style.border = '1px solid #3b82f6'
+                      e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)'
+                      e.target.style.background = 'linear-gradient(145deg, #ffffff, #f0f9ff)'
                     }}
                     onBlur={(e) => {
-                      e.target.style.border = '1px solid rgba(255,255,255,0.08)'
-                      e.target.style.background = 'rgba(255,255,255,0.04)'
+                      e.target.style.border = '1px solid #e2e8f0'
+                      e.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
+                      e.target.style.background = 'linear-gradient(145deg, #ffffff, #f8fafc)'
                     }}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
 
               {/* Button */}
-              <div className="fade-up-4 pt-1">
+              <div className="fade-up-4 pt-2">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 rounded-xl text-white text-sm font-medium transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3.5 rounded-xl text-white text-sm font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                   style={{
                     background: loading
-                      ? 'rgba(59,130,246,0.5)'
-                      : 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                    boxShadow: loading ? 'none' : '0 4px 16px rgba(37,99,235,0.3)',
+                      ? '#9ca3af'
+                      : 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                    boxShadow: loading 
+                      ? '0 1px 3px rgba(0,0,0,0.1)' 
+                      : '0 4px 20px rgba(59,130,246,0.4)',
                   }}
                 >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
                       <span
-                        className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent inline-block"
+                        className="w-4 h-4 rounded-full border-2 border-white border-t-transparent inline-block"
                         style={{ animation: 'spin 0.7s linear infinite' }}
                       />
                       Masuk...
@@ -188,7 +198,7 @@ export default function LoginPage() {
           </div>
 
           {/* Footer */}
-          <p className="text-center text-xs text-gray-700 mt-6 fade-up-4">
+          <p className="text-center text-xs text-gray-500 mt-8 fade-up-4 font-medium">
             © {new Date().getFullYear()} Sistem Manajemen Proyek
           </p>
         </div>

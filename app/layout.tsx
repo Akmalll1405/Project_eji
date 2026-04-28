@@ -21,18 +21,18 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#030712',
+  themeColor: '#2563eb',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" style={{ background: '#030712' }}>
+    <html lang="id" style={{ background: '#f0f4ff' }}>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="theme-color" content="#030712" />
+        <meta name="theme-color" content="#2563eb" />
       </head>
-      <body className={inter.className} style={{ background: '#030712', minHeight: '100dvh' }}>
+      <body className={inter.className} style={{ background: '#f0f4ff', minHeight: '100dvh' }}>
         <Providers>{children}</Providers>
       </body>
     </html>

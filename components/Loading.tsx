@@ -3,39 +3,38 @@ import Image from 'next/image'
 export default function Loading() {
   return (
     <div
-      className="flex items-center justify-center bg-gray-950 px-4"
-      style={{ minHeight: '100dvh' }}
+      className="flex items-center justify-center px-4"
+      style={{ minHeight: '100dvh', background: '#f0f4ff'}}
     >
-      <div className="flex flex-col items-center gap-6">
+      <div className="flex flex-col items-center gap-5">
 
         {/* Logo */}
-        <div className="relative w-14 h-14 opacity-90">
+        <div className="relative w-14 h-14">
           <Image
             src="/logopupuk.png"
             alt="Logo"
-            fill
-            sizes="56px"
+            fill sizes="56px"
             priority
             className="object-contain"
-            style={{ filter: 'drop-shadow(0 0 12px rgba(59,130,246,0.5))' }}
+            style={{ filter: 'drop-shadow(0 4px 12px rgba(39, 99, 235, 0.25))' }}
           />
         </div>
 
         {/* Spinner */}
         <div className="relative w-8 h-8">
-          <div className="absolute inset-0 rounded-full border-2 border-gray-800"></div>
+          <div className="absolute inset-0 rounded-full border-2 border-blue-100"></div>
           <div
-            className="absolute inset-0 rounded-full border-2 border-blue-500 border-t-transparent"
-            style={{ animation: 'spin 0.8s linear infinite' }}
+            className="absolute inset-0 rounded-full border-2 border-blue-600 border-t-transparent"
+            style={{ animation: 'spin 1s linear infinite' }}
           ></div>
         </div>
 
         {/* Text */}
         <p
-          className="text-xs text-gray-500 tracking-widest uppercase"
+          className="text-xs tracking-widest uppercase font-semibold text-blue-500"
           style={{ animation: 'pulse 2s ease-in-out infinite' }}
         >
-          Memuat
+          Memuat...
         </p>
       </div>
 
