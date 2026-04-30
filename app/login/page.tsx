@@ -196,11 +196,6 @@ export default function LoginPage() {
               </div>
             </form>
           </div>
-
-          {/* Footer */}
-          <p className="text-center text-xs text-gray-500 mt-8 fade-up-4 font-medium">
-            © {new Date().getFullYear()} Sistem Manajemen Proyek
-          </p>
         </div>
 
         <style>{`

@@ -25,6 +25,9 @@ export default function Header() {
   const [headerHeight, setHeaderHeight] = useState(64)
   const headerRef = useRef<HTMLElement>(null)
 
+  const website_name = "SI-APUK"
+  const website_tagline = "Sistem Informasi Arsip PUPUK"
+
   const unread = notifs.filter(n => !n.isRead).length
 
   const fetchNotifs = async () => {
@@ -121,7 +124,25 @@ export default function Header() {
             style={{ filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2))' }}
           />
         </div>
-
+        {/*website Name */}
+        <div className= "hidden sm:block">
+          <div
+            className="font-bold text-lg leading-tight cursor-pointer hover:opacity-90 transition-opacity"
+            style={{ color: 'white' }}
+            onClick={() => router.push('/dashboard')}
+            >
+              {website_name}
+            </div>
+            {website_tagline && (
+              <div
+                className= "text-xs font-medium leading-tight cursor-pointer hover:opacity-90 transition-opacity"
+                style={{ color: 'rgba(255, 255, 255, 0.8'}}
+                onClick={() => router.push('/dashboard')}
+              >
+                {website_tagline}
+                </div>
+            )}
+        </div>
         {/* Nav links + Bell */}
         <div className="flex items-center gap-2 sm:gap-4 ml-4 flex-1 justify-end">
           {/* Email — hidden di mobile kecil */}

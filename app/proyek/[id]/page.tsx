@@ -357,7 +357,7 @@ export default function DetailProyekPage() {
       const res = await fetch(`/api/transaksi/${selectedTransaksi.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statusApproval: s, catatanAdmin: catatanAdminTransaksi }) })
       if (!res.ok) throw new Error('Gagal')
       setShowTransaksiApprovalModal(false); setSelectedTransaksi(null); setCatatanAdminTransaksi(''); reloadAll()
-      alert(s === 'CLEAR' ? '✓ Transaksi Clear!' : '✗ Transaksi Not Clear!')
+      alert(s === 'CLEAR' ? 'Transaksi Clear!' : 'Transaksi Not Clear!')
     } catch (e) { alert('Gagal: ' + String(e)) }
     finally { setTransaksiApprovalLoading(false) }
   }
@@ -461,7 +461,7 @@ export default function DetailProyekPage() {
                   color: isLocked ? C.green : C.textMute,
                   border: isLocked ? `1px solid ${C.greenBd}` : '1px solid #cbd5e1',
                 }}>
-                  {isLocked ? '✓ Disetujui' : '⏳ Menunggu'}
+                  {isLocked ? 'Disetujui' : 'Menunggu'}
                 </span>
               </div>
             </div>
@@ -652,7 +652,7 @@ export default function DetailProyekPage() {
 
             {/* Legend */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-              {[['⏳ Menunggu', C.amberBg, C.amber, C.amberBd], ['✓ Disetujui', C.greenBg, C.green, C.greenBd], ['✗ Ditolak', C.redBg, C.red, C.redBd]].map(([lbl, bg, tc, bd]) => (
+              {[['Menunggu', C.amberBg, C.amber, C.amberBd], ['Disetujui', C.greenBg, C.green, C.greenBd], ['Ditolak', C.redBg, C.red, C.redBd]].map(([lbl, bg, tc, bd]) => (
                 <span key={lbl as string} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 99, background: bg as string, color: tc as string, border: `1px solid ${bd}`, fontWeight: 600 }}>{lbl as string}</span>
               ))}
             </div>
@@ -673,7 +673,7 @@ export default function DetailProyekPage() {
                             border: `1px solid ${d.status === 'APPROVED' ? C.greenBd : d.status === 'REJECTED' ? C.redBd : C.amberBd}`,
                             display: 'inline-block',
                           }}>
-                            {d.status === 'APPROVED' ? '✓ Disetujui' : d.status === 'REJECTED' ? '✗ Ditolak' : '⏳ Menunggu'}
+                            {d.status === 'APPROVED' ? 'Disetujui' : d.status === 'REJECTED' ? 'Ditolak' : 'Menunggu'}
                           </span>
                           {d.catatanAdmin && (
                             <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 8, background: '#f8fafc', border: `1px solid ${C.border}`, fontSize: 12 }}>
@@ -719,7 +719,7 @@ export default function DetailProyekPage() {
 
             {/* Legend */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-              {[['✓ Clear', C.greenBg, C.green, C.greenBd], ['✗ Not Clear', C.redBg, C.red, C.redBd], ['⏳ Pending', C.amberBg, C.amber, C.amberBd]].map(([l, bg, tc, bd]) => (
+              {[['Clear', C.greenBg, C.green, C.greenBd], ['Not Clear', C.redBg, C.red, C.redBd], ['Pending', C.amberBg, C.amber, C.amberBd]].map(([l, bg, tc, bd]) => (
                 <span key={l as string} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 99, background: bg as string, color: tc as string, border: `1px solid ${bd}`, fontWeight: 600 }}>{l as string}</span>
               ))}
             </div>
@@ -749,7 +749,7 @@ export default function DetailProyekPage() {
                           color: isClear ? C.green : isNotClear ? C.red : C.amber,
                           border: `1px solid ${isClear ? C.greenBd : isNotClear ? C.redBd : C.amberBd}`,
                         }}>
-                          {isClear ? '✓ Clear' : isNotClear ? '✗ Not Clear' : '⏳ Pending Review'}
+                          {isClear ? 'Clear' : isNotClear ? 'Not Clear' : 'Pending Review'}
                         </span>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px,1fr))', gap: '2px 16px', fontSize: 12 }}>
                           {t.kegiatan && <div><span style={{ color: C.textMute }}>Kegiatan: </span><span style={{ color: C.text }}>{t.kegiatan}</span></div>}
@@ -915,7 +915,7 @@ export default function DetailProyekPage() {
               <div style={{ marginBottom: 16, padding: '8px 12px', borderRadius: 8, background: C.blueBg, border: `1px solid ${C.blueBd}`, fontSize: 12 }}>
                 <span style={{ color: C.textMute }}>Status saat ini: </span>
                 <span style={{ fontWeight: 700, color: selectedTransaksi.statusApproval === 'CLEAR' ? C.green : selectedTransaksi.statusApproval === 'NOT_CLEAR' ? C.red : C.amber }}>
-                  {selectedTransaksi.statusApproval === 'CLEAR' ? '✓ Clear' : selectedTransaksi.statusApproval === 'NOT_CLEAR' ? '✗ Not Clear' : '⏳ Pending'}
+                  {selectedTransaksi.statusApproval === 'CLEAR' ? 'Clear' : selectedTransaksi.statusApproval === 'NOT_CLEAR' ? 'Not Clear' : 'Pending'}
                 </span>
               </div>
               <div style={{ marginBottom: 20 }}>
@@ -927,11 +927,11 @@ export default function DetailProyekPage() {
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => handleTransaksiApproval('CLEAR')} disabled={transaksiApprovalLoading}
                   style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.green},#15803d)`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: transaksiApprovalLoading ? 0.6 : 1 }}>
-                  {transaksiApprovalLoading ? '...' : '✓ Clear'}
+                  {transaksiApprovalLoading ? '...' : 'Clear'}
                 </button>
                 <button onClick={() => handleTransaksiApproval('NOT_CLEAR')} disabled={transaksiApprovalLoading}
                   style={{ flex: 1, padding: 12, borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.red},#b91c1c)`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: transaksiApprovalLoading ? 0.6 : 1 }}>
-                  {transaksiApprovalLoading ? '...' : '✗ Not Clear'}
+                  {transaksiApprovalLoading ? '...' : 'Not Clear'}
                 </button>
                 <button onClick={() => { setShowTransaksiApprovalModal(false); setSelectedTransaksi(null); setCatatanAdminTransaksi('') }}
                   style={{ padding: '12px 14px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>

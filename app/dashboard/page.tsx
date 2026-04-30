@@ -36,29 +36,29 @@ interface PendingDokumen {
 
 // ─── Design tokens ───
 const C = {
-  bg:        '#f5f7ff',
-  white:     '#ffffff',
-  border:    '#e2e8f0',
-  text:      '#1e293b',
-  textSub:   '#475569',
-  textMute:  '#94a3b8',
-  blue:      '#2563eb',
-  blueDark:  '#1d4ed8',
-  blueBg:    '#eff6ff',
-  blueBd:    '#bfdbfe',
-  blueText:  '#1d4ed8',
-  green:     '#16a34a',
-  greenBg:   '#f0fdf4',
-  greenBd:   '#bbf7d0',
-  amber:     '#d97706',
-  amberBg:   '#fffbeb',
-  amberBd:   '#fde68a',
-  red:       '#dc2626',
-  redBg:     '#fef2f2',
-  redBd:     '#fecaca',
-  purple:    '#7c3aed',
-  purpleBg:  '#f5f3ff',
-  purpleBd:  '#ddd6fe',
+  bg: '#f5f7ff',
+  white: '#ffffff',
+  border: '#e2e8f0',
+  text: '#1e293b',
+  textSub: '#475569',
+  textMute: '#94a3b8',
+  blue: '#2563eb',
+  blueDark: '#1d4ed8',
+  blueBg: '#eff6ff',
+  blueBd: '#bfdbfe',
+  blueText: '#1d4ed8',
+  green: '#16a34a',
+  greenBg: '#f0fdf4',
+  greenBd: '#bbf7d0',
+  amber: '#d97706',
+  amberBg: '#fffbeb',
+  amberBd: '#fde68a',
+  red: '#dc2626',
+  redBg: '#fef2f2',
+  redBd: '#fecaca',
+  purple: '#7c3aed',
+  purpleBg: '#f5f3ff',
+  purpleBd: '#ddd6fe',
 }
 
 const card: React.CSSProperties = {
@@ -97,7 +97,6 @@ const btn = (bg: string, color: string, bd: string): React.CSSProperties => ({
   minHeight: 'auto',
 })
 
-// collapsible panel header
 const panelBtn = (active: boolean): React.CSSProperties => ({
   width: '100%', display: 'flex',
   alignItems: 'center', justifyContent: 'space-between',
@@ -259,8 +258,8 @@ export default function DashboardPage() {
   const statusLabel: Record<string, string> = { PERENCANAAN: 'Draft', BERJALAN: 'Berjalan', SELESAI: 'Selesai' }
   const statusPill: Record<string, [string, string, string]> = {
     PERENCANAAN: ['#f1f5f9', '#64748b', '#cbd5e1'],
-    BERJALAN:    [C.blueBg,  C.blueText, C.blueBd],
-    SELESAI:     [C.greenBg, C.green,    C.greenBd],
+    BERJALAN: [C.blueBg, C.blueText, C.blueBd],
+    SELESAI: [C.greenBg, C.green, C.greenBd],
   }
 
   const filtered = projects.filter(p =>
@@ -289,75 +288,67 @@ export default function DashboardPage() {
       <Header />
 
       <main style={{
-        maxWidth: 1100, margin: '0 auto',
+        maxWidth: 900, margin: '0 auto',
         padding: '1.5rem calc(1rem + env(safe-area-inset-left,0px)) calc(2rem + env(safe-area-inset-bottom,0px)) calc(1rem + env(safe-area-inset-right,0px))',
       }}>
 
         {/* ─── Summary Cards ─── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
-            { label: 'Total Program',   value: projects.length,                                                                                                               color:C.blue,  bg:C.blueBg,  bd:C.blueBd  },
-            { label: 'Sedang Berjalan', value: projects.filter(p => p.status === 'BERJALAN').length,                                                                          color:C.amber, bg:C.amberBg, bd:C.amberBd },
-            { label: 'Selesai',         value: projects.filter(p => p.status === 'SELESAI').length,                                                                           color:C.green, bg:C.greenBg, bd:C.greenBd },
-            { label: 'Hampir Selesai',  value: projects.filter(p => { const d = diffDays(p.tanggalSelesai); return d<=7&&d>=0&&p.status!=='SELESAI' }).length,                color:C.red,   bg:C.redBg,   bd:C.redBd   },
+            { label: 'Total Program', value: projects.length, color: C.blue, bg: C.blueBg, bd: C.blueBd },
+            { label: 'Sedang Berjalan', value: projects.filter(p => p.status === 'BERJALAN').length, color: C.amber, bg: C.amberBg, bd: C.amberBd },
+            { label: 'Selesai', value: projects.filter(p => p.status === 'SELESAI').length, color: C.green, bg: C.greenBg, bd: C.greenBd },
+            { label: 'Hampir Selesai', value: projects.filter(p => { const d = diffDays(p.tanggalSelesai); return d <= 7 && d >= 0 && p.status !== 'SELESAI' }).length, color: C.red, bg: C.redBg, bd: C.redBd },
           ].map(({ label, value, color, bg, bd }) => (
             <div key={label} style={{ ...card, padding: '16px 20px', background: bg, border: `1px solid ${bd}` }}>
-              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
-                <span style={{ fontSize:11, color:C.textSub, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.04em' }}>{label}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 11, color: C.textSub, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</span>
               </div>
-              <span style={{ fontSize:36, fontWeight:900, color, lineHeight:1 }}>{value}</span>
+              <span style={{ fontSize: 36, fontWeight: 900, color, lineHeight: 1 }}>{value}</span>
             </div>
           ))}
         </div>
 
         {/* ─── Panel Admin ─── */}
         {isAdmin && (
-          <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:24 }}>
-
-            {/* Label */}
-            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:2 }}>
-              <div style={{ width:3, height:14, borderRadius:99, background:C.blue }} />
-              <span style={{ fontSize:11, fontWeight:800, color:C.blue, textTransform:'uppercase', letterSpacing:'0.08em' }}>
-                Panel Admin
-              </span>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
 
             {/* ── Ringkasan Per User ── */}
             <div style={card}>
               <button onClick={() => setShowUserPanel(p => !p)} style={panelBtn(showUserPanel)}>
-                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <span style={{ fontSize:13, fontWeight:700, color:C.text }}>Ringkasan Per User</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Ringkasan Per User</span>
                   <span style={pill(C.blueBg, C.blueText, C.blueBd)}>{userEntries.length} user</span>
                 </div>
-                <span style={{ fontSize:11, color:C.textMute }}>{showUserPanel ? '▲' : '▼'}</span>
+                <span style={{ fontSize: 11, color: C.textMute }}>{showUserPanel ? '▲' : '▼'}</span>
               </button>
               {showUserPanel && (
-                <div style={{ borderTop:`1px solid ${C.border}` }}>
+                <div style={{ borderTop: `1px solid ${C.border}` }}>
                   {userEntries.length === 0 ? <EmptyMsg text="Belum ada data" /> : userEntries.map(([name, data]) => (
-                    <div key={name} style={{ padding:'12px 16px', borderBottom:`1px solid #f8fafc` }}>
-                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8, flexWrap:'wrap', gap:6 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                          <div style={{ width:28, height:28, borderRadius:'50%', background:`linear-gradient(135deg,${C.blue},${C.blueDark})`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                            <span style={{ color:'#fff', fontSize:11, fontWeight:700 }}>{name.charAt(0).toUpperCase()}</span>
+                    <div key={name} style={{ padding: '12px 16px', borderBottom: `1px solid #f8fafc` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>{name.charAt(0).toUpperCase()}</span>
                           </div>
-                          <span style={{ fontSize:13, fontWeight:700, color:C.text }}>{name}</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{name}</span>
                         </div>
-                        <div style={{ display:'flex', gap:6 }}>
-                          <span style={pill(C.blueBg, C.blueText, C.blueBd)}>{data.projects.filter(p=>p.status==='BERJALAN').length} berjalan</span>
-                          <span style={pill(C.greenBg, C.green, C.greenBd)}>{data.projects.filter(p=>p.status==='SELESAI').length} selesai</span>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <span style={pill(C.blueBg, C.blueText, C.blueBd)}>{data.projects.filter(p => p.status === 'BERJALAN').length} berjalan</span>
+                          <span style={pill(C.greenBg, C.green, C.greenBd)}>{data.projects.filter(p => p.status === 'SELESAI').length} selesai</span>
                         </div>
                       </div>
-                      <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-                        {data.projects.slice(0,5).map(p => {
-                          const [bg,tc,bd] = statusPill[p.status] || statusPill.PERENCANAAN
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {data.projects.slice(0, 5).map(p => {
+                          const [bg, tc, bd] = statusPill[p.status] || statusPill.PERENCANAAN
                           return (
                             <button key={p.id} onClick={() => router.push(`/proyek/${p.id}`)}
-                              style={{ fontSize:11, padding:'4px 10px', borderRadius:8, background:bg, border:`1px solid ${bd}`, color:tc, cursor:'pointer', minHeight:'auto' }}>
-                              {p.nama.length > 25 ? p.nama.slice(0,25)+'…' : p.nama}
+                              style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, background: bg, border: `1px solid ${bd}`, color: tc, cursor: 'pointer', minHeight: 'auto' }}>
+                              {p.nama.length > 25 ? p.nama.slice(0, 25) + '…' : p.nama}
                             </button>
                           )
                         })}
-                        {data.projects.length > 5 && <span style={{ fontSize:11, color:C.textMute, padding:'4px 6px' }}>+{data.projects.length-5} lagi</span>}
+                        {data.projects.length > 5 && <span style={{ fontSize: 11, color: C.textMute, padding: '4px 6px' }}>+{data.projects.length - 5} lagi</span>}
                       </div>
                     </div>
                   ))}
@@ -367,29 +358,29 @@ export default function DashboardPage() {
 
             {/* ── Permintaan Persetujuan Proyek ── */}
             <div style={card}>
-              <button onClick={() => { setShowRequestApprovalPanel(p=>!p); fetchRequestApproval() }} style={panelBtn(requestApprovalList.length > 0)}>
-                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <span style={{ fontSize:13, fontWeight:700, color: requestApprovalList.length > 0 ? C.blueText : C.text }}>
+              <button onClick={() => { setShowRequestApprovalPanel(p => !p); fetchRequestApproval() }} style={panelBtn(requestApprovalList.length > 0)}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: requestApprovalList.length > 0 ? C.blueText : C.text }}>
                     Permintaan Persetujuan Proyek
                   </span>
                   {requestApprovalList.length > 0 && <span style={pill(C.blueBg, C.blueText, C.blueBd)}>{requestApprovalList.length}</span>}
                 </div>
-                <span style={{ fontSize:11, color:C.textMute }}>{showRequestApprovalPanel ? '▲' : '▼'}</span>
+                <span style={{ fontSize: 11, color: C.textMute }}>{showRequestApprovalPanel ? '▲' : '▼'}</span>
               </button>
               {showRequestApprovalPanel && (
-                <div style={{ borderTop:`1px solid ${C.border}` }}>
+                <div style={{ borderTop: `1px solid ${C.border}` }}>
                   {requestApprovalList.length === 0 ? <EmptyMsg text="Tidak ada permintaan persetujuan" /> : requestApprovalList.map(r => (
-                    <div key={r.id} style={{ padding:'14px 16px', borderBottom:`1px solid #f8fafc` }}>
-                      <div style={{ fontSize:13, fontWeight:700, color:C.text, marginBottom:4 }}>{r.fileName}</div>
-                      {r.catatanAdmin && <div style={{ fontSize:12, color:C.textSub, fontStyle:'italic', marginBottom:6 }}>"{r.catatanAdmin}"</div>}
-                      <div style={{ fontSize:11, color:C.textMute, marginBottom:10 }}>
-                        {new Date(r.createdAt).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+                    <div key={r.id} style={{ padding: '14px 16px', borderBottom: `1px solid #f8fafc` }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 4 }}>{r.fileName}</div>
+                      {r.catatanAdmin && <div style={{ fontSize: 12, color: C.textSub, fontStyle: 'italic', marginBottom: 6 }}>"{r.catatanAdmin}"</div>}
+                      <div style={{ fontSize: 11, color: C.textMute, marginBottom: 10 }}>
+                        {new Date(r.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </div>
-                      <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         <button onClick={() => router.push(`/proyek/${r.projectId}`)} style={btn(C.blueBg, C.blueText, C.blueBd)}>Lihat Proyek</button>
-                        <button onClick={() => handleApproveProjectFromDashboard(r.projectId)} disabled={approveProjectLoading===r.projectId}
-                          style={{ ...btn(C.greenBg, C.green, C.greenBd), opacity: approveProjectLoading===r.projectId ? 0.5 : 1 }}>
-                          {approveProjectLoading===r.projectId ? '...' : '✓ Setujui Proyek'}
+                        <button onClick={() => handleApproveProjectFromDashboard(r.projectId)} disabled={approveProjectLoading === r.projectId}
+                          style={{ ...btn(C.greenBg, C.green, C.greenBd), opacity: approveProjectLoading === r.projectId ? 0.5 : 1 }}>
+                          {approveProjectLoading === r.projectId ? '...' : '✓ Setujui Proyek'}
                         </button>
                         <button onClick={() => handleRejectRequest(r.projectId)} style={btn(C.redBg, C.red, C.redBd)}>✗ Tolak</button>
                       </div>
@@ -401,29 +392,29 @@ export default function DashboardPage() {
 
             {/* ── Permintaan Edit Proyek ── */}
             <div style={card}>
-              <button onClick={() => { setShowRequestPanel(p=>!p); fetchRequestEdit() }} style={panelBtn(requestEditList.length > 0)}>
-                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <span style={{ fontSize:13, fontWeight:700, color: requestEditList.length > 0 ? C.purple : C.text }}>
+              <button onClick={() => { setShowRequestPanel(p => !p); fetchRequestEdit() }} style={panelBtn(requestEditList.length > 0)}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: requestEditList.length > 0 ? C.purple : C.text }}>
                     Permintaan Edit Proyek
                   </span>
                   {requestEditList.length > 0 && <span style={pill(C.purpleBg, C.purple, C.purpleBd)}>{requestEditList.length}</span>}
                 </div>
-                <span style={{ fontSize:11, color:C.textMute }}>{showRequestPanel ? '▲' : '▼'}</span>
+                <span style={{ fontSize: 11, color: C.textMute }}>{showRequestPanel ? '▲' : '▼'}</span>
               </button>
               {showRequestPanel && (
-                <div style={{ borderTop:`1px solid ${C.border}` }}>
+                <div style={{ borderTop: `1px solid ${C.border}` }}>
                   {requestEditList.length === 0 ? <EmptyMsg text="Tidak ada permintaan edit" /> : requestEditList.map(r => (
-                    <div key={r.id} style={{ padding:'14px 16px', borderBottom:`1px solid #f8fafc` }}>
-                      <div style={{ fontSize:13, fontWeight:700, color:C.text, marginBottom:4 }}>{r.fileName}</div>
-                      {r.catatanAdmin && <div style={{ fontSize:12, color:C.textSub, fontStyle:'italic', marginBottom:6 }}>"{r.catatanAdmin}"</div>}
-                      <div style={{ fontSize:11, color:C.textMute, marginBottom:10 }}>
-                        {new Date(r.createdAt).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+                    <div key={r.id} style={{ padding: '14px 16px', borderBottom: `1px solid #f8fafc` }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 4 }}>{r.fileName}</div>
+                      {r.catatanAdmin && <div style={{ fontSize: 12, color: C.textSub, fontStyle: 'italic', marginBottom: 6 }}>"{r.catatanAdmin}"</div>}
+                      <div style={{ fontSize: 11, color: C.textMute, marginBottom: 10 }}>
+                        {new Date(r.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </div>
-                      <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         <button onClick={() => router.push(`/proyek/${r.projectId}`)} style={btn(C.blueBg, C.blueText, C.blueBd)}>Lihat Proyek</button>
-                        <button onClick={() => handleUnlockProject(r.projectId, r.id)} disabled={unlockLoading===r.projectId}
-                          style={{ ...btn(C.greenBg, C.green, C.greenBd), opacity: unlockLoading===r.projectId ? 0.5 : 1 }}>
-                          {unlockLoading===r.projectId ? '...' : '🔓 Izinkan Edit'}
+                        <button onClick={() => handleUnlockProject(r.projectId, r.id)} disabled={unlockLoading === r.projectId}
+                          style={{ ...btn(C.greenBg, C.green, C.greenBd), opacity: unlockLoading === r.projectId ? 0.5 : 1 }}>
+                          {unlockLoading === r.projectId ? '...' : '🔓 Izinkan Edit'}
                         </button>
                         <button onClick={() => handleRejectRequest(r.projectId)} style={btn(C.redBg, C.red, C.redBd)}>✗ Tolak</button>
                       </div>
@@ -435,23 +426,23 @@ export default function DashboardPage() {
 
             {/* ── Keuangan Pending ── */}
             <div style={card}>
-              <button onClick={() => { setShowKeuanganPanel(p=>!p); fetchPendingKeuangan() }} style={panelBtn(pendingKeuangan.length > 0)}>
-                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <span style={{ fontSize:13, fontWeight:700, color: pendingKeuangan.length > 0 ? C.amber : C.text }}>
+              <button onClick={() => { setShowKeuanganPanel(p => !p); fetchPendingKeuangan() }} style={panelBtn(pendingKeuangan.length > 0)}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: pendingKeuangan.length > 0 ? C.amber : C.text }}>
                     Keuangan Menunggu Review
                   </span>
                   {pendingKeuangan.length > 0 && <span style={pill(C.amberBg, C.amber, C.amberBd)}>{pendingKeuangan.length} pending</span>}
                 </div>
-                <span style={{ fontSize:11, color:C.textMute }}>{showKeuanganPanel ? '▲' : '▼'}</span>
+                <span style={{ fontSize: 11, color: C.textMute }}>{showKeuanganPanel ? '▲' : '▼'}</span>
               </button>
               {showKeuanganPanel && (
-                <div style={{ borderTop:`1px solid ${C.border}` }}>
+                <div style={{ borderTop: `1px solid ${C.border}` }}>
                   {pendingKeuangan.length === 0 ? <EmptyMsg text="Tidak ada keuangan pending" /> : pendingKeuangan.map(t => (
-                    <div key={t.id} style={{ padding:'14px 16px', borderBottom:`1px solid #f8fafc` }}>
-                      <div style={{ fontSize:13, fontWeight:700, color:C.text, marginBottom:2 }}>{t.namaProgram || t.keterangan || '-'}</div>
-                      <div style={{ fontSize:12, color:C.textSub, marginBottom:8 }}>
-                        <button onClick={() => router.push(`/proyek/${t.projectId}`)} style={{ color:C.blue, background:'none', border:'none', cursor:'pointer', fontSize:12, padding:0, fontWeight:600 }}>{t.proyekNama}</button>
-                        {t.jumlah && <span style={{ marginLeft:8, color:C.green, fontWeight:700 }}>{fmtRp(t.jumlah)}</span>}
+                    <div key={t.id} style={{ padding: '14px 16px', borderBottom: `1px solid #f8fafc` }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 2 }}>{t.namaProgram || t.keterangan || '-'}</div>
+                      <div style={{ fontSize: 12, color: C.textSub, marginBottom: 8 }}>
+                        <button onClick={() => router.push(`/proyek/${t.projectId}`)} style={{ color: C.blue, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, padding: 0, fontWeight: 600 }}>{t.proyekNama}</button>
+                        {t.jumlah && <span style={{ marginLeft: 8, color: C.green, fontWeight: 700 }}>{fmtRp(t.jumlah)}</span>}
                       </div>
                       <button onClick={() => router.push(`/proyek/${t.projectId}`)} style={btn(C.blueBg, C.blueText, C.blueBd)}>Review →</button>
                     </div>
@@ -462,33 +453,33 @@ export default function DashboardPage() {
 
             {/* ── Dokumen Pending ── */}
             <div style={card}>
-              <button onClick={() => { setShowApprovalPanel(p=>!p); if (!showApprovalPanel) fetchPendingDokumen() }} style={panelBtn(pendingDokumen.length > 0)}>
-                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <span style={{ fontSize:13, fontWeight:700, color: pendingDokumen.length > 0 ? C.amber : C.text }}>
+              <button onClick={() => { setShowApprovalPanel(p => !p); if (!showApprovalPanel) fetchPendingDokumen() }} style={panelBtn(pendingDokumen.length > 0)}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: pendingDokumen.length > 0 ? C.amber : C.text }}>
                     Dokumen Menunggu Approval
                   </span>
                   {pendingDokumen.length > 0 && <span style={pill(C.amberBg, C.amber, C.amberBd)}>{pendingDokumen.length} pending</span>}
                 </div>
-                <span style={{ fontSize:11, color:C.textMute }}>{showApprovalPanel ? '▲' : '▼'}</span>
+                <span style={{ fontSize: 11, color: C.textMute }}>{showApprovalPanel ? '▲' : '▼'}</span>
               </button>
               {showApprovalPanel && (
-                <div style={{ borderTop:`1px solid ${C.border}` }}>
+                <div style={{ borderTop: `1px solid ${C.border}` }}>
                   {pendingDokumen.length === 0 ? <EmptyMsg text="Tidak ada dokumen pending" /> : pendingDokumen.map(d => (
-                    <div key={d.id} style={{ padding:'14px 16px', borderBottom:`1px solid #f8fafc` }}>
-                      <div style={{ fontSize:13, fontWeight:700, color:C.text, marginBottom:2 }}>{d.fileName}</div>
-                      <div style={{ fontSize:12, color:C.textSub, marginBottom:2 }}>
-                        <button onClick={() => router.push(`/proyek/${d.projectId}`)} style={{ color:C.blue, background:'none', border:'none', cursor:'pointer', fontSize:12, padding:0, fontWeight:600 }}>{d.proyekNama}</button>
+                    <div key={d.id} style={{ padding: '14px 16px', borderBottom: `1px solid #f8fafc` }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 2 }}>{d.fileName}</div>
+                      <div style={{ fontSize: 12, color: C.textSub, marginBottom: 2 }}>
+                        <button onClick={() => router.push(`/proyek/${d.projectId}`)} style={{ color: C.blue, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, padding: 0, fontWeight: 600 }}>{d.proyekNama}</button>
                         {' • '}{d.uploaderName}{' • '}{new Date(d.tanggalUpload).toLocaleDateString('id-ID')}
                       </div>
-                      <a href={d.fileUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize:12, color:C.blue, display:'block', marginBottom:8, fontWeight:600 }}>Lihat File →</a>
-                      <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                      <a href={d.fileUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: C.blue, display: 'block', marginBottom: 8, fontWeight: 600 }}>Lihat File →</a>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <input type="text" placeholder="Catatan (opsional)..."
                           value={catatanMap[d.id] || ''}
                           onChange={e => setCatatanMap(p => ({ ...p, [d.id]: e.target.value }))}
-                          style={{ ...inputSt, flex:1, minWidth:110, fontSize:12, padding:'6px 10px' }} />
-                        <button onClick={() => handleQuickApproval(d.id,'APPROVED')} disabled={approvalLoading===d.id}
-                          style={{ ...btn(C.greenBg, C.green, C.greenBd), opacity: approvalLoading===d.id ? 0.5:1 }}>✓ Setujui</button>
-                        <button onClick={() => handleQuickApproval(d.id,'REJECTED')} disabled={approvalLoading===d.id}
+                          style={{ ...inputSt, flex: 1, minWidth: 110, fontSize: 12, padding: '6px 10px' }} />
+                        <button onClick={() => handleQuickApproval(d.id, 'APPROVED')} disabled={approvalLoading === d.id}
+                          style={{ ...btn(C.greenBg, C.green, C.greenBd), opacity: approvalLoading === d.id ? 0.5 : 1 }}>✓ Setujui</button>
+                        <button onClick={() => handleQuickApproval(d.id, 'REJECTED')} disabled={approvalLoading === d.id}
                           style={btn(C.redBg, C.red, C.redBd)}>✗ Tolak</button>
                       </div>
                     </div>
@@ -500,19 +491,19 @@ export default function DashboardPage() {
         )}
 
         {/* ─── Search ─── */}
-        <div style={{ ...card, padding:'12px 16px', marginBottom:14 }}>
+        <div style={{ ...card, padding: '12px 16px', marginBottom: 14 }}>
           <div className="flex flex-col sm:flex-row gap-2">
             {[
-              { ph:'🔍 Cari nama program...', val:searchNama, set:setSearchNama },
-              { ph:'🔍 Cari wilayah...',      val:searchWilayah, set:setSearchWilayah },
+              { ph: '🔍 Cari nama program...', val: searchNama, set: setSearchNama },
+              { ph: '🔍 Cari wilayah...', val: searchWilayah, set: setSearchWilayah },
             ].map(({ ph, val, set }) => (
               <input key={ph} type="text" placeholder={ph} value={val}
                 onChange={e => set(e.target.value)}
-                style={{ ...inputSt, flex:1 }} />
+                style={{ ...inputSt, flex: 1 }} />
             ))}
             {(searchNama || searchWilayah) && (
               <button onClick={() => { setSearchNama(''); setSearchWilayah('') }}
-                style={{ fontSize:12, color:C.red, background:'none', border:'none', cursor:'pointer', minHeight:'auto', whiteSpace:'nowrap' }}>
+                style={{ fontSize: 12, color: C.red, background: 'none', border: 'none', cursor: 'pointer', minHeight: 'auto', whiteSpace: 'nowrap' }}>
                 Reset
               </button>
             )}
@@ -521,116 +512,107 @@ export default function DashboardPage() {
 
         {/* ─── Filter + Tambah ─── */}
         <div className="flex gap-2 mb-4 flex-wrap items-center">
-          {['SEMUA','PERENCANAAN','BERJALAN','SELESAI'].map(s => (
+          {['SEMUA', 'PERENCANAAN', 'BERJALAN', 'SELESAI'].map(s => (
             <button key={s} onClick={() => setFilterStatus(s)}
               style={{
-                padding:'6px 14px', borderRadius:99, fontSize:12, fontWeight:700,
-                cursor:'pointer', minHeight:'auto', transition:'all 0.15s',
-                background: filterStatus===s ? C.blue : C.white,
-                border: `1px solid ${filterStatus===s ? C.blue : C.border}`,
-                color: filterStatus===s ? '#fff' : C.textSub,
-                boxShadow: filterStatus===s ? '0 2px 8px rgba(37,99,235,0.2)' : 'none',
+                padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700,
+                cursor: 'pointer', minHeight: 'auto', transition: 'all 0.15s',
+                background: filterStatus === s ? C.blue : C.white,
+                border: `1px solid ${filterStatus === s ? C.blue : C.border}`,
+                color: filterStatus === s ? '#fff' : C.textSub,
+                boxShadow: filterStatus === s ? '0 2px 8px rgba(37,99,235,0.2)' : 'none',
               }}>
-              {s==='SEMUA' ? 'Semua' : statusLabel[s]}
+              {s === 'SEMUA' ? 'Semua' : statusLabel[s]}
             </button>
           ))}
           <button onClick={() => setShowForm(true)}
             style={{
-              marginLeft:'auto', padding:'8px 18px', borderRadius:10, fontSize:13,
-              fontWeight:700, cursor:'pointer', minHeight:'auto',
-              background:`linear-gradient(135deg,${C.blue},${C.blueDark})`,
-              border:'none', color:'#fff',
-              boxShadow:'0 2px 8px rgba(37,99,235,0.3)',
+              marginLeft: 'auto', padding: '8px 18px', borderRadius: 10, fontSize: 13,
+              fontWeight: 700, cursor: 'pointer', minHeight: 'auto',
+              background: `linear-gradient(135deg,${C.blue},${C.blueDark})`,
+              border: 'none', color: '#fff',
+              boxShadow: '0 2px 8px rgba(37,99,235,0.3)',
             }}>
             + Tambah Program
           </button>
         </div>
 
-        {/* ─── Tabel Desktop ─── */}
-        <div className="hidden md:block" style={{ ...card, overflow:'hidden' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse' }}>
-            <thead>
-              <tr style={{ background:`linear-gradient(135deg,${C.blue},${C.blueDark})` }}>
-                {['Diperbarui','Nama Program','Nilai Kontrak','Status & Aksi'].map(h => (
-                  <th key={h} style={{ textAlign:'left', padding:'12px 16px', fontSize:11, color:'rgba(255,255,255,0.85)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={4} style={{ textAlign:'center', padding:48, color:C.textMute, fontSize:14 }}>Belum ada data program</td></tr>
-              ) : filtered.map((p, i) => {
-                const d = diffDays(p.tanggalSelesai)
-                const [bg,tc,bd] = statusPill[p.status] || statusPill.PERENCANAAN
-                return (
-                  <tr key={p.id} style={{ borderBottom:`1px solid #f1f5f9`, background: i%2===0 ? '#fff' : '#fafbff' }}>
-                    <td style={{ padding:'13px 16px', color:C.textMute, fontSize:12, whiteSpace:'pre-line' }}>{fmtDate(p.updatedAt)}</td>
-                    <td style={{ padding:'13px 16px' }}>
-                      <button onClick={() => router.push(`/proyek/${p.id}`)}
-                        style={{ color:C.blue, fontWeight:700, fontSize:13, background:'none', border:'none', cursor:'pointer', padding:0, textAlign:'left', display:'block' }}>
-                        {p.nama || '-'}
-                      </button>
-                      <div style={{ fontSize:11, color:C.textMute, marginTop:2 }}>
-                        PM: {p.penanggungjawab || '-'}{p.wilayah ? ` • ${p.wilayah}` : ''}
-                      </div>
-                    </td>
-                    <td style={{ padding:'13px 16px' }}>
-                      <div style={{ fontSize:13, fontWeight:800, color:C.green }}>{p.nilai ? fmtRp(p.nilai) : '-'}</div>
-                      <div style={{ fontSize:11, color:C.textMute, marginTop:2 }}>{p.jenis || '-'}</div>
-                    </td>
-                    <td style={{ padding:'13px 16px' }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap', marginBottom:8 }}>
-                        <span style={pill(bg,tc,bd)}>{statusLabel[p.status] || p.status}</span>
-                        {(p as any).isApproved && <span style={pill(C.greenBg, C.green, C.greenBd)}>✓ Disetujui</span>}
-                        {d<=7&&d>=0&&p.status!=='SELESAI' && <span style={{ fontSize:11, color:C.amber, fontWeight:700 }}>⚠ {d}h lagi</span>}
-                        {d<0&&p.status!=='SELESAI' && <span style={{ fontSize:11, color:C.red, fontWeight:700 }}>⚠ Lewat batas</span>}
-                      </div>
-                      <div style={{ display:'flex', gap:6 }}>
-                        <button onClick={() => router.push(`/proyek/${p.id}`)} style={btn(C.blueBg, C.blueText, C.blueBd)}>Detail</button>
-                        {isAdmin && <button onClick={() => handleDelete(p.id)} style={btn(C.redBg, C.red, C.redBd)}>Hapus</button>}
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* ─── Card Mobile ─── */}
-        <div className="md:hidden space-y-3">
+        {/* ─── Card Layout (Desktop & Mobile) ─── */}
+        <div className="space-y-3">
           {filtered.length === 0 ? (
-            <div style={{ ...card, padding:40, textAlign:'center', color:C.textMute }}>Belum ada data program</div>
-          ) : filtered.map(p => {
+            <div style={{ ...card, padding: 40, textAlign: 'center', color: C.textMute }}>Belum ada data program</div>
+          ) : filtered.map((p, i) => {
             const d = diffDays(p.tanggalSelesai)
-            const [bg,tc,bd] = statusPill[p.status] || statusPill.PERENCANAAN
+            const [bg, tc, bd] = statusPill[p.status] || statusPill.PERENCANAAN
+
+            // Create unique keys for each field
+            const projectFields = [
+              { id: 'jenis', label: 'Deskripsi', value: p.jenis || '-', alwaysShow: true},
+              { id: 'nilai', label: 'Nilai', value: p.nilai ? fmtRp(p.nilai) : '-', alwaysShow: true},
+              {
+                id: 'pm-wilayah',
+                label: `PM • ${p.wilayah || ''}`,
+                value: p.penanggungjawab || '-',
+                alwaysShow: true
+              },
+              {
+                id: 'creator',
+                label: 'Dibuat oleh',
+                value: p.userName || 'Unknown',
+                alwaysShow: false
+              },
+              { id: 'updated', label: 'Diperbarui', value: fmtDate(p.updatedAt) },
+            ].filter(item => {return item.alwaysShow || item.value !== '-'})
+
             return (
-              <div key={p.id} style={{ ...card, padding:16 }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
+              <div key={p.id} style={{
+                ...card,
+                padding: 16,
+                background: i % 2 === 0 ? '#fff' : '#fafbff'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
                   <button onClick={() => router.push(`/proyek/${p.id}`)}
-                    style={{ color:C.blue, fontWeight:700, fontSize:14, background:'none', border:'none', cursor:'pointer', padding:0, textAlign:'left', flex:1, marginRight:8 }}>
+                    style={{
+                      color: C.blue,
+                      fontWeight: 700,
+                      fontSize: 14,
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      textAlign: 'left',
+                      flex: 1,
+                      minWidth: 0
+                    }}>
                     {p.nama || '-'}
                   </button>
-                  <span style={pill(bg,tc,bd)}>{statusLabel[p.status] || p.status}</span>
+                  <span style={pill(bg, tc, bd)}>{statusLabel[p.status] || p.status}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5" style={{ marginBottom:10 }}>
-                  {[
-                    ['Deskripsi', p.jenis||'-'],
-                    ['Nilai', p.nilai ? fmtRp(p.nilai) : '-'],
-                    ['Program Manager', p.penanggungjawab||'-'],
-                    ['Wilayah', p.wilayah||'-'],
-                    ['Input oleh', p.userName||'-'],
-                    ['Update', new Date(p.updatedAt).toLocaleDateString('id-ID')],
-                  ].map(([lbl,val]) => (
-                    <div key={lbl} style={{ fontSize:12 }}>
-                      <span style={{ color:C.textMute }}>{lbl}: </span>
-                      <span style={{ color:'#334155', fontWeight:600 }}>{val}</span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-2" style={{ marginBottom: 12 }}>
+                  {projectFields.map(({ id, label, value }) => (
+                    <div key={id} style={{ fontSize: 12 }}>
+                      <span style={{ color: C.textMute, display: 'block', marginBottom: 2 }}>{label}:</span>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        color: C.text,
+                        lineHeight: 1.3
+                      }}>
+                        <span>{value}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
-                {d<=7&&d>=0&&p.status!=='SELESAI' && <div style={{ fontSize:12, color:C.amber, fontWeight:700, marginBottom:8 }}>⚠ {d} hari lagi</div>}
-                {d<0&&p.status!=='SELESAI' && <div style={{ fontSize:12, color:C.red, fontWeight:700, marginBottom:8 }}>⚠ Lewat batas waktu</div>}
-                <div style={{ display:'flex', gap:8, borderTop:`1px solid #f1f5f9`, paddingTop:10 }}>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+                  {(p as any).isApproved && <span style={pill(C.greenBg, C.green, C.greenBd)}>✓ Disetujui</span>}
+                  {d <= 7 && d >= 0 && p.status !== 'SELESAI' && <span style={{ fontSize: 11, color: C.amber, fontWeight: 700 }}>⚠ {d} hari lagi</span>}
+                  {d < 0 && p.status !== 'SELESAI' && <span style={{ fontSize: 11, color: C.red, fontWeight: 700 }}>⚠ Lewat batas</span>}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, borderTop: `1px solid rgba(31, 63, 207, 0.6)`, paddingTop: 12 }}>
                   <button onClick={() => router.push(`/proyek/${p.id}`)} style={btn(C.blueBg, C.blueText, C.blueBd)}>Detail</button>
                   {isAdmin && <button onClick={() => handleDelete(p.id)} style={btn(C.redBg, C.red, C.redBd)}>Hapus</button>}
                 </div>
@@ -643,47 +625,47 @@ export default function DashboardPage() {
       {/* ─── Modal Tambah ─── */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background:'rgba(15,23,42,0.35)', backdropFilter:'blur(4px)' }}>
-          <div style={{ ...card, width:'100%', maxWidth:520, maxHeight:'90vh', overflowY:'auto' }}>
-            <div style={{ background:`linear-gradient(135deg,${C.blue},${C.blueDark})`, padding:'20px 24px', borderRadius:'14px 14px 0 0' }}>
-              <h3 style={{ color:'#fff', fontWeight:800, fontSize:16 }}>Tambah Program Baru</h3>
+          style={{ background: 'rgba(15,23,42,0.35)', backdropFilter: 'blur(4px)' }}>
+          <div style={{ ...card, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, padding: '20px 24px', borderRadius: '14px 14px 0 0' }}>
+              <h3 style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>Tambah Program Baru</h3>
             </div>
-            <div style={{ padding:24 }}>
+            <div style={{ padding: 24 }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 {[
-                  { lbl:'Nama Program *',      key:'nama',            type:'text',   full:true  },
-                  { lbl:'Deskripsi Program *', key:'jenis',           type:'text',   full:false },
-                  { lbl:'Sektor *',            key:'sektor',          type:'text',   full:false },
-                  { lbl:'Nilai Kontrak (Rp)',  key:'nilai',           type:'number', full:false },
-                  { lbl:'Program Manager',     key:'penanggungjawab', type:'text',   full:false },
-                  { lbl:'Wilayah',             key:'wilayah',         type:'text',   full:false },
-                  { lbl:'Tanggal Mulai *',     key:'tanggalMulai',   type:'date',   full:false },
-                  { lbl:'Tanggal Selesai',     key:'tanggalSelesai', type:'date',   full:false },
+                  { lbl: 'Nama Program *', key: 'nama', type: 'text', full: true },
+                  { lbl: 'Deskripsi Program *', key: 'jenis', type: 'text', full: false },
+                  { lbl: 'Sektor *', key: 'sektor', type: 'text', full: false },
+                  { lbl: 'Nilai Kontrak (Rp)', key: 'nilai', type: 'number', full: false },
+                  { lbl: 'Program Manager', key: 'penanggungjawab', type: 'text', full: false },
+                  { lbl: 'Wilayah', key: 'wilayah', type: 'text', full: false },
+                  { lbl: 'Tanggal Mulai *', key: 'tanggalMulai', type: 'date', full: false },
+                  { lbl: 'Tanggal Selesai', key: 'tanggalSelesai', type: 'date', full: false },
                 ].map(({ lbl, key, type, full }) => (
                   <div key={key} style={{ gridColumn: full ? '1 / -1' : 'auto' }}>
-                    <label style={{ display:'block', fontSize:12, fontWeight:700, color:C.textSub, marginBottom:5 }}>{lbl}</label>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: C.textSub, marginBottom: 5 }}>{lbl}</label>
                     <input type={type} value={form[key as keyof typeof form]}
                       onChange={e => setForm({ ...form, [key]: e.target.value })}
-                      style={{ ...inputSt, fontSize:14, colorScheme: type==='date' ? 'light' : undefined } as React.CSSProperties} />
+                      style={{ ...inputSt, fontSize: 14 }} />
                   </div>
                 ))}
               </div>
-              <div style={{ marginBottom:20 }}>
-                <label style={{ display:'block', fontSize:12, fontWeight:700, color:C.textSub, marginBottom:5 }}>Status</label>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: C.textSub, marginBottom: 5 }}>Status</label>
                 <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
-                  style={{ ...inputSt, fontSize:14 }}>
+                  style={{ ...inputSt, fontSize: 14 }}>
                   <option value="PERENCANAAN">Draft</option>
                   <option value="BERJALAN">Sedang Berjalan</option>
                   <option value="SELESAI">Selesai</option>
                 </select>
               </div>
-              <div style={{ display:'flex', gap:12 }}>
+              <div style={{ display: 'flex', gap: 12 }}>
                 <button onClick={handleSubmit}
-                  style={{ flex:1, padding:13, borderRadius:11, border:'none', background:`linear-gradient(135deg,${C.blue},${C.blueDark})`, color:'#fff', fontWeight:800, fontSize:14, cursor:'pointer', boxShadow:'0 2px 8px rgba(37,99,235,0.3)' }}>
+                  style={{ flex: 1, padding: 13, borderRadius: 11, border: 'none', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, color: '#fff', fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 2px 8px rgba(37,99,235,0.3)' }}>
                   Simpan
                 </button>
                 <button onClick={() => setShowForm(false)}
-                  style={{ flex:1, padding:13, borderRadius:11, border:`1.5px solid ${C.border}`, background:'#f8fafc', color:C.textSub, fontWeight:700, fontSize:14, cursor:'pointer' }}>
+                  style={{ flex: 1, padding: 13, borderRadius: 11, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
                   Batal
                 </button>
               </div>
