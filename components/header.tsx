@@ -102,10 +102,12 @@ export default function Header() {
           WebkitBackdropFilter: 'blur(20px)',
           backdropFilter: 'blur(20px)',
           boxShadow: '0 4px 20px rgba(59, 130, 246, 0.3), 0 2px 10px rgba(0, 0, 0, 0.1)',
-          paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)',
-          paddingBottom: '0.75rem',
-          paddingLeft: 'calc(env(safe-area-inset-left) + 1.25rem)',
-          paddingRight: 'calc(env(safe-area-inset-right) + 1.25rem)',
+          paddingTop: 'max(env(safe-area-inset-top), 1rem, 16px)',
+          paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
+          paddingLeft: 'max(env(safe-area-inset-left), 1.25rem, 20px)',
+          paddingRight: 'max(env(safe-area-inset-right), 1.25rem, 20px)',
+          minHeight: '64px',
+          height: 'fit-content'
         }}
       >
         {/* Logo */}
@@ -125,30 +127,30 @@ export default function Header() {
           />
         </div>
         {/*website Name */}
-        <div className= "hidden sm:block">
+        <div className="hidden sm:block">
           <div
             className="font-bold text-lg leading-tight cursor-pointer hover:opacity-90 transition-opacity"
             style={{ color: 'white' }}
             onClick={() => router.push('/dashboard')}
+          >
+            {website_name}
+          </div>
+          {website_tagline && (
+            <div
+              className="text-xs font-medium leading-tight cursor-pointer hover:opacity-90 transition-opacity"
+              style={{ color: 'rgba(255, 255, 255, 0.8' }}
+              onClick={() => router.push('/dashboard')}
             >
-              {website_name}
+              {website_tagline}
             </div>
-            {website_tagline && (
-              <div
-                className= "text-xs font-medium leading-tight cursor-pointer hover:opacity-90 transition-opacity"
-                style={{ color: 'rgba(255, 255, 255, 0.8'}}
-                onClick={() => router.push('/dashboard')}
-              >
-                {website_tagline}
-                </div>
-            )}
+          )}
         </div>
         {/* Nav links + Bell */}
         <div className="flex items-center gap-2 sm:gap-4 ml-4 flex-1 justify-end">
           {/* Email — hidden di mobile kecil */}
           <div className="hidden sm:block px-3 py-2 rounded-xl text-sm text-white/90 font-medium max-w-[160px] truncate backdrop-blur-sm"
-            style={{ 
-              background: 'rgba(255, 255, 255, 0.15)', 
+            style={{
+              background: 'rgba(255, 255, 255, 0.15)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
             }}>
@@ -188,14 +190,14 @@ export default function Header() {
               style={{
                 width: 44,
                 height: 44,
-                background: showNotif 
-                  ? 'rgba(255, 255, 255, 0.25)' 
+                background: showNotif
+                  ? 'rgba(255, 255, 255, 0.25)'
                   : 'rgba(255, 255, 255, 0.15)',
-                border: showNotif 
-                  ? '1px solid rgba(255, 255, 255, 0.4)' 
+                border: showNotif
+                  ? '1px solid rgba(255, 255, 255, 0.4)'
                   : '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: showNotif 
-                  ? '0 4px 16px rgba(59, 130, 246, 0.4)' 
+                boxShadow: showNotif
+                  ? '0 4px 16px rgba(59, 130, 246, 0.4)'
                   : '0 2px 8px rgba(0, 0, 0, 0.1)',
               }}
             >
@@ -247,9 +249,10 @@ export default function Header() {
           <div
             className="fixed z-50"
             style={{
-              top: headerHeight,
-              left: 'calc(env(safe-area-inset-left) + 12px)',
-              right: 'calc(env(safe-area-inset-right) + 12px)',
+              top: `calc(${headerHeight}px + env(safe-area-inset-top))`,
+              left: 'max(env(safe-area-inset-left), 12px)',
+              right: 'max(env(safe-area-inset-right), 12px)',
+              maxWidth: 'calc(100vw - 24px)'
             }}
           >
             <div
@@ -335,8 +338,8 @@ export default function Header() {
                           )}
                           <div className="text-sm font-semibold mb-1" style={{ color: cfg.color }}>
                             {n.status === 'NEEDS_REVIEW'
-                            ? (n.catatanAdmin?.startsWith('Keuangan baru')
-                                ?'Keuangan butuh review'
+                              ? (n.catatanAdmin?.startsWith('Keuangan baru')
+                                ? 'Keuangan butuh review'
                                 : 'Dokumen butuh review')
                               : cfg.label}
                           </div>
