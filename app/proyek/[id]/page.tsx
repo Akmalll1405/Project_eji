@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -95,7 +95,7 @@ export default function DetailProyekPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
-  const id = params.id as string
+  const id = params?.id as string
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const buktiBayarRef = useRef<HTMLInputElement>(null)
@@ -155,41 +155,82 @@ export default function DetailProyekPage() {
     else if (status === 'authenticated') fetchAll()
   }, [status])
 
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
+    if (!id) {
+      setLoading(false)
+      return
+    }
+
     try {
-      const res = await fetch(`/api/proyek/${id}`, { cache: 'no-cache' })
-      if (!res.ok) throw new Error('Gagal')
+      setLoading(true)
+      const res = await fetch(`/api/proyek/${id}`, { 
+        cache: 'no-cache',
+        next: { revalidate: 0 } // Force fresh data
+      })
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+      }
+      
       const data = await res.json()
       const p = Array.isArray(data) ? data[0] : data
+      
+      if (!p) {
+        throw new Error('Proyek tidak ditemukan')
+      }
+
       setProyek(p)
       setIsLocked(p.isApproved === true)
       setIsOwner((session?.user as any)?.role === 'ADMIN' || p.userId === (session?.user as any)?.id)
+      
+      // Set form data
       setEditProyekForm({
-        nama: p.nama || '', jenis: p.jenis || '', nilai: p.nilai?.toString() || '',
-        penanggungjawab: p.penanggungjawab || '', wilayah: p.wilayah || '', sektor: p.sektor || '',
+        nama: p.nama || '', 
+        jenis: p.jenis || '', 
+        nilai: p.nilai?.toString() || '',
+        penanggungjawab: p.penanggungjawab || '', 
+        wilayah: p.wilayah || '', 
+        sektor: p.sektor || '',
         tanggalMulai: p.tanggalMulai?.split('T')[0] || '',
         tanggalSelesai: p.tanggalSelesai?.split('T')[0] || '',
         status: p.status || 'PERENCANAAN'
       })
+      
       await reloadAll()
+    } catch (error) {
+      console.error('Fetch proyek error:', error)
+      alert(`Gagal memuat data proyek: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
       setLoading(false)
-    } catch { alert('Gagal memuat data proyek'); setLoading(false) }
-  }
+    }
+  }, [id, session?.user])
 
-  const reloadAll = async () => {
-    try {
-      const [d, dok, t, k] = await Promise.all([
-        fetch(`/api/donor?projectId=${id}`, { cache: 'no-cache' }).then(r => r.json()),
-        fetch(`/api/dokumen?projectId=${id}`, { cache: 'no-cache' }).then(r => r.json()),
-        fetch(`/api/transaksi?projectId=${id}`, { cache: 'no-cache' }).then(r => r.json()),
-        fetch(`/api/kegiatan?projectId=${id}`, { cache: 'no-cache' }).then(r => r.json()),
-      ])
-      setDonors(Array.isArray(d) ? d : [])
-      setDokumen(Array.isArray(dok) ? dok : [])
-      setTransaksi(Array.isArray(t) ? t : [])
-      setKegiatan(Array.isArray(k) ? k : [])
-    } catch { }
+const reloadAll = useCallback(async () => {
+  if (!id) return
+  
+  try {
+    // ✅ Parallel tapi dengan proper error handling
+    const donorsPromise = fetch(`/api/donor?projectId=${id}`, { cache: 'no-cache' }).then(r => r.json())
+    const dokumenPromise = fetch(`/api/dokumen?projectId=${id}`, { cache: 'no-cache' }).then(r => r.json())
+    const transaksiPromise = fetch(`/api/transaksi?projectId=${id}`, { cache: 'no-cache' }).then(r => r.json())
+    const kegiatanPromise = fetch(`/api/kegiatan?projectId=${id}`, { cache: 'no-cache' }).then(r => r.json())
+
+    const [d, dok, t, k] = await Promise.all([
+      donorsPromise.catch(() => [] as Donor[]),
+      dokumenPromise.catch(() => [] as Dokumen[]),
+      transaksiPromise.catch(() => [] as Transaksi[]),
+      kegiatanPromise.catch(() => [] as Kegiatan[]),
+    ])
+
+    setDonors(Array.isArray(d) ? d : [])
+    setDokumen(Array.isArray(dok) ? dok : [])
+    setTransaksi(Array.isArray(t) ? t : [])
+    setKegiatan(Array.isArray(k) ? k : [])
+    
+  } catch (error) {
+    console.error('Reload all error:', error)
   }
+}, [id])
 
   const handleApproveProject = async () => {
     setProjectApprovalLoading(true)
