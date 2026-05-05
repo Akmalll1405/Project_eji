@@ -18,28 +18,28 @@ interface Notif {
 }
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  APPROVED: { label: 'Disetujui', color: '#10b981' },
-  REJECTED: { label: 'Ditolak', color: '#ef4444' },
-  NEEDS_REVIEW: { label: 'Butuh review', color: '#f59e0b' },
-  REQUEST_EDIT: { label: 'Permintaan edit proyek', color: '#8b5cf6' },
-  REQUEST_APPROVAL: { label: 'Permintaan persetujuan proyek', color: '#3b82f6' },
-  UNLOCKED: { label: 'Proyek dibuka untuk diedit', color: '#06b6d4' },
+  APPROVED:         { label: 'Disetujui',                      color: '#10b981' },
+  REJECTED:         { label: 'Ditolak',                         color: '#ef4444' },
+  NEEDS_REVIEW:     { label: 'Butuh review',                    color: '#f59e0b' },
+  REQUEST_EDIT:     { label: 'Permintaan edit proyek',          color: '#8b5cf6' },
+  REQUEST_APPROVAL: { label: 'Permintaan persetujuan proyek',   color: '#3b82f6' },
+  UNLOCKED:         { label: 'Proyek dibuka untuk diedit',      color: '#06b6d4' },
 }
 
-const WEBSITE_NAME = 'SI-APUK'
+const WEBSITE_NAME    = 'SI-APUK'
 const WEBSITE_TAGLINE = 'Sistem Informasi Arsip PUPUK'
 
 export default function Header() {
-  const router = useRouter()
+  const router  = useRouter()
   const { data: session } = useSession()
-  const role = (session?.user as any)?.role
+  const role    = (session?.user as any)?.role
 
-  const [notifs, setNotifs] = useState<Notif[]>([])
-  const [showNotif, setShowNotif] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)   // mobile nav drawer
+  const [notifs,      setNotifs]      = useState<Notif[]>([])
+  const [showNotif,   setShowNotif]   = useState(false)
+  const [showMenu,    setShowMenu]    = useState(false)   // mobile nav drawer
 
-  const notifRef = useRef<HTMLDivElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const notifRef  = useRef<HTMLDivElement>(null)
+  const menuRef   = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLElement>(null)
 
   const unread = notifs.filter(n => !n.isRead).length
@@ -47,7 +47,7 @@ export default function Header() {
   // ── data fetching ──────────────────────────────────────────────
   const fetchNotifs = async () => {
     try {
-      const res = await fetch('/api/notifikasi')
+      const res  = await fetch('/api/notifikasi')
       const data = await res.json()
       setNotifs(Array.isArray(data) ? data : [])
     } catch { /* silent */ }
@@ -113,8 +113,8 @@ export default function Header() {
 
   // ── nav links list ────────────────────────────────────────────
   const navLinks = [
-    { label: 'Home', path: '/dashboard', icon: <Home size={16} /> },
-    { label: 'Report', path: '/report', icon: <FileText size={16} /> },
+    { label: 'Home',   path: '/dashboard', icon: <Home size={16} /> },
+    { label: 'Report', path: '/report',    icon: <FileText size={16} /> },
     ...(role === 'ADMIN'
       ? [{ label: 'Users', path: '/users', icon: <Users size={16} /> }]
       : []),
@@ -139,7 +139,6 @@ export default function Header() {
           height: 60px;
           max-width: 1280px;
           margin: 0 auto;
-          min-width: 0;
         }
         /* Logo */
         .hdr-logo {
@@ -157,7 +156,6 @@ export default function Header() {
           cursor: pointer;
           line-height: 1.2;
           margin-right: 4px;
-          min-width: 0;
         }
         .hdr-brand-name {
           font-size: 15px; font-weight: 700;
@@ -171,7 +169,7 @@ export default function Header() {
         .hdr-spacer { flex: 1; }
         /* Desktop nav */
         .hdr-nav {
-          display: flex; align-items: center; gap: 2px; min-width: 0;
+          display: flex; align-items: center; gap: 2px;
         }
         .hdr-nav-btn {
           display: flex; align-items: center; gap: 6px;
@@ -184,7 +182,6 @@ export default function Header() {
           cursor: pointer;
           transition: background 0.15s, color 0.15s;
           white-space: nowrap;
-          flex-shrink: 1;
         }
         .hdr-nav-btn:hover {
           background: rgba(255,255,255,0.10);
@@ -192,7 +189,7 @@ export default function Header() {
         }
         /* Email pill */
         .hdr-email {
-          max-width: 120px;
+          max-width: 160px;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
           font-size: 12.5px; color: rgba(255,255,255,0.70);
           background: rgba(255,255,255,0.08);
@@ -331,11 +328,7 @@ export default function Header() {
           padding: 40px 20px; text-align: center;
           color: #9ca3af; font-size: 14px;
         }
-        @media (max-width: 900px) {
-          .hdr-email {
-            display: none;
-          }
-        }
+
         /* ── Mobile nav drawer ──────────────────────────────────── */
         .hdr-mobile-nav { display: flex; flex-direction: column; padding: 8px 0; }
         .hdr-mobile-nav-btn {
