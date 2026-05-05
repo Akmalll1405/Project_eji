@@ -37,41 +37,118 @@ export default function LoginPage() {
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+
+        .login-root * { font-family: 'DM Sans', sans-serif; }
+
         @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(16px); }
+          from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50%       { opacity: 0.5; }
+        .fade-0 { animation: fadeUp 0.5s ease both; }
+        .fade-1 { animation: fadeUp 0.5s 0.06s ease both; }
+        .fade-2 { animation: fadeUp 0.5s 0.12s ease both; }
+        .fade-3 { animation: fadeUp 0.5s 0.18s ease both; }
+
+        .bg-grid {
+          position: absolute; inset: 0;
+          background-image:
+            linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+          background-size: 36px 36px;
+          pointer-events: none;
         }
-        .fade-up { animation: fadeUp 0.5s ease both; }
-        .fade-up-1 { animation: fadeUp 0.5s 0.05s ease both; }
-        .fade-up-2 { animation: fadeUp 0.5s 0.10s ease both; }
-        .fade-up-3 { animation: fadeUp 0.5s 0.15s ease both; }
-        .fade-up-4 { animation: fadeUp 0.5s 0.20s ease both; }
+
+        .login-input {
+          width: 100%;
+          padding: 11px 14px;
+          border-radius: 10px;
+          border: 1.5px solid #e2e8f0;
+          background: #f8fafc;
+          font-size: 14px;
+          color: #0e1523;
+          font-family: 'DM Sans', sans-serif;
+          outline: none;
+          transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+        }
+        .login-input::placeholder { color: #b0bac9; }
+        .login-input:focus {
+          border-color: #3b82f6;
+          background: #ffffff;
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.10);
+        }
+
+        .btn-login {
+          width: 100%;
+          padding: 13px;
+          border-radius: 11px;
+          background: #002147;
+          color: #ffffff;
+          font-size: 14.5px;
+          font-weight: 600;
+          font-family: 'DM Sans', sans-serif;
+          letter-spacing: 0.01em;
+          border: none;
+          cursor: pointer;
+          transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+          box-shadow: 0 2px 12px rgba(0,33,71,0.22);
+        }
+        .btn-login:hover {
+          background: #003366;
+          box-shadow: 0 4px 20px rgba(0,33,71,0.32);
+          transform: translateY(-1px);
+        }
+        .btn-login:active { transform: translateY(0); }
+        .btn-login:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
       `}</style>
 
+      {/* Root */}
       <div
-        className="flex items-center justify-center bg-white px-4"
+        className="login-root flex items-center justify-center bg-[#002147] px-4 relative overflow-hidden"
         style={{ minHeight: '100dvh' }}
       >
-        <div className="w-full max-w-sm">
+        {/* Background grid texture */}
+        <div className="bg-grid" />
 
-          {/* Logo & Title */}
-          <div className="text-center mb-8 fade-up">
-            <div className="flex justify-center mb-4">
-              <div
-                className="relative w-20 h-20 rounded-2xl overflow-hidden"
-                style={{ boxShadow: '0 4px 12px rgba(48, 117, 228, 0.47)' }}
-              >
+        {/* Subtle glow blobs */}
+        <div
+          style={{
+            position: 'absolute', width: 340, height: 340, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(59,130,246,0.09) 0%, transparent 70%)',
+            top: -70, left: -70, pointerEvents: 'none'
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute', width: 280, height: 280, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(99,179,237,0.06) 0%, transparent 70%)',
+            bottom: -50, right: -50, pointerEvents: 'none'
+          }}
+        />
+
+        {/* Content wrapper */}
+        <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-7">
+
+          {/* Logo */}
+          <div className="flex flex-col items-center gap-3 fade-0">
+            <div
+              style={{
+                width: 90, height: 90,
+                borderRadius: 18,
+                background: '#ffffff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 24px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.06)',
+                overflow: 'hidden'
+              }}
+            >
+              <div className="relative w-25 h-25">
                 <Image
                   src="/logopupuk.png"
                   alt="Logo"
                   fill
-                  sizes="80px"
+                  sizes="70px"
                   priority
-                  className="object-contain p-1"
+                  className="object-contain"
                 />
               </div>
             </div>
@@ -79,130 +156,105 @@ export default function LoginPage() {
 
           {/* Card */}
           <div
-            className="rounded-2xl p-8 fade-up-1 shadow-2xl border border-blue-200"
+            className="w-full fade-1"
             style={{
-              background: 'linear-gradient(145deg, #fafbff, #f8fafc)',
+              background: '#ffffff',
+              borderRadius: 20,
+              padding: '32px 28px 28px',
+              boxShadow: '0 8px 48px rgba(0,0,0,0.30), 0 1px 0 rgba(255,255,255,0.06)'
             }}
           >
 
             {/* Error */}
             {error && (
               <div
-                className="mb-6 px-4 py-3 rounded-xl text-sm text-red-600 text-center font-medium"
-                style={{ 
-                  background: 'linear-gradient(145deg, #fef2f2, #fee2e2)', 
-                  border: '1px solid rgba(239,68,68,0.15)',
-                  boxShadow: '0 1px 3px rgba(239,68,68,0.1)'
+                style={{
+                  background: '#fff5f5', border: '1px solid #fed7d7',
+                  borderRadius: 10, padding: '10px 14px',
+                  fontSize: 13, color: '#c53030', textAlign: 'center',
+                  marginBottom: 16
                 }}
               >
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-4">
-
+            <form onSubmit={handleLogin}>
               {/* Email */}
-              <div className="fade-up-2">
-                <label className="block text-sm text-gray-700 mb-2 ml-0.5 font-medium">Email</label>
+              <div style={{ marginBottom: 16 }} className="fade-1">
+                <label
+                  style={{ display: 'block', fontSize: 12.5, fontWeight: 500, color: '#4a5568', marginBottom: 7 }}
+                >
+                  Email
+                </label>
                 <input
                   type="email"
                   placeholder="nama@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  autoComplete="email"
-                  className="w-full px-4 py-3 rounded-xl text-gray-900 text-sm placeholder-gray-500 focus:outline-none transition-all duration-200"
-                  style={{
-                    background: 'linear-gradient(145deg, #ffffff, #f8fafc)',
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.border = '1px solid #3b82f6'
-                    e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)'
-                    e.target.style.background = 'linear-gradient(145deg, #ffffff, #f0f9ff)'
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.border = '1px solid #e2e8f0'
-                    e.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
-                    e.target.style.background = 'linear-gradient(145deg, #ffffff, #f8fafc)'
-                  }}
+                  className="login-input"
                 />
               </div>
 
               {/* Password */}
-              <div className="fade-up-3">
-                <label className="block text-sm text-gray-700 mb-2 ml-0.5 font-medium">Password</label>
-                <div className="relative">
+              <div style={{ marginBottom: 0 }} className="fade-2">
+                <label
+                  style={{ display: 'block', fontSize: 12.5, fontWeight: 500, color: '#4a5568', marginBottom: 7 }}
+                >
+                  Password
+                </label>
+                <div style={{ position: 'relative' }}>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    autoComplete="current-password"
-                    className="w-full px-4 py-3 pr-12 rounded-xl text-gray-900 text-sm placeholder-gray-500 focus:outline-none transition-all duration-200"
-                    style={{
-                      background: 'linear-gradient(145deg, #ffffff, #f8fafc)',
-                      border: '1px solid #e2e8f0',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.border = '1px solid #3b82f6'
-                      e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)'
-                      e.target.style.background = 'linear-gradient(145deg, #ffffff, #f0f9ff)'
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.border = '1px solid #e2e8f0'
-                      e.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
-                      e.target.style.background = 'linear-gradient(145deg, #ffffff, #f8fafc)'
-                    }}
+                    className="login-input"
+                    style={{ paddingRight: 44 }}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                    style={{
+                      position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                      color: '#94a3b8', display: 'flex', alignItems: 'center',
+                      transition: 'color 0.15s'
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#3b82f6')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                   </button>
                 </div>
               </div>
 
+              {/* Divider */}
+              <div style={{ height: 1, background: '#edf2f7', margin: '20px 0' }} />
+
               {/* Button */}
-              <div className="fade-up-4 pt-2">
+              <div className="fade-3">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 rounded-xl text-white text-sm font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-                  style={{
-                    background: loading
-                      ? '#9ca3af'
-                      : 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-                    boxShadow: loading 
-                      ? '0 1px 3px rgba(0,0,0,0.1)' 
-                      : '0 4px 20px rgba(59,130,246,0.4)',
-                  }}
+                  className="btn-login"
                 >
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span
-                        className="w-4 h-4 rounded-full border-2 border-white border-t-transparent inline-block"
-                        style={{ animation: 'spin 0.7s linear infinite' }}
-                      />
-                      Masuk...
-                    </span>
-                  ) : 'Masuk'}
+                  {loading ? 'Memproses...' : 'Masuk'}
                 </button>
               </div>
             </form>
           </div>
-        </div>
 
-        <style>{`
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
+          {/* Footer */}
+          <p
+            className="fade-3"
+            style={{ fontSize: 12, color: 'rgba(255,255,255,0.22)', textAlign: 'center' }}
+          >
+          SI-APUK (Sistem Informasi Arsip PUPUK)
+          </p>
+        </div>
       </div>
     </>
   )

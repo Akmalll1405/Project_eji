@@ -76,6 +76,7 @@ model Transaction {
   nomorRekening               String?
   bankTujuan                  String?
   jumlah                      Float     @default(0)
+  nominalPJUM                 Float     @default(0)
   tanggalPembayaran           DateTime?
   buktiBayarUrl               String?
   createdAt                   DateTime  @default(now())

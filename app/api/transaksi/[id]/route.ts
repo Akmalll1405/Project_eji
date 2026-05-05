@@ -69,6 +69,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ message: 'Status approval diupdate' })
     }
 
+    const nominalPJUM     = parseFloat(body.nominalPJUM) || 0
     const jenisPembayaran = safe(body.jenisPembayaran) || 'TUNAI'
     const keterangan      = safe(body.keterangan)
     const jumlah          = parseFloat(body.jumlah) || 0
@@ -89,6 +90,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         "jenisPembayaran"            = '${jenisPembayaran}',
         "keterangan"                 = '${keterangan}',
         "jumlah"                     = ${jumlah},
+        "nominalPJUM"                = ${nominalPJUM},
         "nomorRekening"              = '${nomorRekening}',
         "bankTujuan"                 = '${bankTujuan}',
         "tanggalPembayaran"          = ${tanggalBayar},

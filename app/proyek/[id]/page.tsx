@@ -27,7 +27,7 @@ interface Transaksi {
   tanggalPengajuan?: string; tanggalPertanggungjawaban?: string
   kelengkapanDokumen?: string; statusTransaksi?: string; jenisPembayaran: string
   keterangan?: string; nomorRekening?: string; bankTujuan?: string
-  jumlah: number; tanggalPembayaran: string; buktiBayarUrl?: string
+  jumlah: number; nominalPJUM?: number; tanggalPembayaran: string; buktiBayarUrl?: string
   catatanAdmin?: string; statusApproval?: string
   approvedByName?: string; approvedAt?: string
 }
@@ -38,7 +38,7 @@ interface Kegiatan {
 interface TransaksiForm {
   namaProgram: string; kegiatan: string; staffCA: string
   tanggalPengajuan: string; tanggalPertanggungjawaban: string
-  kelengkapanDokumen: string; jumlah: string; statusTransaksi: string
+  kelengkapanDokumen: string; jumlah: string; nominalPJUM: string; statusTransaksi: string
   keterangan: string; jenisPembayaran: string; nomorRekening: string
   bankTujuan: string; tanggalPembayaran: string; buktiBayarUrl: string
 }
@@ -146,7 +146,7 @@ export default function DetailProyekPage() {
   const [editProyekForm, setEditProyekForm] = useState({ nama: '', jenis: '', nilai: '', penanggungjawab: '', wilayah: '', sektor: '', tanggalMulai: '', tanggalSelesai: '', status: '' })
   const [transaksiForm, setTransaksiForm] = useState<TransaksiForm>({
     namaProgram: '', kegiatan: '', staffCA: '', tanggalPengajuan: '', tanggalPertanggungjawaban: '',
-    kelengkapanDokumen: 'Lengkap', jumlah: '0', statusTransaksi: 'Transfer successful',
+    kelengkapanDokumen: 'Lengkap', jumlah: '0', nominalPJUM: '0', statusTransaksi: 'Transfer successful',
     keterangan: '', jenisPembayaran: 'TUNAI', nomorRekening: '', bankTujuan: '', tanggalPembayaran: '', buktiBayarUrl: ''
   })
 
@@ -331,7 +331,7 @@ export default function DetailProyekPage() {
   }
 
   const resetTransaksiForm = () => {
-    setTransaksiForm({ namaProgram: '', kegiatan: '', staffCA: '', tanggalPengajuan: '', tanggalPertanggungjawaban: '', kelengkapanDokumen: 'Lengkap', jumlah: '0', statusTransaksi: 'Transfer successful', keterangan: '', jenisPembayaran: 'TUNAI', nomorRekening: '', bankTujuan: '', tanggalPembayaran: '', buktiBayarUrl: '' })
+    setTransaksiForm({ namaProgram: '', kegiatan: '', staffCA: '', tanggalPengajuan: '', tanggalPertanggungjawaban: '', kelengkapanDokumen: 'Lengkap', jumlah: '0', nominalPJUM: '0', statusTransaksi: 'Transfer successful', keterangan: '', jenisPembayaran: 'TUNAI', nomorRekening: '', bankTujuan: '', tanggalPembayaran: '', buktiBayarUrl: '' })
     if (buktiBayarRef.current) buktiBayarRef.current.value = ''
   }
 
@@ -339,7 +339,7 @@ export default function DetailProyekPage() {
     if (!transaksiForm.namaProgram.trim()) { alert('Nama Program wajib diisi!'); return }
     if (!transaksiForm.staffCA.trim()) { alert('Staff CA wajib diisi!'); return }
     if (!transaksiForm.tanggalPengajuan) { alert('Tanggal Pengajuan wajib diisi!'); return }
-    const payload = { ...transaksiForm, projectId: id, jumlah: parseFloat(transaksiForm.jumlah) || 0, tanggalPembayaran: transaksiForm.tanggalPengajuan }
+    const payload = { ...transaksiForm, projectId: id, jumlah: parseFloat(transaksiForm.jumlah) || 0, nominalPJUM: parseFloat(transaksiForm.nominalPJUM) || 0, tanggalPembayaran: transaksiForm.tanggalPengajuan }
     if (editTransaksi) await fetch(`/api/transaksi/${editTransaksi.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     else await fetch('/api/transaksi', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     setShowTransaksiForm(false); setEditTransaksi(null); resetTransaksiForm(); reloadAll()
@@ -510,7 +510,7 @@ export default function DetailProyekPage() {
                 background: activeSection === s.key ? C.blueBg : 'transparent',
                 borderRadius: '8px 8px 0 0', minHeight: 'auto', border: 'none',
                 borderBottomStyle: 'solid',
-                borderBottomWidth: activeSection === s.key ? 2:2,
+                borderBottomWidth: activeSection === s.key ? 2 : 2,
                 borderBottomColor: activeSection === s.key ? C.blue : 'transparent',
                 userSelect: 'none',
                 transition: 'all 0.2s ease',
@@ -523,7 +523,7 @@ export default function DetailProyekPage() {
         {/* ─── TAB: DATA PROYEK ─── */}
         {activeSection === 'proyek' && (
           <div>
-            <SectionHeader title="Data Program" />
+            <SectionHeader title="Data Proyek" />
             {lockBanner}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
@@ -573,11 +573,46 @@ export default function DetailProyekPage() {
         {/* ─── TAB: PENDONOR ─── */}
         {activeSection === 'donor' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
-              <SectionHeader title="Data Pendonor" />
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '8px 10px',
+              borderRadius: 12,
+              background: '#2563eb',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: 13,
+              marginBottom: 12
+            }}>
+              <span>DATA PENDONOR</span>
+
               {canEdit && (
-                <button onClick={() => { setShowDonorForm(true); setEditDonor(null); setDonorForm({ nama: '', jenis: '', penanggungjawab: '', wilayah: '', alamat: '', tahunPendirian: '', lamaUsaha: '' }) }}
-                  style={{ fontSize: 12, padding: '8px 14px', borderRadius: 9, background: C.blueBg, border: `1px solid ${C.blueBd}`, color: C.blueText, cursor: 'pointer', fontWeight: 700, flexShrink: 0, minHeight: 'auto' }}>
+                <button
+                  onClick={() => {
+                    setShowDonorForm(true)
+                    setEditDonor(null)
+                    setDonorForm({
+                      nama: '',
+                      jenis: '',
+                      penanggungjawab: '',
+                      wilayah: '',
+                      alamat: '',
+                      tahunPendirian: '',
+                      lamaUsaha: ''
+                    })
+                  }}
+                  style={{
+                    fontSize: 12,
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    background: '#ffffff',
+                    color: '#2563eb',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 700
+                  }}
+                >
                   + Tambah
                 </button>
               )}
@@ -619,7 +654,7 @@ export default function DetailProyekPage() {
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Jenis Dokumen</label>
                     <select value={selectedJenisDokumen} onChange={e => setSelectedJenisDokumen(e.target.value)} style={{ ...inp(), colorScheme: 'light' } as React.CSSProperties}>
-                      {[['KONTRAK_KERJA','Kontrak Kerja'],['PROPOSAL','Proposal'],['SURAT_IZIN','Surat Izin'],['DOKUMENTASI_KEGIATAN','Dokumentasi Kegiatan'],['LAPORAN_AKHIR','Laporan Akhir'],['SURAT_REKOMENDASI','Surat Rekomendasi'],['LAPORAN_PERIODIK','Laporan Periodik'],['LAIN_LAIN','Lain-lain']].map(([v,l]) => (
+                      {[['KONTRAK_KERJA', 'Kontrak Kerja'], ['PROPOSAL', 'Proposal'], ['SURAT_IZIN', 'Surat Izin'], ['DOKUMENTASI_KEGIATAN', 'Dokumentasi Kegiatan'], ['LAPORAN_AKHIR', 'Laporan Akhir'], ['SURAT_REKOMENDASI', 'Surat Rekomendasi'], ['LAPORAN_PERIODIK', 'Laporan Periodik'], ['LAIN_LAIN', 'Lain-lain']].map(([v, l]) => (
                         <option key={v} value={v}>{l}</option>
                       ))}
                     </select>
@@ -706,11 +741,37 @@ export default function DetailProyekPage() {
         {/* ─── TAB: KEUANGAN ─── */}
         {activeSection === 'keuangan' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
-              <SectionHeader title="Keuangan" />
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '8px 10px',
+              borderRadius: 12,
+              background: '#2563eb',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: 13,
+              marginBottom: 12
+            }}>
+              <span>KEUANGAN</span>
+
               {canEdit && (
-                <button onClick={() => { setShowTransaksiForm(true); setEditTransaksi(null); resetTransaksiForm() }}
-                  style={{ fontSize: 12, padding: '8px 14px', borderRadius: 9, background: C.blueBg, border: `1px solid ${C.blueBd}`, color: C.blueText, cursor: 'pointer', fontWeight: 700, flexShrink: 0, minHeight: 'auto' }}>
+                <button
+                  onClick={() => {
+                    setShowTransaksiForm(true)
+                    setEditTransaksi(null)
+                    resetTransaksiForm()
+                  }}
+                  style={{
+                    fontSize: 12,
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    background: '#ffffff',
+                    color: '#2563eb',
+                    border: 'none',
+                    fontWeight: 700
+                  }}
+                >
                   + Pembayaran
                 </button>
               )}
@@ -754,9 +815,32 @@ export default function DetailProyekPage() {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px,1fr))', gap: '2px 16px', fontSize: 12 }}>
                           {t.kegiatan && <div><span style={{ color: C.textMute }}>Kegiatan: </span><span style={{ color: C.text }}>{t.kegiatan}</span></div>}
                           {t.staffCA && <div><span style={{ color: C.textMute }}>Staff CA: </span><span style={{ color: C.text }}>{t.staffCA}</span></div>}
-                          {t.tanggalPengajuan && <div><span style={{ color: C.textMute }}>Tgl: </span><span style={{ color: C.text }}>{new Date(t.tanggalPengajuan).toLocaleDateString('id-ID')}</span></div>}
                           {t.kelengkapanDokumen && <div><span style={{ color: C.textMute }}>Dok: </span><span style={{ color: t.kelengkapanDokumen === 'Lengkap' ? C.green : C.amber, fontWeight: 600 }}>{t.kelengkapanDokumen}</span></div>}
-                          <div><span style={{ color: C.textMute }}>Nominal: </span><span style={{ color: C.green, fontWeight: 700 }}>{fmtRp(t.jumlah)}</span></div>
+                        </div>
+                        {/* Nominal CA & PJUM */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', marginTop: 8, fontSize: 12 }}>
+                          {/* Nominal CA */}
+                          <div style={{ padding: '8px 10px', borderRadius: 8, background: C.redBg, border: `1px solid ${C.redBd}` }}>
+                            <div style={{ color: C.textMute, marginBottom: 2, fontWeight: 600, fontSize: 11 }}>Nominal CA</div>
+                            <div style={{ color: C.red, fontWeight: 800, fontSize: 13 }}>{fmtRp(t.jumlah)}</div>
+                            {t.tanggalPengajuan && (
+                              <div style={{ color: C.textMute, fontSize: 11, marginTop: 3 }}>
+                                📅 {new Date(t.tanggalPengajuan).toLocaleDateString('id-ID')}
+                              </div>
+                            )}
+                          </div>
+                          {/* Nominal PJUM */}
+                          <div style={{ padding: '8px 10px', borderRadius: 8, background: C.greenBg, border: `1px solid ${C.greenBd}` }}>
+                            <div style={{ color: C.textMute, marginBottom: 2, fontWeight: 600, fontSize: 11 }}>Nominal PJUM</div>
+                            <div style={{ color: C.green, fontWeight: 800, fontSize: 13 }}>
+                              {t.nominalPJUM ? fmtRp(t.nominalPJUM) : <span style={{ color: C.textMute, fontWeight: 400, fontSize: 11 }}>Belum diisi</span>}
+                            </div>
+                            {t.tanggalPertanggungjawaban && (
+                              <div style={{ color: C.textMute, fontSize: 11, marginTop: 3 }}>
+                                📅 {new Date(t.tanggalPertanggungjawaban).toLocaleDateString('id-ID')}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         {t.buktiBayarUrl && <a href={t.buktiBayarUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: C.blue, fontWeight: 600, display: 'inline-block', marginTop: 6 }}>Lihat Bukti →</a>}
                         {t.catatanAdmin && (
@@ -769,7 +853,8 @@ export default function DetailProyekPage() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
                         {isAdmin && (
                           <button onClick={() => { setSelectedTransaksi(t); setCatatanAdminTransaksi(t.catatanAdmin || ''); setShowTransaksiApprovalModal(true) }}
-                            style={{ fontSize: 12, padding: '5px 12px', borderRadius: 8, cursor: 'pointer', fontWeight: 600, minHeight: 'auto',
+                            style={{
+                              fontSize: 12, padding: '5px 12px', borderRadius: 8, cursor: 'pointer', fontWeight: 600, minHeight: 'auto',
                               background: isClear ? C.greenBg : isNotClear ? C.redBg : C.amberBg,
                               border: `1px solid ${isClear ? C.greenBd : isNotClear ? C.redBd : C.amberBd}`,
                               color: isClear ? C.green : isNotClear ? C.red : C.amber,
@@ -781,7 +866,7 @@ export default function DetailProyekPage() {
                           <>
                             <button onClick={() => {
                               setEditTransaksi(t)
-                              setTransaksiForm({ namaProgram: t.namaProgram||'', kegiatan: t.kegiatan||'', staffCA: t.staffCA||'', tanggalPengajuan: t.tanggalPengajuan?.split('T')[0]||'', tanggalPertanggungjawaban: t.tanggalPertanggungjawaban?.split('T')[0]||'', kelengkapanDokumen: t.kelengkapanDokumen||'Lengkap', jumlah: t.jumlah.toString(), statusTransaksi: t.statusTransaksi||'Transfer successful', keterangan: t.keterangan||'', jenisPembayaran: t.jenisPembayaran||'TUNAI', nomorRekening: t.nomorRekening||'', bankTujuan: t.bankTujuan||'', tanggalPembayaran: t.tanggalPembayaran?.split('T')[0]||'', buktiBayarUrl: t.buktiBayarUrl||'' })
+                              setTransaksiForm({ namaProgram: t.namaProgram || '', kegiatan: t.kegiatan || '', staffCA: t.staffCA || '', tanggalPengajuan: t.tanggalPengajuan?.split('T')[0] || '', tanggalPertanggungjawaban: t.tanggalPertanggungjawaban?.split('T')[0] || '', kelengkapanDokumen: t.kelengkapanDokumen || 'Lengkap', jumlah: t.jumlah.toString(), nominalPJUM: (t.nominalPJUM || 0).toString(), statusTransaksi: t.statusTransaksi || 'Transfer successful', keterangan: t.keterangan || '', jenisPembayaran: t.jenisPembayaran || 'TUNAI', nomorRekening: t.nomorRekening || '', bankTujuan: t.bankTujuan || '', tanggalPembayaran: t.tanggalPembayaran?.split('T')[0] || '', buktiBayarUrl: t.buktiBayarUrl || '' })
                               setShowTransaksiForm(true)
                             }} style={{ fontSize: 12, color: C.blue, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, minHeight: 'auto', padding: 0 }}>Edit</button>
                             <button onClick={() => handleDeleteTransaksi(t.id)} style={{ fontSize: 12, color: C.red, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, minHeight: 'auto', padding: 0 }}>Hapus</button>
@@ -798,11 +883,43 @@ export default function DetailProyekPage() {
         {/* ─── TAB: LAIN-LAIN ─── */}
         {activeSection === 'lainlain' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
-              <SectionHeader title="Lain-Lain" />
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '8px 10px',
+              borderRadius: 12,
+              background: '#2563eb',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: 13,
+              marginBottom: 12
+            }}>
+              <span>LAIN-LAIN</span>
+
               {canEdit && (
-                <button onClick={() => { setShowKegiatanForm(true); setEditKegiatan(null); setKegiatanForm({ namaKegiatan: '', tanggalKegiatan: '', fotoUrl: '', fotoName: '' }) }}
-                  style={{ fontSize: 12, padding: '8px 14px', borderRadius: 9, background: C.blueBg, border: `1px solid ${C.blueBd}`, color: C.blueText, cursor: 'pointer', fontWeight: 700, flexShrink: 0, minHeight: 'auto' }}>
+                <button
+                  onClick={() => {
+                    setShowKegiatanForm(true)
+                    setEditKegiatan(null)
+                    setKegiatanForm({
+                      namaKegiatan: '',
+                      tanggalKegiatan: '',
+                      fotoUrl: '',
+                      fotoName: ''
+                    })
+                  }}
+                  style={{
+                    fontSize: 12,
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    background: '#ffffff',
+                    color: '#2563eb',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 700
+                  }}
+                >
                   + Kegiatan
                 </button>
               )}
@@ -826,7 +943,7 @@ export default function DetailProyekPage() {
                         </div>
                         {canEdit && (
                           <div style={{ display: 'flex', gap: 8, marginLeft: 12 }}>
-                            <ActionBtn label="Edit" onClick={() => { setEditKegiatan(k); setKegiatanForm({ namaKegiatan: k.namaKegiatan, tanggalKegiatan: k.tanggalKegiatan.split('T')[0], fotoUrl: k.fotoUrl||'', fotoName: k.fotoName||'' }); setShowKegiatanForm(true) }} />
+                            <ActionBtn label="Edit" onClick={() => { setEditKegiatan(k); setKegiatanForm({ namaKegiatan: k.namaKegiatan, tanggalKegiatan: k.tanggalKegiatan.split('T')[0], fotoUrl: k.fotoUrl || '', fotoName: k.fotoName || '' }); setShowKegiatanForm(true) }} />
                             <ActionBtn label="Hapus" onClick={() => handleDeleteKegiatan(k.id)} color={C.red} bg={C.redBg} bd={C.redBd} />
                           </div>
                         )}
@@ -838,10 +955,6 @@ export default function DetailProyekPage() {
           </div>
         )}
       </main>
-
-      {/* ════════════════════════════
-          SEMUA MODAL — WHITE THEME
-          ════════════════════════════ */}
 
       {/* Modal Project Approval */}
       {showProjectApprovalModal && (
@@ -908,9 +1021,15 @@ export default function DetailProyekPage() {
               <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 2 }}>{selectedTransaksi.namaProgram || selectedTransaksi.keterangan || '-'}</p>
             </div>
             <div style={{ padding: 24 }}>
-              <div style={{ marginBottom: 12 }}>
-                <span style={{ fontSize: 12, color: C.textMute }}>Nominal: </span>
-                <span style={{ fontSize: 14, fontWeight: 800, color: C.green }}>{fmtRp(selectedTransaksi.jumlah)}</span>
+              <div style={{ marginBottom: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div style={{ padding: '8px 10px', borderRadius: 8, background: C.redBg, border: `1px solid ${C.redBd}` }}>
+                  <div style={{ fontSize: 11, color: C.textMute, fontWeight: 600 }}>Nominal CA</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: C.red }}>{fmtRp(selectedTransaksi.jumlah)}</div>
+                </div>
+                <div style={{ padding: '8px 10px', borderRadius: 8, background: C.greenBg, border: `1px solid ${C.greenBd}` }}>
+                  <div style={{ fontSize: 11, color: C.textMute, fontWeight: 600 }}>Nominal PJUM</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: C.green }}>{selectedTransaksi.nominalPJUM ? fmtRp(selectedTransaksi.nominalPJUM) : <span style={{ fontSize: 12, fontWeight: 400, color: C.textMute }}>Belum diisi</span>}</div>
+                </div>
               </div>
               <div style={{ marginBottom: 16, padding: '8px 12px', borderRadius: 8, background: C.blueBg, border: `1px solid ${C.blueBd}`, fontSize: 12 }}>
                 <span style={{ color: C.textMute }}>Status saat ini: </span>
@@ -955,7 +1074,7 @@ export default function DetailProyekPage() {
                 {[{ l: 'Nama Yayasan/Lembaga', k: 'nama' }, { l: 'Alamat Lengkap', k: 'alamat' }, { l: 'Tahun Pendirian', k: 'tahunPendirian' }, { l: 'Lama Usaha (tahun)', k: 'lamaUsaha' }, { l: 'Penanggung Jawab', k: 'penanggungjawab' }].map(({ l, k }) => (
                   <div key={k}>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>{l}</label>
-                    <input type={['tahunPendirian','lamaUsaha'].includes(k) ? 'number' : 'text'}
+                    <input type={['tahunPendirian', 'lamaUsaha'].includes(k) ? 'number' : 'text'}
                       value={donorForm[k as keyof typeof donorForm]}
                       onChange={e => setDonorForm({ ...donorForm, [k]: e.target.value })}
                       style={inp()} onFocus={e => { e.target.style.borderColor = C.blue }} onBlur={e => { e.target.style.borderColor = C.border }} />
@@ -990,7 +1109,7 @@ export default function DetailProyekPage() {
                 ))}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                {[{ l: 'Tanggal Pengajuan *', k: 'tanggalPengajuan' }, { l: 'Tanggal Pertanggungjawaban', k: 'tanggalPertanggungjawaban' }].map(({ l, k }) => (
+                {[{ l: 'Tanggal Pengajuan *', k: 'tanggalPengajuan' }, { l: 'Tanggal Pertanggung jawaban', k: 'tanggalPertanggungjawaban' }].map(({ l, k }) => (
                   <div key={k}>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>{l}</label>
                     <input type="date" value={transaksiForm[k as keyof TransaksiForm]}
@@ -1008,11 +1127,19 @@ export default function DetailProyekPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Nominal Transaksi</label>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Nominal CA</label>
                   <input type="number" placeholder="0" value={transaksiForm.jumlah}
                     onChange={e => setTransaksiForm({ ...transaksiForm, jumlah: e.target.value })}
-                    style={inp()} onFocus={e => { e.target.style.borderColor = C.blue }} onBlur={e => { e.target.style.borderColor = C.border }} />
+                    style={{ ...inp(), borderColor: C.redBd } as React.CSSProperties} onFocus={e => { e.target.style.borderColor = C.red }} onBlur={e => { e.target.style.borderColor = C.redBd }} />
                 </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Nominal PJUM</label>
+                  <input type="number" placeholder="0" value={transaksiForm.nominalPJUM}
+                    onChange={e => setTransaksiForm({ ...transaksiForm, nominalPJUM: e.target.value })}
+                    style={{ ...inp(), borderColor: C.greenBd } as React.CSSProperties} onFocus={e => { e.target.style.borderColor = C.green }} onBlur={e => { e.target.style.borderColor = C.greenBd }} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 5 }}>Status</label>
                   <select value={transaksiForm.statusTransaksi} onChange={e => setTransaksiForm({ ...transaksiForm, statusTransaksi: e.target.value })} style={{ ...inp(), colorScheme: 'light' } as React.CSSProperties}>

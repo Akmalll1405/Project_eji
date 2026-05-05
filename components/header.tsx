@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import { useState, useEffect, useRef } from 'react'
+import { Menu, X, Bell, LogOut, Home, FileText, Users } from 'lucide-react'
 
 interface Notif {
   id: string
@@ -16,60 +17,78 @@ interface Notif {
   projectId: string
 }
 
+const statusConfig: Record<string, { label: string; color: string }> = {
+  APPROVED: { label: 'Disetujui', color: '#10b981' },
+  REJECTED: { label: 'Ditolak', color: '#ef4444' },
+  NEEDS_REVIEW: { label: 'Butuh review', color: '#f59e0b' },
+  REQUEST_EDIT: { label: 'Permintaan edit proyek', color: '#8b5cf6' },
+  REQUEST_APPROVAL: { label: 'Permintaan persetujuan proyek', color: '#3b82f6' },
+  UNLOCKED: { label: 'Proyek dibuka untuk diedit', color: '#06b6d4' },
+}
+
+const WEBSITE_NAME = 'SI-APUK'
+const WEBSITE_TAGLINE = 'Sistem Informasi Arsip PUPUK'
+
 export default function Header() {
   const router = useRouter()
   const { data: session } = useSession()
+  const role = (session?.user as any)?.role
+
   const [notifs, setNotifs] = useState<Notif[]>([])
   const [showNotif, setShowNotif] = useState(false)
-  const notifRef = useRef<HTMLDivElement>(null)
-  const [headerHeight, setHeaderHeight] = useState(64)
-  const headerRef = useRef<HTMLElement>(null)
+  const [showMenu, setShowMenu] = useState(false)   // mobile nav drawer
 
-  const website_name = "SI-APUK"
-  const website_tagline = "Sistem Informasi Arsip PUPUK"
+  const notifRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLElement>(null)
 
   const unread = notifs.filter(n => !n.isRead).length
 
+  // ── data fetching ──────────────────────────────────────────────
   const fetchNotifs = async () => {
     try {
       const res = await fetch('/api/notifikasi')
       const data = await res.json()
       setNotifs(Array.isArray(data) ? data : [])
-    } catch { }
+    } catch { /* silent */ }
   }
 
   useEffect(() => {
-    if (session) {
-      fetchNotifs()
-      const interval = setInterval(fetchNotifs, 15000)
-      return () => clearInterval(interval)
-    }
+    if (!session) return
+    fetchNotifs()
+    const iv = setInterval(fetchNotifs, 15000)
+    return () => clearInterval(iv)
   }, [session])
 
-  // Hitung tinggi header untuk posisi dropdown
+  // ── close on outside click ────────────────────────────────────
   useEffect(() => {
-    if (headerRef.current) {
-      setHeaderHeight(headerRef.current.offsetHeight)
-    }
-  }, [])
-
-  // Tutup notif saat klik di luar
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
+    const handler = (e: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setShowNotif(false)
       }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false)
+      }
     }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  // ── close menu on route change ────────────────────────────────
+  const navigate = (path: string) => {
+    router.push(path)
+    setShowMenu(false)
+    setShowNotif(false)
+  }
+
+  // ── open notif ────────────────────────────────────────────────
   const handleOpenNotif = async () => {
-    setShowNotif(prev => !prev)
-    if (!showNotif && unread > 0) {
+    const next = !showNotif
+    setShowNotif(next)
+    setShowMenu(false)
+    if (next && unread > 0) {
       await fetch('/api/notifikasi/read', { method: 'PUT' })
       setNotifs(prev => prev.map(n => ({ ...n, isRead: true })))
-      // Hapus notif yang sudah dibaca setelah 3 detik
       setTimeout(async () => {
         await fetch('/api/notifikasi', { method: 'DELETE' })
         fetchNotifs()
@@ -82,319 +101,416 @@ export default function Header() {
     setShowNotif(false)
   }
 
-  const statusConfig: Record<string, { icon: string; label: string; color: string }> = {
-    APPROVED: { icon: '✅', label: 'Disetujui', color: '#10b981' },
-    REJECTED: { icon: '❌', label: 'Ditolak', color: '#ef4444' },
-    NEEDS_REVIEW: { icon: '📋', label: 'Butuh review', color: '#f59e0b' },
-    REQUEST_EDIT: { icon: '✏️', label: 'Permintaan edit proyek', color: '#8b5cf6' },
-    REQUEST_APPROVAL: { icon: '📤', label: 'Permintaan persetujuan proyek', color: '#3b82f6' },
-    UNLOCKED: { icon: '🔓', label: 'Proyek dibuka untuk diedit', color: '#06b6d4' },
+  const markAllRead = async () => {
+    await fetch('/api/notifikasi/read', { method: 'PUT' })
+    setNotifs(prev => prev.map(n => ({ ...n, isRead: true })))
+    setTimeout(async () => {
+      await fetch('/api/notifikasi', { method: 'DELETE' })
+      fetchNotifs()
+      setShowNotif(false)
+    }, 500)
   }
+
+  // ── nav links list ────────────────────────────────────────────
+  const navLinks = [
+    { label: 'Home', path: '/dashboard', icon: <Home size={16} /> },
+    { label: 'Report', path: '/report', icon: <FileText size={16} /> },
+    ...(role === 'ADMIN'
+      ? [{ label: 'Users', path: '/users', icon: <Users size={16} /> }]
+      : []),
+  ]
 
   return (
     <>
-      <header
-        ref={headerRef}
-        className="sticky top-0 z-40 flex items-center justify-between"
-        style={{
-          background: 'rgba(59, 130, 246, 0.95)',
-          borderBottom: '1px solid rgba(99, 102, 241, 0.3)',
-          WebkitBackdropFilter: 'blur(20px)',
-          backdropFilter: 'blur(20px)',
-          boxShadow: '0 4px 20px rgba(59, 130, 246, 0.3), 0 2px 10px rgba(0, 0, 0, 0.1)',
-          paddingTop: 'max(env(safe-area-inset-top), 1rem, 16px)',
-          paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
-          paddingLeft: 'max(env(safe-area-inset-left), 1.25rem, 20px)',
-          paddingRight: 'max(env(safe-area-inset-right), 1.25rem, 20px)',
-          minHeight: '64px',
-          height: 'fit-content'
-        }}
-      >
-        {/* Logo */}
-        <div
-          className="flex-shrink-0 relative cursor-pointer"
-          onClick={() => router.push('/dashboard')}
-          style={{ width: 44, height: 44 }}
-        >
-          <Image
-            src="/logopupuk.png"
-            alt="Logo"
-            fill
-            sizes="44px"
-            priority
-            className="object-contain rounded-xl"
-            style={{ filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2))' }}
-          />
-        </div>
-        {/*website Name */}
-        <div className="hidden sm:block">
-          <div
-            className="font-bold text-lg leading-tight cursor-pointer hover:opacity-90 transition-opacity"
-            style={{ color: 'white' }}
-            onClick={() => router.push('/dashboard')}
-          >
-            {website_name}
+      <style>{`
+        .hdr-root {
+          position: sticky;
+          top: 0;
+          z-index: 40;
+          background: #002147;
+          border-bottom: 1px solid rgba(255,255,255,0.10);
+          box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+        }
+        .hdr-inner {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 0 16px;
+          height: 60px;
+          max-width: 1280px;
+          margin: 0 auto;
+          min-width: 0;
+        }
+        /* Logo */
+        .hdr-logo {
+          flex-shrink: 0;
+          width: 36px; height: 36px;
+          cursor: pointer;
+          border-radius: 10px;
+          overflow: hidden;
+          background: #fff;
+          display: flex; align-items: center; justify-content: center;
+        }
+        /* Brand text */
+        .hdr-brand {
+          flex-shrink: 0;
+          cursor: pointer;
+          line-height: 1.2;
+          margin-right: 4px;
+          min-width: 0;
+        }
+        .hdr-brand-name {
+          font-size: 15px; font-weight: 700;
+          color: #fff; letter-spacing: 0.01em;
+        }
+        .hdr-brand-tagline {
+          font-size: 11px; color: rgba(255,255,255,0.55);
+          white-space: nowrap;
+        }
+        /* Spacer */
+        .hdr-spacer { flex: 1; }
+        /* Desktop nav */
+        .hdr-nav {
+          display: flex; align-items: center; gap: 2px; min-width: 0;
+        }
+        .hdr-nav-btn {
+          display: flex; align-items: center; gap: 6px;
+          padding: 7px 12px;
+          border-radius: 8px;
+          border: none;
+          background: transparent;
+          color: rgba(255,255,255,0.80);
+          font-size: 13.5px; font-weight: 500;
+          cursor: pointer;
+          transition: background 0.15s, color 0.15s;
+          white-space: nowrap;
+          flex-shrink: 1;
+        }
+        .hdr-nav-btn:hover {
+          background: rgba(255,255,255,0.10);
+          color: #fff;
+        }
+        /* Email pill */
+        .hdr-email {
+          max-width: 120px;
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+          font-size: 12.5px; color: rgba(255,255,255,0.70);
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.14);
+          border-radius: 8px;
+          padding: 6px 10px;
+        }
+        /* Icon button (bell, hamburger) */
+        .hdr-icon-btn {
+          position: relative;
+          width: 40px; height: 40px;
+          border-radius: 10px;
+          border: 1px solid rgba(255,255,255,0.16);
+          background: rgba(255,255,255,0.08);
+          color: rgba(255,255,255,0.85);
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: background 0.15s, border-color 0.15s;
+        }
+        .hdr-icon-btn:hover, .hdr-icon-btn.active {
+          background: rgba(255,255,255,0.16);
+          border-color: rgba(255,255,255,0.28);
+        }
+        /* Unread badge */
+        .hdr-badge {
+          position: absolute; top: -4px; right: -4px;
+          min-width: 18px; height: 18px; padding: 0 4px;
+          border-radius: 9px;
+          background: #ef4444;
+          border: 2px solid #002147;
+          color: #fff;
+          font-size: 10px; font-weight: 700;
+          display: flex; align-items: center; justify-content: center;
+          line-height: 1;
+        }
+        /* Logout btn */
+        .hdr-logout {
+          display: flex; align-items: center; gap: 6px;
+          padding: 7px 12px;
+          border-radius: 8px;
+          border: 1px solid rgba(255,255,255,0.20);
+          background: rgba(255,255,255,0.08);
+          color: rgba(255,255,255,0.85);
+          font-size: 13px; font-weight: 500;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: background 0.15s;
+        }
+        .hdr-logout:hover { background: rgba(255,255,255,0.16); }
+
+        /* Hide desktop nav on small screens */
+        @media (max-width: 639px) {
+          .hdr-desktop-only { display: none !important; }
+          .hdr-brand-tagline { display: none; }
+        }
+        @media (min-width: 640px) {
+          .hdr-mobile-only { display: none !important; }
+        }
+
+        /* ── Notif & Mobile menu dropdown ──────────────────────── */
+        .hdr-dropdown-overlay {
+          position: fixed; inset: 0; z-index: 48;
+          background: rgba(0,0,0,0.30);
+        }
+        .hdr-dropdown {
+          position: fixed;
+          top: 60px; /* matches hdr-inner height */
+          left: 0; right: 0;
+          z-index: 49;
+          padding: 8px 12px 12px;
+        }
+        .hdr-dropdown-inner {
+          background: #fff;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 16px 48px rgba(0,0,0,0.22);
+          max-height: calc(100dvh - 80px);
+          display: flex; flex-direction: column;
+        }
+        /* constrain to right on desktop */
+        @media (min-width: 400px) {
+          .hdr-dropdown { left: auto; width: 360px; right: 12px; }
+        }
+        .hdr-dd-head {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 14px 18px 12px;
+          border-bottom: 1px solid #f0f0f0;
+          flex-shrink: 0;
+        }
+        .hdr-dd-title {
+          font-size: 15px; font-weight: 700; color: #0e1523;
+          display: flex; align-items: center; gap: 8px;
+        }
+        .hdr-dd-badge {
+          font-size: 11px; font-weight: 700;
+          background: #3b82f6; color: #fff;
+          border-radius: 6px; padding: 2px 7px;
+        }
+        .hdr-dd-close {
+          width: 30px; height: 30px; border-radius: 8px;
+          border: none; background: #f5f5f5; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          color: #555; transition: background 0.12s;
+        }
+        .hdr-dd-close:hover { background: #ebebeb; }
+        .hdr-dd-list { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        .hdr-notif-item {
+          width: 100%; text-align: left;
+          padding: 13px 18px;
+          border: none; cursor: pointer;
+          border-bottom: 1px solid #f5f5f5;
+          transition: background 0.12s;
+          display: flex; gap: 12px; align-items: flex-start;
+        }
+        .hdr-notif-item:hover { background: #f8faff; }
+        .hdr-notif-item.unread { background: #eff6ff; }
+        .hdr-notif-dot {
+          width: 8px; height: 8px; border-radius: 50%;
+          background: #3b82f6; flex-shrink: 0; margin-top: 5px;
+        }
+        .hdr-dd-footer {
+          padding: 12px 18px;
+          border-top: 1px solid #f0f0f0;
+          flex-shrink: 0;
+        }
+        .hdr-dd-footer-btn {
+          width: 100%; padding: 10px;
+          border-radius: 10px; border: none;
+          background: #f5f5f5; color: #444;
+          font-size: 13px; font-weight: 600;
+          cursor: pointer; transition: background 0.12s;
+        }
+        .hdr-dd-footer-btn:hover { background: #ebebeb; }
+        .hdr-empty {
+          padding: 40px 20px; text-align: center;
+          color: #9ca3af; font-size: 14px;
+        }
+        @media (max-width: 900px) {
+          .hdr-email {
+            display: none;
+          }
+        }
+        /* ── Mobile nav drawer ──────────────────────────────────── */
+        .hdr-mobile-nav { display: flex; flex-direction: column; padding: 8px 0; }
+        .hdr-mobile-nav-btn {
+          display: flex; align-items: center; gap: 10px;
+          padding: 13px 18px;
+          border: none; background: transparent;
+          color: #1a202c; font-size: 14px; font-weight: 500;
+          cursor: pointer; text-align: left;
+          transition: background 0.12s;
+          border-bottom: 1px solid #f5f5f5;
+        }
+        .hdr-mobile-nav-btn:hover { background: #f8faff; }
+        .hdr-mobile-nav-btn:last-child { border-bottom: none; }
+        .hdr-mobile-email {
+          padding: 12px 18px;
+          border-bottom: 1px solid #f0f0f0;
+          font-size: 12.5px; color: #6b7280;
+          word-break: break-all;
+        }
+        .hdr-mobile-logout {
+          margin: 8px 12px;
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          padding: 11px;
+          border-radius: 10px;
+          border: none;
+          background: #002147; color: #fff;
+          font-size: 14px; font-weight: 600;
+          cursor: pointer;
+        }
+      `}</style>
+
+      {/* ── HEADER BAR ───────────────────────────────────────────── */}
+      <header className="hdr-root" ref={headerRef}>
+        <div className="hdr-inner">
+
+          {/* Logo */}
+          <div className="hdr-logo" onClick={() => navigate('/dashboard')}>
+            <Image src="/logopupuk.png" alt="Logo" width={32} height={32} priority style={{ objectFit: 'contain' }} />
           </div>
-          {website_tagline && (
-            <div
-              className="text-xs font-medium leading-tight cursor-pointer hover:opacity-90 transition-opacity"
-              style={{ color: 'rgba(255, 255, 255, 0.8' }}
-              onClick={() => router.push('/dashboard')}
-            >
-              {website_tagline}
-            </div>
-          )}
-        </div>
-        {/* Nav links + Bell */}
-        <div className="flex items-center gap-2 sm:gap-4 ml-4 flex-1 justify-end">
-          {/* Email — hidden di mobile kecil */}
-          <div className="hidden sm:block px-3 py-2 rounded-xl text-sm text-white/90 font-medium max-w-[160px] truncate backdrop-blur-sm"
-            style={{
-              background: 'rgba(255, 255, 255, 0.15)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-            }}>
-            {session?.user?.email}
+
+          {/* Brand */}
+          <div className="hdr-brand" onClick={() => navigate('/dashboard')}>
+            <div className="hdr-brand-name">{WEBSITE_NAME}</div>
+            <div className="hdr-brand-tagline">{WEBSITE_TAGLINE}</div>
           </div>
 
-          {/* Nav buttons - NO BOX */}
-          {[
-            { label: 'Home', path: '/dashboard' },
-            { label: 'Report', path: '/report' },
-          ].map(({ label, path }) => (
-            <button
-              key={path}
-              onClick={() => router.push(path)}
-              className="text-white/90 hover:text-white font-medium text-sm transition-all duration-200 whitespace-nowrap px-3 py-2 rounded-xl hover:scale-105"
-              style={{ minHeight: '44px' }}
-            >
-              {label}
-            </button>
-          ))}
+          <div className="hdr-spacer" />
 
-          {(session?.user as any)?.role === 'ADMIN' && (
-            <button
-              onClick={() => router.push('/users')}
-              className="text-white/90 hover:text-white font-medium text-sm transition-all duration-200 whitespace-nowrap px-3 py-2 rounded-xl hover:scale-105"
-              style={{ minHeight: '44px' }}
-            >
-              Users
-            </button>
-          )}
+          {/* ── Desktop: email + nav + bell + logout ── */}
+          <div className="hdr-nav hdr-desktop-only">
+            <span className="hdr-email">{session?.user?.email}</span>
+            {navLinks.map(({ label, path, icon }) => (
+              <button key={path} className="hdr-nav-btn" onClick={() => navigate(path)}>
+                {icon}{label}
+              </button>
+            ))}
+          </div>
 
-          {/* Bell Notifikasi */}
-          <div className="relative" ref={notifRef}>
+          {/* Bell — always visible */}
+          <div className="relative" ref={notifRef} style={{ position: 'relative' }}>
             <button
+              className={`hdr-icon-btn${showNotif ? ' active' : ''}`}
               onClick={handleOpenNotif}
-              className="relative flex items-center justify-center rounded-xl transition-all duration-200 hover:scale-105 group"
-              style={{
-                width: 44,
-                height: 44,
-                background: showNotif
-                  ? 'rgba(255, 255, 255, 0.25)'
-                  : 'rgba(255, 255, 255, 0.15)',
-                border: showNotif
-                  ? '1px solid rgba(255, 255, 255, 0.4)'
-                  : '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: showNotif
-                  ? '0 4px 16px rgba(59, 130, 246, 0.4)'
-                  : '0 2px 8px rgba(0, 0, 0, 0.1)',
-              }}
+              aria-label="Notifikasi"
             >
-              <span style={{ fontSize: 18 }}>🔔</span>
+              <Bell size={18} />
               {unread > 0 && (
-                <span
-                  className="absolute flex items-center justify-center text-white font-bold shadow-lg"
-                  style={{
-                    top: -2, right: -2,
-                    width: 20, height: 20,
-                    borderRadius: '50%',
-                    background: '#ef4444',
-                    fontSize: 10,
-                    boxShadow: '0 2px 8px rgba(239, 68, 68, 0.5)',
-                  }}
-                >
-                  {unread > 9 ? '9+' : unread}
-                </span>
+                <span className="hdr-badge">{unread > 9 ? '9+' : unread}</span>
               )}
             </button>
           </div>
 
-          {/* Logout */}
+          {/* Desktop logout */}
+          <button className="hdr-logout hdr-desktop-only" onClick={() => signOut({ callbackUrl: '/login' })}>
+            <LogOut size={14} />Logout
+          </button>
+
+          {/* Mobile hamburger */}
           <button
-            onClick={() => signOut({ callbackUrl: '/login' })}
-            className="text-sm font-medium px-4 py-2 rounded-xl text-white transition-all duration-200 hover:scale-105 shadow-lg"
-            style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              minHeight: '44px',
-              boxShadow: '0 2px 12px rgba(59, 130, 246, 0.3)'
-            }}
+            className={`hdr-icon-btn hdr-mobile-only${showMenu ? ' active' : ''}`}
+            onClick={() => { setShowMenu(p => !p); setShowNotif(false) }}
+            aria-label="Menu"
           >
-            Logout
+            {showMenu ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
       </header>
 
-      {/* Dropdown Notifikasi — FIXED, full width, iOS-safe */}
+      {/* ── NOTIFICATION DROPDOWN ────────────────────────────────── */}
       {showNotif && (
         <>
-          {/* Overlay transparan untuk tutup saat tap di luar */}
-          <div
-            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
-            onClick={() => setShowNotif(false)}
-          />
-
-          {/* Panel notifikasi */}
-          <div
-            className="fixed z-50"
-            style={{
-              top: `calc(${headerHeight}px + env(safe-area-inset-top))`,
-              left: 'max(env(safe-area-inset-left), 12px)',
-              right: 'max(env(safe-area-inset-right), 12px)',
-              maxWidth: 'calc(100vw - 24px)'
-            }}
-          >
-            <div
-              className="rounded-3xl overflow-hidden"
-              style={{
-                background: 'rgba(255, 255, 255, 0.98)',
-                border: '1px solid rgba(59, 130, 246, 0.2)',
-                boxShadow: '0 20px 40px rgba(59, 130, 246, 0.25), 0 0 0 1px rgba(59, 130, 246, 0.1)',
-                maxHeight: '65dvh',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              {/* Header panel */}
-              <div
-                className="flex items-center justify-between px-6 py-4 flex-shrink-0 bg-gradient-to-r from-blue-500/10 to-indigo-500/10"
-                style={{ borderBottom: '1px solid rgba(59, 130, 246, 0.15)' }}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-gray-900">Notifikasi</span>
-                  {unread > 0 && (
-                    <span className="text-xs px-2.5 py-1 rounded-full bg-blue-500 text-white font-semibold">
-                      {unread} baru
-                    </span>
-                  )}
+          <div className="hdr-dropdown-overlay" onClick={() => setShowNotif(false)} />
+          <div className="hdr-dropdown">
+            <div className="hdr-dropdown-inner">
+              <div className="hdr-dd-head">
+                <div className="hdr-dd-title">
+                  Notifikasi
+                  {unread > 0 && <span className="hdr-dd-badge">{unread} baru</span>}
                 </div>
-                <button
-                  onClick={() => setShowNotif(false)}
-                  className="flex items-center justify-center rounded-2xl text-gray-600 hover:text-gray-900 hover:bg-white/50 transition-all duration-200"
-                  style={{
-                    width: 36, height: 36,
-                    fontSize: 16,
-                    fontWeight: 'bold'
-                  }}
-                >
-                  ✕
+                <button className="hdr-dd-close" onClick={() => setShowNotif(false)}>
+                  <X size={14} />
                 </button>
               </div>
 
-              {/* List notif */}
-              <div
-                className="overflow-y-auto flex-1"
-                style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
-              >
+              <div className="hdr-dd-list">
                 {notifs.length === 0 ? (
-                  <div className="px-8 py-12 text-center">
-                    <div className="text-4xl mb-4 mx-auto w-20 h-20 flex items-center justify-center rounded-2xl bg-blue-100 mb-4">
-                      🔔
-                    </div>
-                    <div className="text-gray-600 text-lg font-medium mb-1">Belum ada notifikasi</div>
-                    <div className="text-gray-500 text-sm">Notifikasi akan muncul di sini</div>
-                  </div>
-                ) : notifs.map((n) => {
-                  const cfg = statusConfig[n.status] || { icon: '🔔', label: n.status, color: '#3b82f6' }
+                  <div className="hdr-empty">Belum ada notifikasi</div>
+                ) : notifs.map(n => {
+                  const cfg = statusConfig[n.status] || { label: n.status, color: '#3b82f6' }
                   return (
                     <button
                       key={n.id}
+                      className={`hdr-notif-item${!n.isRead ? ' unread' : ''}`}
                       onClick={() => handleNotifClick(n)}
-                      className="w-full text-left transition-all duration-200 hover:bg-blue-50 group"
-                      style={{
-                        borderBottom: '1px solid rgba(0, 0, 0, 0.04)',
-                        background: !n.isRead ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
-                        minHeight: '72px',
-                        padding: '16px 20px',
-                      }}
                     >
-                      <div className="flex items-start gap-4">
-                        {/* Icon */}
-                        <div className="flex-shrink-0 mt-1 w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-100 group-hover:from-blue-200 group-hover:to-indigo-200 transition-all duration-200"
-                          style={{ fontSize: 20 }}>
-                          {cfg.icon}
+                      {!n.isRead && <div className="hdr-notif-dot" />}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#0e1523', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {n.fileName}
                         </div>
-
-                        {/* Konten */}
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-bold text-gray-900 truncate mb-1">
-                            {n.fileName}
+                        {n.proyekNama && (
+                          <div style={{ fontSize: 12, color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>
+                            {n.proyekNama}
                           </div>
-                          {n.proyekNama && (
-                            <div className="text-sm text-gray-600 mb-1 truncate">
-                              {n.proyekNama}
-                            </div>
-                          )}
-                          <div className="text-sm font-semibold mb-1" style={{ color: cfg.color }}>
-                            {n.status === 'NEEDS_REVIEW'
-                              ? (n.catatanAdmin?.startsWith('Keuangan baru')
-                                ? 'Keuangan butuh review'
-                                : 'Dokumen butuh review')
-                              : cfg.label}
-                          </div>
-                          {n.catatanAdmin && (
-                            <div className="text-xs text-gray-500 italic truncate bg-gray-100 px-2 py-1 rounded-lg">
-                              "{n.catatanAdmin}"
-                            </div>
-                          )}
-                          <div className="text-xs text-gray-500 mt-2">
-                            {new Date(n.createdAt).toLocaleDateString('id-ID', {
-                              day: '2-digit', month: 'short',
-                              hour: '2-digit', minute: '2-digit'
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Unread dot */}
-                        {!n.isRead && (
-                          <div
-                            className="flex-shrink-0 rounded-full mt-2 shadow-lg"
-                            style={{
-                              width: 10, height: 10,
-                              background: '#3b82f6',
-                              boxShadow: '0 0 12px rgba(59, 130, 246, 0.6)',
-                            }}
-                          />
                         )}
+                        <div style={{ fontSize: 12, fontWeight: 600, color: cfg.color, marginTop: 3 }}>
+                          {n.status === 'NEEDS_REVIEW'
+                            ? (n.catatanAdmin?.startsWith('Keuangan baru') ? 'Keuangan butuh review' : 'Dokumen butuh review')
+                            : cfg.label}
+                        </div>
+                        {n.catatanAdmin && (
+                          <div style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            "{n.catatanAdmin}"
+                          </div>
+                        )}
+                        <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>
+                          {new Date(n.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </div>
                       </div>
                     </button>
                   )
                 })}
               </div>
 
-              {/* Footer — tandai semua sudah dibaca */}
               {notifs.length > 0 && (
-                <div
-                  className="flex-shrink-0 px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50"
-                  style={{ borderTop: '1px solid rgba(59, 130, 246, 0.1)' }}
-                >
-                  <button
-                    onClick={async () => {
-                      await fetch('/api/notifikasi/read', { method: 'PUT' })
-                      setNotifs(prev => prev.map(n => ({ ...n, isRead: true })))
-                      setTimeout(async () => {
-                        await fetch('/api/notifikasi', { method: 'DELETE' })
-                        fetchNotifs()
-                        setShowNotif(false)
-                      }, 500)
-                    }}
-                    className="w-full text-sm font-semibold text-gray-700 hover:text-blue-600 transition-all duration-200 py-2.5 rounded-2xl hover:bg-white hover:shadow-md"
-                  >
-                    Tandai semua sudah dibaca & hapus
+                <div className="hdr-dd-footer">
+                  <button className="hdr-dd-footer-btn" onClick={markAllRead}>
+                    Tandai semua sudah dibaca &amp; hapus
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── MOBILE NAV DRAWER ────────────────────────────────────── */}
+      {showMenu && (
+        <>
+          <div className="hdr-dropdown-overlay hdr-mobile-only" onClick={() => setShowMenu(false)} />
+          <div className="hdr-dropdown hdr-mobile-only" style={{ width: '100%', left: 0, right: 0, padding: '8px 12px 12px' }}>
+            <div className="hdr-dropdown-inner">
+              {session?.user?.email && (
+                <div className="hdr-mobile-email">{session.user.email}</div>
+              )}
+              <div className="hdr-mobile-nav">
+                {navLinks.map(({ label, path, icon }) => (
+                  <button key={path} className="hdr-mobile-nav-btn" onClick={() => navigate(path)}>
+                    {icon}{label}
+                  </button>
+                ))}
+              </div>
+              <button className="hdr-mobile-logout" onClick={() => signOut({ callbackUrl: '/login' })}>
+                <LogOut size={15} />Logout
+              </button>
             </div>
           </div>
         </>

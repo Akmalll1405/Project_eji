@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     const isAdminUser = (session.user as any).role === 'ADMIN'
     const id          = crypto.randomUUID()
 
-    // Semua nilai default dihitung di JS dulu
+    const nominalPJUM       = parseFloat(body.nominalPJUM) || 0
     const jenisPembayaran   = safe(body.jenisPembayaran) || 'TUNAI'
     const keterangan        = safe(body.keterangan)
     const jumlah            = parseFloat(body.jumlah) || 0
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         "namaProgram", "kegiatan", "staffCA",
         "tanggalPengajuan", "tanggalPertanggungjawaban",
         "kelengkapanDokumen", "statusTransaksi", "statusApproval",
-        "createdAt"
+        "createdAt", "nominalPJUM"
       ) VALUES (
         '${id}',
         '${projectId}',
@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
         '${jenisPembayaran}',
         '${keterangan}',
         ${jumlah},
+        ${nominalPJUM},
         '${nomorRekening}',
         '${bankTujuan}',
         ${tanggalPembayaran},
