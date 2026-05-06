@@ -59,91 +59,130 @@ const card: React.CSSProperties = {
   boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,33,71,0.05)',
 }
 
-// Input style — mobile-optimized
 const inp = (disabled = false): React.CSSProperties => ({
   width: '100%',
-  padding: '10px 12px',
-  borderRadius: 10,
-  border: `1.5px solid ${disabled ? '#f1f5f9' : C.border}`,
-  background: disabled ? '#f8fafc' : C.white,
+  padding: '7px 10px',  // Dikurangi dari 9px 12px
+  borderRadius: 6,      // Dikurangi dari 8
+  border: 'none',
+  background: disabled ? '#f1f5f9' : '#f8fafc',
   color: disabled ? C.textMute : C.text,
-  fontSize: 16, // 16px prevents iOS auto-zoom
+  fontSize: 13,         // Dikurangi dari 14
   outline: 'none',
   cursor: disabled ? 'not-allowed' : 'text',
   WebkitAppearance: 'none',
-  minHeight: 44, // iOS touch target
+  minHeight: 36,        // Dikurangi dari 40
   boxSizing: 'border-box',
   display: 'block',
 })
 
-// Select style — mobile-optimized
 const sel = (disabled = false): React.CSSProperties => ({
   ...inp(disabled),
-  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
   backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'right 12px center',
-  paddingRight: 36,
+  backgroundPosition: 'right 8px center',
+  paddingRight: 28,
   colorScheme: 'light',
+  cursor: disabled ? 'not-allowed' : 'pointer',
 })
 
-// ─── Modal components ───
+// ModalWrapper — Fixed center positioning untuk semua ukuran
 const ModalWrapper = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => (
   <div
-    className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-    style={{ background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(4px)' }}
+    className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-8"
+    style={{
+      background: 'rgba(15,23,42,0.6)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)'
+    }}
     onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
   >
     {children}
   </div>
 )
 
-// ModalContent — full-width on mobile, centered sheet on desktop
-const ModalContent = ({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) => (
+const ModalContent = ({
+  children,
+  wide = false,
+  className = '',
+}: {
+  children: React.ReactNode;
+  wide?: boolean;
+  className?: string;
+}) => (
   <div
-    className={`w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'} rounded-t-3xl sm:rounded-2xl`}
+    className={`
+      w-full max-w-sm
+      ${wide ? 'max-w-md sm:max-w-lg' : 'max-w-sm sm:max-w-md'}
+      max-h-[85vh] overflow-hidden
+      bg-white rounded-3xl shadow-2xl
+      animate-in fade-in-0 zoom-in-95 duration-200
+    `}
     style={{
-      ...card,
-      maxHeight: '92dvh',
-      overflowY: 'auto',
-      paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      background: C.white,
       WebkitOverflowScrolling: 'touch',
-    } as React.CSSProperties}
+      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+      position: 'relative',
+      overflow: 'hidden',
+    }}
   >
-    {children}
+    <div
+      style={{
+        top: 14,        
+        left: 4,
+        right: 4,
+        bottom: 4,
+        background: C.white,
+        borderRadius: '20px 20px 0 0',
+        zIndex: 1,
+        boxShadow: `
+          0 1px 3px rgba(0,0,0,0.06),
+          inset 0 1px 0 rgba(255,255,255,0.9)
+        `,
+      }}
+    />
+    <div style={{ position: 'relative'}}>
+      {children}
+    </div>
   </div>
+
 )
 
-// Compact label + field
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
     <label style={{
-      fontSize: 11, fontWeight: 700, color: C.textMute,
-      textTransform: 'uppercase', letterSpacing: '0.05em',
+      fontSize: 9, fontWeight: 700, color: C.textMute,
+      textTransform: 'uppercase', letterSpacing: '0.08em',
     }}>
       {label}
     </label>
-    {children}
+    <div style={{
+      borderRadius: 8, background: '#f8fafc',
+      overflow: 'hidden',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+    }}>
+      {children}
+    </div>
   </div>
 )
 
-// Shared modal header
+
 const ModalHeader = ({
   title, subtitle, gradient, onClose,
 }: {
   title: string; subtitle?: string; gradient?: string; onClose?: () => void
 }) => (
   <div style={{
-    padding: '16px 20px',
+    padding: '14px 18px',
     background: gradient || `linear-gradient(135deg,${C.blue},${C.blueDark})`,
-    borderRadius: '20px 20px 0 0',
-    display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
+    borderRadius: '16px 16px 0 0',
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
     position: 'sticky', top: 0, zIndex: 1,
   }}>
     <div style={{ minWidth: 0 }}>
-      <h3 style={{ color: '#fff', fontWeight: 800, fontSize: 15, margin: 0 }}>{title}</h3>
+      <h3 style={{ color: '#fff', fontWeight: 700, fontSize: 14, margin: 0, letterSpacing: '-0.01em' }}>{title}</h3>
       {subtitle && (
         <p style={{
-          color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 3, margin: '3px 0 0',
+          color: 'rgba(255,255,255,0.65)', fontSize: 11, margin: '2px 0 0',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>{subtitle}</p>
       )}
@@ -152,9 +191,10 @@ const ModalHeader = ({
       <button
         onClick={onClose}
         style={{
-          flexShrink: 0, width: 30, height: 30, borderRadius: '50%',
-          background: 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer',
-          color: '#fff', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0, width: 26, height: 26, borderRadius: '50%',
+          background: 'rgba(255,255,255,0.12)', border: 'none', cursor: 'pointer',
+          color: '#fff', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          lineHeight: 1,
         }}
       >
         ×
@@ -162,24 +202,41 @@ const ModalHeader = ({
     )}
   </div>
 )
+// Tambahkan di dalam ModalHeader setelah title
+const DragHandle = () => (
+  <div
+    style={{
+      top: 8,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: 36,
+      height: 4,
+      background: 'rgba(255,255,255,0.4)',
+      borderRadius: 2,
+      display: 'block',
+    }}
+    className="sm:hidden"
+  />
+)
 
-// Shared modal footer
+// Gunakan di ModalHeader: <ModalHeader title="..." onClose={...} />
+// Shared modal footer — proportional
 const ModalFooter = ({
   onSave, onCancel, saveLabel = 'Simpan', saveColor = C.blue, disabled = false,
 }: {
   onSave: () => void; onCancel: () => void
   saveLabel?: string; saveColor?: string; disabled?: boolean
 }) => (
-  <div style={{ display: 'flex', gap: 10, paddingTop: 6 }}>
+  <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
     <button
       onClick={onSave}
       disabled={disabled}
       style={{
-        flex: 1, padding: '13px 0', borderRadius: 12, border: 'none',
-        background: `linear-gradient(135deg,${saveColor},${saveColor}cc)`,
-        color: '#fff', fontWeight: 700, fontSize: 15,
+        flex: 2, padding: '11px 0', borderRadius: 10, border: 'none',
+        background: `linear-gradient(135deg,${saveColor},${saveColor}dd)`,
+        color: '#fff', fontWeight: 700, fontSize: 13,
         cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.6 : 1,
-        minHeight: 48,
+        minHeight: 42, letterSpacing: '0.01em',
       }}
     >
       {disabled ? '...' : saveLabel}
@@ -187,10 +244,10 @@ const ModalFooter = ({
     <button
       onClick={onCancel}
       style={{
-        flex: 1, padding: '13px 0', borderRadius: 12,
-        border: `1.5px solid ${C.border}`, background: '#f8fafc',
-        color: C.textSub, fontWeight: 600, fontSize: 15, cursor: 'pointer',
-        minHeight: 48,
+        flex: 1, padding: '11px 0', borderRadius: 10,
+        border: 'none', background: '#f1f5f9',
+        color: C.textSub, fontWeight: 600, fontSize: 13, cursor: 'pointer',
+        minHeight: 42,
       }}
     >
       Batal
@@ -279,7 +336,7 @@ export default function DetailProyekPage() {
     if (status === 'unauthenticated') { router.push('/login'); return }
     if (!id || id === 'undefined' || id.trim() === '') return
     fetchAll()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted, status, id])
 
   const fetchAll = async () => {
@@ -1085,14 +1142,14 @@ export default function DetailProyekPage() {
                           <div style={{ padding: '8px 10px', borderRadius: 8, background: C.redBg, border: `1px solid ${C.redBd}` }}>
                             <div style={{ color: C.textMute, marginBottom: 2, fontWeight: 600, fontSize: 11 }}>Nominal CA</div>
                             <div style={{ color: C.red, fontWeight: 800, fontSize: 13 }}>{fmtRp(t.jumlah)}</div>
-                            {t.tanggalPengajuan && <div style={{ color: C.textMute, fontSize: 11, marginTop: 3 }}>📅 {new Date(t.tanggalPengajuan).toLocaleDateString('id-ID')}</div>}
+                            {t.tanggalPengajuan && <div style={{ color: C.textMute, fontSize: 11, marginTop: 3 }}>Date: {new Date(t.tanggalPengajuan).toLocaleDateString('id-ID')}</div>}
                           </div>
                           <div style={{ padding: '8px 10px', borderRadius: 8, background: C.greenBg, border: `1px solid ${C.greenBd}` }}>
                             <div style={{ color: C.textMute, marginBottom: 2, fontWeight: 600, fontSize: 11 }}>Nominal PJUM</div>
                             <div style={{ color: C.green, fontWeight: 800, fontSize: 13 }}>
                               {t.nominalPJUM ? fmtRp(t.nominalPJUM) : <span style={{ color: C.textMute, fontWeight: 400, fontSize: 11 }}>Belum diisi</span>}
                             </div>
-                            {t.tanggalPertanggungjawaban && <div style={{ color: C.textMute, fontSize: 11, marginTop: 3 }}>📅 {new Date(t.tanggalPertanggungjawaban).toLocaleDateString('id-ID')}</div>}
+                            {t.tanggalPertanggungjawaban && <div style={{ color: C.textMute, fontSize: 11, marginTop: 3 }}>Date: {new Date(t.tanggalPertanggungjawaban).toLocaleDateString('id-ID')}</div>}
                           </div>
                         </div>
                         {t.buktiBayarUrl && <a href={t.buktiBayarUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: C.blue, fontWeight: 600, display: 'inline-block', marginTop: 6 }}>Lihat Bukti →</a>}
@@ -1210,7 +1267,7 @@ export default function DetailProyekPage() {
               subtitle={proyek?.nama}
               onClose={() => { setShowProjectApprovalModal(false); setCatatanApprovalProyek('') }}
             />
-            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ padding: '10px 14px', borderRadius: 10, background: isLocked ? C.greenBg : C.amberBg, border: `1px solid ${isLocked ? C.greenBd : C.amberBd}` }}>
                 <span style={{ fontSize: 12, color: C.textMute }}>Status: </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: isLocked ? C.green : C.amber }}>
@@ -1225,20 +1282,20 @@ export default function DetailProyekPage() {
                       onChange={e => setCatatanApprovalProyek(e.target.value)}
                       placeholder="Contoh: Proyek sudah memenuhi syarat..."
                       rows={3}
-                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.text, fontSize: 15, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: 'none', background: '#f8fafc', color: C.text, fontSize: 14, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
                     />
                   </Field>
                   <div style={{ display: 'flex', gap: 10 }}>
                     <button
                       onClick={handleApproveProject}
                       disabled={projectApprovalLoading}
-                      style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: 'none', background: `linear-gradient(135deg,${C.green},#15803d)`, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', opacity: projectApprovalLoading ? 0.6 : 1, minHeight: 48 }}
+                      style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.green},#15803d)`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: projectApprovalLoading ? 0.6 : 1, minHeight: 42 }}
                     >
                       {projectApprovalLoading ? '...' : '✓ Setujui & Kunci'}
                     </button>
                     <button
                       onClick={() => { setShowProjectApprovalModal(false); setCatatanApprovalProyek('') }}
-                      style={{ padding: '13px 18px', borderRadius: 12, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 15, cursor: 'pointer', minHeight: 48 }}
+                      style={{ padding: '11px 16px', borderRadius: 10, border: 'none', background: '#f1f5f9', color: C.textSub, fontWeight: 600, fontSize: 13, cursor: 'pointer', minHeight: 42 }}
                     >
                       Batal
                     </button>
@@ -1250,19 +1307,19 @@ export default function DetailProyekPage() {
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button
                       onClick={handleUnlockProject}
-                      style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: 'none', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', minHeight: 48 }}
+                      style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.blue},${C.blueDark})`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', minHeight: 42 }}
                     >
                       🔓 Buka Kunci
                     </button>
                     <button
                       onClick={handleRejectProject}
-                      style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: 'none', background: `linear-gradient(135deg,${C.red},#b91c1c)`, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', minHeight: 48 }}
+                      style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.red},#b91c1c)`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', minHeight: 42 }}
                     >
                       ✗ Batalkan
                     </button>
                     <button
                       onClick={() => setShowProjectApprovalModal(false)}
-                      style={{ width: '100%', padding: '13px 0', borderRadius: 12, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 14, cursor: 'pointer', minHeight: 48 }}
+                      style={{ width: '100%', padding: '11px 0', borderRadius: 10, border: 'none', background: '#f1f5f9', color: C.textSub, fontWeight: 600, fontSize: 13, cursor: 'pointer', minHeight: 42 }}
                     >
                       Tutup
                     </button>
@@ -1283,15 +1340,15 @@ export default function DetailProyekPage() {
               subtitle={selectedTransaksi.namaProgram || selectedTransaksi.keterangan || '-'}
               onClose={() => { setShowTransaksiApprovalModal(false); setSelectedTransaksi(null); setCatatanAdminTransaksi('') }}
             />
-            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div style={{ padding: 12, borderRadius: 10, background: C.redBg, border: `1px solid ${C.redBd}` }}>
                   <div style={{ fontSize: 11, color: C.textMute, fontWeight: 600, marginBottom: 4 }}>Nominal CA</div>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: C.red }}>{fmtRp(selectedTransaksi.jumlah)}</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: C.red }}>{fmtRp(selectedTransaksi.jumlah)}</div>
                 </div>
                 <div style={{ padding: 12, borderRadius: 10, background: C.greenBg, border: `1px solid ${C.greenBd}` }}>
                   <div style={{ fontSize: 11, color: C.textMute, fontWeight: 600, marginBottom: 4 }}>Nominal PJUM</div>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: C.green }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: C.green }}>
                     {selectedTransaksi.nominalPJUM
                       ? fmtRp(selectedTransaksi.nominalPJUM)
                       : <span style={{ fontSize: 12, fontWeight: 400, color: C.textMute }}>Belum diisi</span>
@@ -1311,28 +1368,28 @@ export default function DetailProyekPage() {
                   onChange={e => setCatatanAdminTransaksi(e.target.value)}
                   placeholder="Contoh: Bukti pembayaran sudah sesuai..."
                   rows={3}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.text, fontSize: 15, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: 'none', background: '#f8fafc', color: C.text, fontSize: 14, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
                 />
               </Field>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   onClick={() => handleTransaksiApproval('CLEAR')}
                   disabled={transaksiApprovalLoading}
-                  style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: 'none', background: `linear-gradient(135deg,${C.green},#15803d)`, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', opacity: transaksiApprovalLoading ? 0.6 : 1, minHeight: 48 }}
+                  style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.green},#15803d)`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: transaksiApprovalLoading ? 0.6 : 1, minHeight: 42 }}
                 >
                   {transaksiApprovalLoading ? '...' : 'Clear'}
                 </button>
                 <button
                   onClick={() => handleTransaksiApproval('NOT_CLEAR')}
                   disabled={transaksiApprovalLoading}
-                  style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: 'none', background: `linear-gradient(135deg,${C.red},#b91c1c)`, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', opacity: transaksiApprovalLoading ? 0.6 : 1, minHeight: 48 }}
+                  style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.red},#b91c1c)`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: transaksiApprovalLoading ? 0.6 : 1, minHeight: 42 }}
                 >
                   {transaksiApprovalLoading ? '...' : 'Not Clear'}
                 </button>
               </div>
               <button
                 onClick={() => { setShowTransaksiApprovalModal(false); setSelectedTransaksi(null); setCatatanAdminTransaksi('') }}
-                style={{ width: '100%', padding: '13px 0', borderRadius: 12, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 15, cursor: 'pointer', minHeight: 48 }}
+                style={{ width: '100%', padding: '11px 0', borderRadius: 10, border: 'none', background: '#f1f5f9', color: C.textSub, fontWeight: 600, fontSize: 13, cursor: 'pointer', minHeight: 42 }}
               >
                 Batal
               </button>
@@ -1349,7 +1406,7 @@ export default function DetailProyekPage() {
               title={editDonor ? 'Edit Donor' : 'Tambah Donor'}
               onClose={() => { setShowDonorForm(false); setEditDonor(null) }}
             />
-            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <Field label="Nama Yayasan / Lembaga *">
                 <input
                   type="text"
@@ -1371,7 +1428,7 @@ export default function DetailProyekPage() {
                 />
               </Field>
               {/* Tahun & Lama — stacked on mobile, side-by-side on sm+ */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <Field label="Tahun Pendirian">
                   <input
                     type="number"
@@ -1423,7 +1480,7 @@ export default function DetailProyekPage() {
               title={editTransaksi ? 'Edit Pembayaran' : 'Tambah Pembayaran'}
               onClose={() => { setShowTransaksiForm(false); setEditTransaksi(null); resetTransaksiForm() }}
             />
-            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
               {/* Nama Program */}
               <Field label="Nama Program *">
@@ -1438,7 +1495,7 @@ export default function DetailProyekPage() {
               </Field>
 
               {/* Staff CA + Kegiatan — side by side on sm+ */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <Field label="Staff CA *">
                   <input
                     type="text"
@@ -1462,7 +1519,7 @@ export default function DetailProyekPage() {
               </div>
 
               {/* Tanggal Pengajuan + Pertanggungjawaban */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <Field label="Tgl Pengajuan *">
                   <input
                     type="date"
@@ -1482,7 +1539,7 @@ export default function DetailProyekPage() {
               </div>
 
               {/* Nominal CA + PJUM */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <Field label="Nominal CA (Rp)">
                   <input
                     type="number"
@@ -1510,7 +1567,7 @@ export default function DetailProyekPage() {
               </div>
 
               {/* Kelengkapan + Status */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <Field label="Kelengkapan Dokumen">
                   <select
                     value={transaksiForm.kelengkapanDokumen}
@@ -1555,8 +1612,8 @@ export default function DetailProyekPage() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     padding: '12px', borderRadius: 10, cursor: 'pointer',
                     background: C.blueBg, color: C.blueText,
-                    border: `1.5px dashed ${C.blueBd}`, fontWeight: 600, fontSize: 14,
-                    minHeight: 48,
+                    border: `1.5px dashed ${C.blueBd}`, fontWeight: 600, fontSize: 13,
+                    minHeight: 40,
                   }}
                 >
                   <input
@@ -1567,10 +1624,10 @@ export default function DetailProyekPage() {
                     className="hidden"
                     id="buktiBayarUpload"
                   />
-                  📎 {uploadingBukti ? 'Mengupload...' : 'Pilih File Bukti'}
+                  {uploadingBukti ? 'Mengupload...' : 'Pilih File Bukti'}
                 </label>
                 {transaksiForm.buktiBayarUrl && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8, padding: '8px 12px', borderRadius: 8, background: C.greenBg, border: `1px solid ${C.greenBd}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, padding: '6px 10px', borderRadius: 8, background: C.greenBg }}>
                     <span style={{ fontSize: 13, color: C.green, fontWeight: 700 }}>✓ Terupload</span>
                     <a href={transaksiForm.buktiBayarUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: C.blue, fontWeight: 600 }}>Lihat →</a>
                   </div>
@@ -1595,7 +1652,7 @@ export default function DetailProyekPage() {
               title={editKegiatan ? 'Edit Kegiatan' : 'Tambah Kegiatan'}
               onClose={() => { setShowKegiatanForm(false); setEditKegiatan(null) }}
             />
-            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <Field label="Nama Kegiatan *">
                 <input
                   type="text"
@@ -1621,8 +1678,8 @@ export default function DetailProyekPage() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     padding: '12px', borderRadius: 10, cursor: 'pointer',
                     background: C.blueBg, color: C.blueText,
-                    border: `1.5px dashed ${C.blueBd}`, fontWeight: 600, fontSize: 14,
-                    minHeight: 48,
+                    border: `1.5px dashed ${C.blueBd}`, fontWeight: 600, fontSize: 13,
+                    minHeight: 40,
                   }}
                 >
                   <input
@@ -1633,7 +1690,7 @@ export default function DetailProyekPage() {
                     className="hidden"
                     id="fotoKegiatanUpload"
                   />
-                  📷 {uploadingFoto ? 'Mengupload...' : 'Pilih Foto'}
+                  {uploadingFoto ? 'Mengupload...' : 'Pilih Foto'}
                 </label>
                 {kegiatanForm.fotoUrl && (
                   <div style={{ marginTop: 10 }}>
@@ -1676,7 +1733,7 @@ export default function DetailProyekPage() {
               subtitle={selectedDokumen.fileName}
               onClose={() => { setShowApprovalModal(false); setSelectedDokumen(null); setCatatanAdmin('') }}
             />
-            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ padding: '10px 14px', borderRadius: 10, background: C.blueBg, border: `1px solid ${C.blueBd}`, fontSize: 13 }}>
                 <span style={{ color: C.textMute }}>Status saat ini: </span>
                 <span style={{ fontWeight: 700, color: selectedDokumen.status === 'APPROVED' ? C.green : selectedDokumen.status === 'REJECTED' ? C.red : C.amber }}>
@@ -1689,28 +1746,28 @@ export default function DetailProyekPage() {
                   onChange={e => setCatatanAdmin(e.target.value)}
                   placeholder="Contoh: Dokumen sudah sesuai..."
                   rows={3}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.text, fontSize: 15, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: 'none', background: '#f8fafc', color: C.text, fontSize: 14, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
                 />
               </Field>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   onClick={() => handleApprovalDokumen('APPROVED')}
                   disabled={approvalLoading}
-                  style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: 'none', background: `linear-gradient(135deg,${C.green},#15803d)`, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', opacity: approvalLoading ? 0.6 : 1, minHeight: 48 }}
+                  style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.green},#15803d)`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: approvalLoading ? 0.6 : 1, minHeight: 42 }}
                 >
                   {approvalLoading ? '...' : '✓ Setujui'}
                 </button>
                 <button
                   onClick={() => handleApprovalDokumen('REJECTED')}
                   disabled={approvalLoading}
-                  style={{ flex: 1, padding: '13px 0', borderRadius: 12, border: 'none', background: `linear-gradient(135deg,${C.red},#b91c1c)`, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', opacity: approvalLoading ? 0.6 : 1, minHeight: 48 }}
+                  style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${C.red},#b91c1c)`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: approvalLoading ? 0.6 : 1, minHeight: 42 }}
                 >
                   {approvalLoading ? '...' : '✗ Tolak'}
                 </button>
               </div>
               <button
                 onClick={() => { setShowApprovalModal(false); setSelectedDokumen(null); setCatatanAdmin('') }}
-                style={{ width: '100%', padding: '13px 0', borderRadius: 12, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.textSub, fontWeight: 600, fontSize: 15, cursor: 'pointer', minHeight: 48 }}
+                style={{ width: '100%', padding: '11px 0', borderRadius: 10, border: 'none', background: '#f1f5f9', color: C.textSub, fontWeight: 600, fontSize: 13, cursor: 'pointer', minHeight: 42 }}
               >
                 Batal
               </button>
@@ -1728,14 +1785,14 @@ export default function DetailProyekPage() {
               gradient={`linear-gradient(135deg,${C.amber},#b45309)`}
               onClose={() => { setShowRequestEditModal(false); setRequestEditNote('') }}
             />
-            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <Field label="Alasan perlu diedit *">
                 <textarea
                   value={requestEditNote}
                   onChange={e => setRequestEditNote(e.target.value)}
                   placeholder="Contoh: Ada perubahan nilai kontrak..."
                   rows={4}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.text, fontSize: 15, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: 'none', background: '#f8fafc', color: C.text, fontSize: 14, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
                 />
               </Field>
               <ModalFooter
@@ -1758,14 +1815,14 @@ export default function DetailProyekPage() {
               title="Ajukan Persetujuan Proyek"
               onClose={() => { setShowRequestApprovalModal(false); setRequestApprovalNote('') }}
             />
-            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <Field label="Catatan untuk Admin (opsional)">
                 <textarea
                   value={requestApprovalNote}
                   onChange={e => setRequestApprovalNote(e.target.value)}
                   placeholder="Contoh: Proyek sudah siap untuk disetujui..."
                   rows={4}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: `1.5px solid ${C.border}`, background: '#f8fafc', color: C.text, fontSize: 15, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: 'none', background: '#f8fafc', color: C.text, fontSize: 14, outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
                 />
               </Field>
               <ModalFooter
